@@ -1,3 +1,5 @@
+#!/bin/sh
+
 tmux new -s "JMRP" -d -n "Back-End" -c /home/giatur/git/jmrp/
 tmux neww -d -n "Front-End" -c /home/giatur/git/jmrp-ui/ -t "JMRP"
 tmux neww -d -n "Other" -c "$HOME" -t "JMRP"
