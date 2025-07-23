@@ -2,22 +2,37 @@ package components
 
 import (
 	"fmt"
+	"os"
+	"path/filepath"
+	"strings"
 
-	"github.com/GianlucaTurra/teamux/internal/layouts"
+	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
 )
 
-type Model struct {
-	sessionLayout []string
-	cursor        int
-	selected      map[int]struct{}
-}
+type (
+	Session string
+	Model   struct {
+		list     list.Model
+		selected string
+	}
+)
+
+func (s Session) FilterValue() string { return "" }
 
 func InitialModel() Model {
-	return Model{
-		sessionLayout: layouts.ReadLayouts(),
-		selected:      make(map[int]struct{}),
+	layouts := []list.Item{}
+	for _, layout := range ReadLayouts() {
+		layouts = append(layouts, Session(layout))
 	}
+	l := list.New(layouts, SessionDelegate{}, 100, 10)
+	l.Title = "Available session layouts"
+	l.Styles.Title = titleStyle
+	l.SetFilteringEnabled(false)
+	l.SetShowStatusBar(false)
+	l.Styles.PaginationStyle = paginationStyle
+	l.Styles.HelpStyle = helpStyle
+	return Model{list: l}
 }
 
 func (m Model) Init() tea.Cmd {
@@ -25,44 +40,54 @@ func (m Model) Init() tea.Cmd {
 }
 
 func (m Model) View() string {
-	s := "Available session layouts\n\n"
-	for i, layout := range m.sessionLayout {
-		cursor := " "
-		if m.cursor == i {
-			cursor = ">"
-		}
-		checked := " "
-		if _, ok := m.selected[i]; ok {
-			checked = "x"
-		}
-		s += fmt.Sprintf("%s [%s] %s\n", cursor, checked, layout)
-	}
-	s += "Press 'q' to quit\n"
-	return s
+	return "\n" + m.list.View()
 }
 
 func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
+	case tea.WindowSizeMsg:
+		m.list.SetWidth(msg.Width)
+		return m, nil
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "ctrl+c", "q":
 			return m, tea.Quit
-		case "k", "up":
-			if m.cursor > 0 {
-				m.cursor--
-			}
-		case "j", "down":
-			if m.cursor < len(m.sessionLayout)-1 {
-				m.cursor++
-			}
 		case "enter", " ":
-			_, ok := m.selected[m.cursor]
-			if ok {
-				delete(m.selected, m.cursor)
-			} else {
-				m.selected[m.cursor] = struct{}{}
+			i, ok := m.list.SelectedItem().(Session)
+			if !ok {
+				m.selected = string(i)
 			}
 		}
 	}
-	return m, nil
+	var cmd tea.Cmd
+	m.list, cmd = m.list.Update(msg)
+	return m, cmd
+}
+
+func ReadLayouts() []string {
+	var layoutFiles []string
+	f, err := os.Open("./")
+	if err != nil {
+		fmt.Printf("Error: %v", err)
+		os.Exit(1)
+	}
+	files, err := f.ReadDir(0)
+	if err != nil {
+		fmt.Printf("Error: %v", err)
+		os.Exit(1)
+	}
+	for _, file := range files {
+		if file.IsDir() {
+			continue
+		}
+		ext := filepath.Ext(file.Name())
+		if ext != ".sh" {
+			continue
+		}
+		if !strings.Contains(file.Name(), "teamux") {
+			continue
+		}
+		layoutFiles = append(layoutFiles, file.Name())
+	}
+	return layoutFiles
 }
