@@ -7,12 +7,12 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 )
 
-type SessionsInfo struct {
-	file string
-	name string
+type SessionInfo struct {
+	File string
+	Name string
 }
 
-func ReadSeassions() []SessionsInfo {
+func ReadSeassions() map[string]string {
 	db, err := sql.Open("sqlite3", "db.sqlite3")
 	if err != nil {
 		log.Fatal(err)
@@ -24,14 +24,15 @@ func ReadSeassions() []SessionsInfo {
 		log.Fatal(err)
 	}
 	defer rows.Close()
-	var sessions []SessionsInfo
+	sessions := make(map[string]string)
 	for rows.Next() {
-		var session SessionsInfo
-		err = rows.Scan(&session)
+		var file string
+		var name string
+		err = rows.Scan(&file, &name)
 		if err != nil {
 			log.Fatal(err)
 		}
-		sessions = append(sessions, session)
+		sessions[name] = file
 	}
 	return sessions
 }

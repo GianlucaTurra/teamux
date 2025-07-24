@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/GianlucaTurra/teamux/internal"
+	"github.com/GianlucaTurra/teamux/internal/db"
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
 )
@@ -18,6 +19,7 @@ type (
 		selected     string
 		openSessions string
 		quitting     bool
+		data         map[string]string
 	}
 )
 
@@ -25,8 +27,9 @@ func (s Session) FilterValue() string { return "" }
 
 func InitialModel() Model {
 	layouts := []list.Item{}
-	for _, layout := range ReadLayouts() {
-		layouts = append(layouts, Session(layout))
+	sessionsInfo := db.ReadSeassions()
+	for name := range sessionsInfo {
+		layouts = append(layouts, Session(name))
 	}
 	l := list.New(layouts, SessionDelegate{}, 100, 10)
 	l.Title = "Available session layouts"
@@ -36,7 +39,7 @@ func InitialModel() Model {
 	l.Styles.PaginationStyle = paginationStyle
 	l.Styles.HelpStyle = helpStyle
 	openSessions := internal.CountTmuxSessions()
-	return Model{list: l, openSessions: openSessions, quitting: false}
+	return Model{list: l, openSessions: openSessions, quitting: false, data: sessionsInfo}
 }
 
 func (m Model) Init() tea.Cmd {
@@ -57,7 +60,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, nil
 	case internal.SelectMsg:
 		return m, func() tea.Msg {
-			return internal.OpenTmuxSession(m.selected)
+			return internal.OpenTmuxSession(m.data[m.selected])
 		}
 	case tea.KeyMsg:
 		switch msg.String() {

@@ -3,7 +3,10 @@ package internal
 import (
 	"bytes"
 	"fmt"
+	"log"
+	"os"
 	"os/exec"
+	"path/filepath"
 
 	tea "github.com/charmbracelet/bubbletea"
 )
@@ -18,9 +21,17 @@ func Select() tea.Msg {
 	return SelectMsg{}
 }
 
-func OpenTmuxSession(selectedLayout string) tea.Msg {
-	cmd := exec.Command("/bin/sh", selectedLayout)
-	if err := cmd.Run(); err != nil {
+func OpenTmuxSession(script string) tea.Msg {
+	home, err := os.UserHomeDir()
+	if err != nil {
+		log.Fatal(err)
+	}
+	file := filepath.Join(home, script)
+	cmd := exec.Command("/bin/sh", file)
+	if out, err := cmd.CombinedOutput(); err != nil {
+		fmt.Println(string(out))
+		fmt.Println(err)
+		// if err := cmd.Run(); err != nil {
 		return TmuxErr{}
 	}
 	return TmuxSessionOpened{}
