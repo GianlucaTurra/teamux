@@ -13,14 +13,13 @@ import (
 )
 
 type (
-	Session string
-	Model   struct {
+	Session      string
 	SessionState int
 	Model        struct {
 		list         list.Model
 		selected     string
 		openSessions string
-		data         map[string]string
+		data         map[string]db.SessionInfo
 		state        SessionState
 	}
 )
@@ -65,16 +64,33 @@ func (m Model) View() string {
 
 func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
-	case internal.TmuxSessionOpened:
+	case internal.TmuxSessionsChanged:
 		m.openSessions = internal.CountTmuxSessions()
 		return m, nil
 	case internal.SelectMsg:
+		if m.data[m.selected].IsOpen {
+			return m, func() tea.Msg {
+				mess := internal.SwitchTmuxSession(m.selected)
+				m.data[m.selected] = db.SessionInfo{File: m.data[m.selected].File, IsOpen: false}
+				return mess
+			}
+		}
 		return m, func() tea.Msg {
-			return internal.OpenTmuxSession(m.data[m.selected])
+			mess := internal.OpenTmuxSession(m.data[m.selected].File)
+			m.data[m.selected] = db.SessionInfo{File: m.data[m.selected].File, IsOpen: true}
+			return mess
+		}
+	case internal.DeleteMsg:
+		if m.data[m.selected].IsOpen {
+			return m, func() tea.Msg {
+				mess := internal.KillTmuxSession(m.selected)
+				m.data[m.selected] = db.SessionInfo{File: m.data[m.selected].File, IsOpen: false}
+				return mess
+			}
 		}
 	case tea.KeyMsg:
 		switch msg.String() {
-		case "ctrl+c", "q":
+		case "ctrl+c", "q", "esc":
 			m.state = quitting
 			return m, tea.Quit
 		case "enter", " ":
@@ -83,6 +99,12 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.selected = string(i)
 			}
 			return m, internal.Select
+		case "d":
+			i, ok := m.list.SelectedItem().(Session)
+			if ok {
+				m.selected = string(i)
+			}
+			return m, internal.Delete
 		}
 	}
 	var cmd tea.Cmd

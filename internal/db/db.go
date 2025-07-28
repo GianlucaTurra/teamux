@@ -4,15 +4,16 @@ import (
 	"database/sql"
 	"log"
 
+	"github.com/GianlucaTurra/teamux/internal"
 	_ "github.com/mattn/go-sqlite3"
 )
 
 type SessionInfo struct {
-	File string
-	Name string
+	File   string
+	IsOpen bool
 }
 
-func ReadSeassions() map[string]string {
+func ReadSeassions() map[string]SessionInfo {
 	db, err := sql.Open("sqlite3", "db.sqlite3")
 	if err != nil {
 		log.Fatal(err)
@@ -24,7 +25,7 @@ func ReadSeassions() map[string]string {
 		log.Fatal(err)
 	}
 	defer rows.Close()
-	sessions := make(map[string]string)
+	sessions := make(map[string]SessionInfo)
 	for rows.Next() {
 		var file string
 		var name string
@@ -32,7 +33,8 @@ func ReadSeassions() map[string]string {
 		if err != nil {
 			log.Fatal(err)
 		}
-		sessions[name] = file
+		isOpen := internal.IsTmuxSessionOpen(name)
+		sessions[name] = SessionInfo{file, isOpen}
 	}
 	return sessions
 }
