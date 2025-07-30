@@ -10,6 +10,7 @@ import (
 	"github.com/GianlucaTurra/teamux/internal/db"
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
 )
 
 type (
@@ -68,19 +69,25 @@ func (m sessionListModel) Update(msg tea.Msg) (sessionListModel, tea.Cmd) {
 	case internal.TmuxSessionsChanged:
 		m.openSessions = internal.CountTmuxSessions()
 		return m, nil
-	case internal.SelectMsg:
-		if m.data[m.selected].IsOpen {
-			return m, func() tea.Msg {
-				mess := internal.SwitchTmuxSession(m.selected)
-				m.data[m.selected] = db.SessionInfo{File: m.data[m.selected].File, IsOpen: false}
-				return mess
-			}
+	case internal.OpenMsg:
+		selectedInfo := m.data[m.selected]
+		if selectedInfo.IsOpen {
+			return m, func() tea.Msg { return internal.SwitchTmuxSession(m.selected) }
 		}
 		return m, func() tea.Msg {
-			mess := internal.OpenTmuxSession(m.data[m.selected].File)
-			m.data[m.selected] = db.SessionInfo{File: m.data[m.selected].File, IsOpen: true}
+			mess := internal.OpenTmuxSession(selectedInfo.File)
+			m.data[m.selected] = db.SessionInfo{File: selectedInfo.File, IsOpen: true}
 			return mess
 		}
+	case internal.SwitchMsg:
+		selectedInfo := m.data[m.selected]
+		var mess tea.Msg = nil
+		if !selectedInfo.IsOpen {
+			mess = internal.OpenTmuxSession(selectedInfo.File)
+			m.data[m.selected] = db.SessionInfo{File: selectedInfo.File, IsOpen: true}
+		}
+		internal.SwitchTmuxSession(m.selected)
+		return m, func() tea.Msg { return mess }
 	case internal.DeleteMsg:
 		if m.data[m.selected].IsOpen {
 			return m, func() tea.Msg {
@@ -99,7 +106,12 @@ func (m sessionListModel) Update(msg tea.Msg) (sessionListModel, tea.Cmd) {
 			if ok {
 				m.selected = string(i)
 			}
-			return m, internal.Select
+			return m, internal.Open
+		case "s":
+			if i, ok := m.list.SelectedItem().(Session); ok {
+				m.selected = string(i)
+			}
+			return m, internal.Switch
 		case "d":
 			i, ok := m.list.SelectedItem().(Session)
 			if ok {

@@ -13,17 +13,14 @@ import (
 type (
 	TmuxSessionsChanged struct{}
 	TmuxErr             struct{}
-	SelectMsg           struct{}
+	OpenMsg             struct{}
 	DeleteMsg           struct{}
+	SwitchMsg           struct{}
 )
 
-func Select() tea.Msg {
-	return SelectMsg{}
-}
-
-func Delete() tea.Msg {
-	return DeleteMsg{}
-}
+func Open() tea.Msg   { return OpenMsg{} }
+func Delete() tea.Msg { return DeleteMsg{} }
+func Switch() tea.Msg { return SwitchMsg{} }
 
 func OpenTmuxSession(script string) tea.Msg {
 	home, err := os.UserHomeDir()
