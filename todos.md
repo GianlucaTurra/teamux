@@ -7,7 +7,7 @@
 - [x] enable attaching to an open session
 - [x] prevent attaching to a not open session (maybe open and attach it)
 - [x] kill a open session
-- [ ] update the legend
+- [x] update the legend
 - [ ] open and attach (needs further development with the db)
 
 ## General

@@ -15,7 +15,6 @@ var (
 	sessionStyle         = lipgloss.NewStyle().PaddingLeft(4)
 	selectedSessionStyle = lipgloss.NewStyle().PaddingLeft(2).Foreground(lipgloss.Color("170"))
 	paginationStyle      = list.DefaultStyles().TitleBar.PaddingLeft(4)
-	helpStyle            = list.DefaultStyles().HelpStyle.PaddingLeft(4).PaddingBottom(1)
 )
 
 type SessionDelegate struct{}

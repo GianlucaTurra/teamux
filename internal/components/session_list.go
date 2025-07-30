@@ -13,9 +13,9 @@ import (
 )
 
 type (
-	Session      string
-	SessionState int
-	Model        struct {
+	Session          string
+	SessionState     int
+	sessionListModel struct {
 		list         list.Model
 		selected     string
 		openSessions string
@@ -33,7 +33,7 @@ const (
 
 func (s Session) FilterValue() string { return "" }
 
-func InitialModel() Model {
+func newSessionListModel() sessionListModel {
 	layouts := []list.Item{}
 	sessionsInfo := db.ReadSeassions()
 	for name := range sessionsInfo {
@@ -44,25 +44,26 @@ func InitialModel() Model {
 	l.Styles.Title = titleStyle
 	l.SetFilteringEnabled(false)
 	l.SetShowStatusBar(false)
+	l.SetShowHelp(false)
 	l.Styles.PaginationStyle = paginationStyle
 	l.Styles.HelpStyle = helpStyle
 	openSessions := internal.CountTmuxSessions()
-	return Model{list: l, openSessions: openSessions, data: sessionsInfo, state: browsing}
+	return sessionListModel{list: l, openSessions: openSessions, data: sessionsInfo, state: browsing}
 }
 
-func (m Model) Init() tea.Cmd {
+func (m sessionListModel) Init() tea.Cmd {
 	return nil
 }
 
-func (m Model) View() string {
+func (m sessionListModel) View() string {
 	switch m.state {
 	case quitting:
-		return "\n See ya!"
+		return "See ya!"
 	}
-	return "\n" + m.list.View() + "\n" + fmt.Sprintf("Open sessions: %s", m.openSessions)
+	return lipgloss.JoinVertical(lipgloss.Top, m.list.View(), fmt.Sprintf("Open sessions: %s", m.openSessions))
 }
 
-func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (m sessionListModel) Update(msg tea.Msg) (sessionListModel, tea.Cmd) {
 	switch msg := msg.(type) {
 	case internal.TmuxSessionsChanged:
 		m.openSessions = internal.CountTmuxSessions()
