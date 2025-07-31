@@ -8,8 +8,14 @@
 - [x] prevent attaching to a not open session (maybe open and attach it)
 - [x] kill a open session
 - [x] update the legend
-- [ ] open and attach (needs further development with the db)
+- [x] open and attach (needs further development with the db)
 
 ## General
 
 - [ ] create a log file in the .local directories
+
+## Session creation
+
+- [ ] create new session with the file field
+- [ ] create a input component
+- [ ] generate sql from input

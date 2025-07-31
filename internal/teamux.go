@@ -16,11 +16,13 @@ type (
 	OpenMsg             struct{}
 	DeleteMsg           struct{}
 	SwitchMsg           struct{}
+	NewMsg              struct{}
 )
 
 func Open() tea.Msg   { return OpenMsg{} }
 func Delete() tea.Msg { return DeleteMsg{} }
 func Switch() tea.Msg { return SwitchMsg{} }
+func New() tea.Msg    { return NewMsg{} }
 
 func OpenTmuxSession(script string) tea.Msg {
 	home, err := os.UserHomeDir()
