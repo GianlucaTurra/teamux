@@ -24,6 +24,10 @@ type sessionInputModel struct {
 	cursorMode   cursor.Mode
 	quitting     bool
 }
+type sessionInputInfo struct {
+	File string
+	Name string
+}
 
 func newSessionInputModel() sessionInputModel {
 	m := sessionInputModel{inputs: make([]textinput.Model, 2)}
@@ -34,13 +38,15 @@ func newSessionInputModel() sessionInputModel {
 		t.CharLimit = 32
 		switch i {
 		case 0:
-			t.Placeholder = "File"
+			t.Prompt = "File: "
+			t.PromptStyle = blurredStyle
 			t.Focus()
 			t.PromptStyle = focusedStyle
 			t.TextStyle = focusedStyle
 			t.CharLimit = 50
 		case 1:
-			t.Placeholder = "Name"
+			t.Prompt = "Name: "
+			t.PromptStyle = blurredStyle
 			t.CharLimit = 20
 		}
 		m.inputs[i] = t
@@ -87,6 +93,7 @@ func (m sessionInputModel) Update(msg tea.Msg) (sessionInputModel, tea.Cmd) {
 			return m, tea.Batch(cmds...)
 		case "enter":
 			if m.focusedIndex == len(m.inputs) {
+				m.readInputs()
 				return m, tea.Quit
 			}
 		}
@@ -101,6 +108,14 @@ func (m *sessionInputModel) updateInputs(msg tea.Msg) tea.Cmd {
 		m.inputs[i], cmds[i] = m.inputs[i].Update(msg)
 	}
 	return tea.Batch(cmds...)
+}
+
+func (m *sessionInputModel) readInputs() {
+	info := sessionInputInfo{
+		File: m.inputs[0].Value(),
+		Name: m.inputs[1].Value(),
+	}
+	fmt.Printf("Session Info: %+v\n", info)
 }
 
 func (m sessionInputModel) View() string {
