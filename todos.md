@@ -12,6 +12,8 @@
 
 ## General
 
+- [ ] manage properly the log
+- [ ] manage properly the db connection
 - [ ] create a log file in the .local directories
 
 ## Session creation
@@ -19,3 +21,7 @@
 - [ ] create new session with the file field
 - [ ] create a input component
 - [ ] generate sql from input
+
+## DB
+
+- [ ] implement a really lightweight orm with entities

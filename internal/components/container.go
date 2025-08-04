@@ -3,6 +3,9 @@
 package components
 
 import (
+	"database/sql"
+	"log"
+
 	"github.com/GianlucaTurra/teamux/internal"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
@@ -20,7 +23,7 @@ const (
 	sessionInput
 )
 
-func InitialModel() Model {
+func InitialModel(db *sql.DB, logger *log.Logger) Model {
 	return Model{
 		newSessionListModel(),
 		newSessionInputModel(),
