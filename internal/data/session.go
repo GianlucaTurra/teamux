@@ -1,0 +1,111 @@
+package data
+
+import (
+	"database/sql"
+	"fmt"
+	"os"
+	"os/exec"
+	"strings"
+
+	_ "github.com/mattn/go-sqlite3"
+)
+
+type Session struct {
+	db               *sql.DB
+	ID               int
+	Name             string
+	WorkingDirectory string
+}
+
+func NewSession(name string, workingDirectory string, db *sql.DB) Session {
+	return Session{
+		db:               db,
+		ID:               0,
+		Name:             name,
+		WorkingDirectory: workingDirectory,
+	}
+}
+
+// Save Create a new record on the database or update it if it already exists
+func (s Session) Save() error {
+	var query string
+	if s.ID == 0 {
+		query = "INSERT INTO sessions (name, working_directory) VALUES (?, ?)"
+	} else {
+		query = "UPDATE sessions SET name = ?, working_directory = ? WHERE id = ?"
+	}
+	if _, err := s.db.Exec(query, s.Name, s.WorkingDirectory, s.ID); err != nil {
+		return err
+	}
+	return nil
+}
+
+// ReadAllSessions from the database. If a session is missing the working
+// directory it is set to the user's home directory.
+func ReadAllSessions(db *sql.DB) ([]Session, error) {
+	query := "SELECT id, name, working_directory FROM sessions"
+	rows, err := db.Query(query)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var sessions []Session
+	for rows.Next() {
+		var s Session
+		if err := rows.Scan(&s.ID, &s.Name, &s.WorkingDirectory); err != nil {
+			return nil, err
+		}
+		if strings.TrimSpace(s.WorkingDirectory) == "" {
+			if home, err := os.UserHomeDir(); err != nil {
+				return nil, err
+			} else {
+				s.WorkingDirectory = home
+			}
+		}
+		s.db = db // Assign the db to the session
+		sessions = append(sessions, s)
+	}
+	return sessions, nil
+}
+
+func ReadSessionByID(db *sql.DB, id int) (*Session, error) {
+	query := "SELECT id, name, working_directory FROM sessions WHERE id = ?"
+	row := db.QueryRow(query, id)
+	var s Session
+	if err := row.Scan(&s.ID, &s.Name, &s.WorkingDirectory); err != nil {
+		return nil, err
+	}
+	if strings.TrimSpace(s.WorkingDirectory) == "" {
+		if home, err := os.UserHomeDir(); err != nil {
+			return nil, err
+		} else {
+			s.WorkingDirectory = home
+		}
+	}
+	s.db = db // Assign the db to the session
+	return &s, nil
+}
+
+// Delete removes a session from the database by its ID.
+func (s Session) Delete() error {
+	query := "DELETE FROM sessions WHERE id = ?"
+	if _, err := s.db.Exec(query, s.ID); err != nil {
+		return err
+	}
+	return nil
+}
+
+// Translates the session object to a tmux command to open a new session.
+func (s Session) Open() error {
+	newSessionCmd := fmt.Sprintf("tmux new-session -d -s \"%s\" -c %s", s.Name, s.WorkingDirectory)
+	cmd := exec.Command("sh", "-c", newSessionCmd)
+	return cmd.Run()
+}
+
+func (s Session) IsOpen() bool {
+	checkCmd := exec.Command("sh", "-c", fmt.Sprintf("tmux has-session -t %s", s.Name))
+	if err := checkCmd.Run(); err != nil {
+		return false
+	}
+	return true
+}

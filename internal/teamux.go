@@ -72,13 +72,13 @@ func IsTmuxSessionOpen(sessionName string) bool {
 	return len(out.String()) != 0
 }
 
-func SwitchTmuxSession(sessionName string) tea.Msg {
+func SwitchTmuxSession(sessionName string) error {
 	tmuxCmd := fmt.Sprintf("tmux switch -t %s", sessionName)
 	cmd := exec.Command("sh", "-c", tmuxCmd)
 	var out bytes.Buffer
 	cmd.Stdout = &out
 	if err := cmd.Run(); err != nil {
-		fmt.Printf("Error switching to sessions %s %v", sessionName, err)
+		return err
 	}
 	return nil
 }

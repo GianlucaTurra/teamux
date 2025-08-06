@@ -4,26 +4,33 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
-	"log/syslog"
 	"os"
 
+	"github.com/GianlucaTurra/teamux/internal"
 	"github.com/GianlucaTurra/teamux/internal/components"
 	tea "github.com/charmbracelet/bubbletea"
 	_ "github.com/mattn/go-sqlite3"
 )
 
 func main() {
-	logWriter, err := syslog.New(syslog.LOG_SYSLOG, "teamux")
+	file := "/tmp/teamux.log"
+	logfile, err := os.OpenFile(file, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0644)
 	if err != nil {
 		log.Fatalln("Unable to setup syslog:", err.Error())
 	}
-	sysLogger := log.New(logWriter, "", log.Ldate|log.Ltime|log.Lshortfile)
+	defer logfile.Close()
+	logger := internal.Logger{
+		Infologger:    log.New(logfile, "INFO: ", log.Ldate|log.Ltime|log.Lshortfile),
+		Warninglogger: log.New(logfile, "WARNING: ", log.Ldate|log.Ltime|log.Lshortfile),
+		Errorlogger:   log.New(logfile, "ERROR: ", log.Ldate|log.Ltime|log.Lshortfile),
+		Fatallogger:   log.New(logfile, "FATAL: ", log.Ldate|log.Ltime|log.Lshortfile),
+	}
 	db, err := sql.Open("sqlite3", "db.sqlite3")
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer db.Close()
-	p := tea.NewProgram(components.InitialModel(db, sysLogger))
+	p := tea.NewProgram(components.InitialModel(db, logger))
 	if _, err := p.Run(); err != nil {
 		fmt.Printf("ERROR: %v", err)
 		os.Exit(1)
