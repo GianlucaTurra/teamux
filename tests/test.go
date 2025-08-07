@@ -14,7 +14,14 @@ func setup() *sql.DB {
 	if err != nil {
 		log.Fatal(err)
 	}
-	schemaSQL, err := os.ReadFile("../sql_scripts/sessions.sql")
+	createTable("../sql_scripts/sessions.sql", db)
+	createTable("../sql_scripts/windows.sql", db)
+	createTable("../sql_scripts/sessions_windows.sql", db)
+	return db
+}
+
+func createTable(scriptFile string, db *sql.DB) {
+	schemaSQL, err := os.ReadFile(scriptFile)
 	if err != nil {
 		log.Fatalf("Failed to read schema SQL: %v", err)
 	}
@@ -22,5 +29,4 @@ func setup() *sql.DB {
 	if err != nil {
 		log.Fatalf("Failed to execute schema SQL: %v", err)
 	}
-	return db
 }

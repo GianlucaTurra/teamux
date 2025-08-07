@@ -123,6 +123,72 @@ func TestOpenSession(t *testing.T) {
 	closeTestSession(name)
 }
 
+func TestGetAllWindows(t *testing.T) {
+	db := setup()
+	defer db.Close()
+	name := "OpenTest"
+	closeTestSession(name)
+	// Create sample Session and open it
+	if err := sampleSession(name, db); err != nil {
+		t.Fatalf("Failed to create sample sessions: %v", err)
+	}
+	s, err := data.ReadSessionByID(db, 1)
+	if err != nil {
+		t.Errorf("Failed to read session: %v", err)
+	}
+	if err := s.Open(); err != nil {
+		t.Errorf("Failed to open session: %v", err)
+	}
+	// Create sample windows and associate them to the session in db
+	if err := createSampleWindows(db); err != nil {
+		t.Errorf("Failed to create sample windows: %v", err)
+	}
+	if err := associateWindowsToSession(db); err != nil {
+		t.Errorf("Failed to associate windows to session: %v", err)
+	}
+	windowIds, err := s.GetAllWindows()
+	if err != nil {
+		t.Errorf("Failed to read related windows: %v", err)
+	}
+	if len(windowIds) != 3 {
+		t.Errorf("Expected 3 windows found: %d", len(windowIds))
+	}
+}
+
+// createSampleWindows Creates 3 sample windows in the expiring db
+func createSampleWindows(db *sql.DB) error {
+	for i := range 3 {
+		if err := data.NewWindow(fmt.Sprintf("Window %d", i), "", db).Save(); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func associateWindowsToSession(db *sql.DB) error {
+	query := "INSERT INTO Session_Windows (session_id, window_id) VALUES (?, ?)"
+	tx, err := db.Begin()
+	if err != nil {
+		return err
+	}
+	stmt, err := tx.Prepare(query)
+	if err != nil {
+		return err
+	}
+	defer stmt.Close()
+	for i := range 3 {
+		_, err := stmt.Exec(1, i)
+		if err != nil {
+			return err
+		}
+	}
+	err = tx.Commit()
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 // TODO: might be useful in the entire app
 func closeTestSession(name string) error {
 	checkCmd := exec.Command("sh", "-c", fmt.Sprintf("tmux has-session -t %s", name))

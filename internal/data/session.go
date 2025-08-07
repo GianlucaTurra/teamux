@@ -119,3 +119,26 @@ func (s Session) Switch() error {
 	cmd := exec.Command("sh", "-c", fmt.Sprintf("tmux switch -t \"%s\"", s.Name))
 	return cmd.Run()
 }
+
+// GetAllWindows reads all Window.ID from the association table based on the
+// current Session.ID
+func (s Session) GetAllWindows() ([]int, error) {
+	var windowsIds []int
+	query := "SELECT window_id FROM Session_Windows WHERE session_id = ?"
+	rows, err := s.db.Query(query, s.ID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var id int
+		if err := rows.Scan(&id); err != nil {
+			return nil, err
+		}
+		windowsIds = append(windowsIds, id)
+	}
+	if err = rows.Err(); err != nil {
+		return windowsIds, err
+	}
+	return windowsIds, nil
+}
