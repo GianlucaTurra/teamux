@@ -3,9 +3,7 @@ package internal
 import (
 	"bytes"
 	"fmt"
-	"os"
 	"os/exec"
-	"path/filepath"
 
 	tea "github.com/charmbracelet/bubbletea"
 )
@@ -17,38 +15,16 @@ type (
 	DeleteMsg           struct{}
 	SwitchMsg           struct{}
 	NewMsg              struct{}
+	KillMsg             struct{}
 	InputErrMsg         struct{ Err error }
+	ReloadMsg           struct{}
 )
 
 func Open() tea.Msg   { return OpenMsg{} }
 func Delete() tea.Msg { return DeleteMsg{} }
 func Switch() tea.Msg { return SwitchMsg{} }
 func New() tea.Msg    { return NewMsg{} }
-
-func OpenTmuxSession(script string) tea.Msg {
-	home, err := os.UserHomeDir()
-	if err != nil {
-		fmt.Printf("Error checking home dir %v", err)
-	}
-	file := filepath.Join(home, script)
-	cmd := exec.Command("/bin/sh", file)
-	if _, err := cmd.CombinedOutput(); err != nil {
-		fmt.Printf("Error opening session %v", err)
-		return TmuxErr{}
-	}
-	return TmuxSessionsChanged{}
-}
-
-func KillTmuxSession(sessionName string) tea.Msg {
-	tmuxCmd := fmt.Sprintf("tmux kill-session -t \"%s\"", sessionName)
-	cmd := exec.Command("sh", "-c", tmuxCmd)
-	var out bytes.Buffer
-	cmd.Stdout = &out
-	if err := cmd.Run(); err != nil {
-		fmt.Printf("Error deleting %s %v", sessionName, err)
-	}
-	return TmuxSessionsChanged{}
-}
+func Kill() tea.Msg   { return KillMsg{} }
 
 func CountTmuxSessions() string {
 	cmd := exec.Command("sh", "-c", "tmux ls | wc -l")
@@ -59,27 +35,4 @@ func CountTmuxSessions() string {
 		return "Error executing tmux ls"
 	}
 	return out.String()
-}
-
-func IsTmuxSessionOpen(sessionName string) bool {
-	tmuxCmd := fmt.Sprintf("tmux ls | grep %s", sessionName)
-	cmd := exec.Command("sh", "-c", tmuxCmd)
-	var out bytes.Buffer
-	cmd.Stdout = &out
-	if err := cmd.Run(); err != nil {
-		fmt.Printf("Error checking open sessions %v", err)
-		return false
-	}
-	return len(out.String()) != 0
-}
-
-func SwitchTmuxSession(sessionName string) error {
-	tmuxCmd := fmt.Sprintf("tmux switch -t %s", sessionName)
-	cmd := exec.Command("sh", "-c", tmuxCmd)
-	var out bytes.Buffer
-	cmd.Stdout = &out
-	if err := cmd.Run(); err != nil {
-		return err
-	}
-	return nil
 }

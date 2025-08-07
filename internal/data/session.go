@@ -95,7 +95,7 @@ func (s Session) Delete() error {
 	return nil
 }
 
-// Translates the session object to a tmux command to open a new session.
+// Open translates the session object to a tmux command to open a new session.
 func (s Session) Open() error {
 	newSessionCmd := fmt.Sprintf("tmux new-session -d -s \"%s\" -c %s", s.Name, s.WorkingDirectory)
 	cmd := exec.Command("sh", "-c", newSessionCmd)
@@ -103,9 +103,19 @@ func (s Session) Open() error {
 }
 
 func (s Session) IsOpen() bool {
-	checkCmd := exec.Command("sh", "-c", fmt.Sprintf("tmux has-session -t %s", s.Name))
-	if err := checkCmd.Run(); err != nil {
+	cmd := exec.Command("sh", "-c", fmt.Sprintf("tmux has-session -t \"%s\"", s.Name))
+	if err := cmd.Run(); err != nil {
 		return false
 	}
 	return true
+}
+
+func (s Session) Close() error {
+	cmd := exec.Command("sh", "-c", fmt.Sprintf("tmux kill-session -t \"%s\"", s.Name))
+	return cmd.Run()
+}
+
+func (s Session) Switch() error {
+	cmd := exec.Command("sh", "-c", fmt.Sprintf("tmux switch -t \"%s\"", s.Name))
+	return cmd.Run()
 }

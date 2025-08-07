@@ -4,8 +4,6 @@ import (
 	"database/sql"
 	"fmt"
 	"io"
-	"os"
-	"path/filepath"
 	"strings"
 
 	"github.com/GianlucaTurra/teamux/internal"
@@ -66,16 +64,7 @@ const (
 func (s item) FilterValue() string { return "" }
 
 func newSessionListModel(db *sql.DB, logger internal.Logger) sessionListModel {
-	layouts := []list.Item{}
-	sessions, err := data.ReadAllSessions(db)
-	if err != nil {
-		logger.Fatallogger.Fatalf("Failed to read sessions: %v", err)
-	}
-	data := make(map[string]data.Session)
-	for _, s := range sessions {
-		layouts = append(layouts, item(s.Name))
-		data[s.Name] = s
-	}
+	data, layouts := loadData(db, logger)
 	l := list.New(layouts, SessionDelegate{}, 100, 10)
 	l.Title = "Available session layouts"
 	l.Styles.Title = titleStyle
@@ -88,6 +77,20 @@ func newSessionListModel(db *sql.DB, logger internal.Logger) sessionListModel {
 	return sessionListModel{list: l, openSessions: openSessions, data: data, state: browsing, logger: logger, db: db}
 }
 
+func loadData(db *sql.DB, logger internal.Logger) (map[string]data.Session, []list.Item) {
+	layouts := []list.Item{}
+	sessions, err := data.ReadAllSessions(db)
+	if err != nil {
+		logger.Fatallogger.Fatalf("Failed to read sessions: %v", err)
+	}
+	data := make(map[string]data.Session)
+	for _, s := range sessions {
+		layouts = append(layouts, item(s.Name))
+		data[s.Name] = s
+	}
+	return data, layouts
+}
+
 func (m sessionListModel) Init() tea.Cmd {
 	return nil
 }
@@ -97,7 +100,11 @@ func (m sessionListModel) View() string {
 	case quitting:
 		return "See ya!"
 	}
-	return lipgloss.JoinVertical(lipgloss.Top, m.list.View(), fmt.Sprintf("Open sessions: %s", m.openSessions))
+	return lipgloss.JoinVertical(
+		lipgloss.Top,
+		m.list.View(),
+		fmt.Sprintf("Open sessions: %s", m.openSessions),
+	)
 }
 
 func (m sessionListModel) Update(msg tea.Msg) (sessionListModel, tea.Cmd) {
@@ -106,37 +113,15 @@ func (m sessionListModel) Update(msg tea.Msg) (sessionListModel, tea.Cmd) {
 		m.openSessions = internal.CountTmuxSessions()
 		return m, nil
 	case internal.OpenMsg:
-		if s := m.data[m.selected]; s.IsOpen() {
-			return m, func() tea.Msg { return internal.SwitchTmuxSession(m.selected) }
-		}
-		return m, func() tea.Msg {
-			s := m.data[m.selected]
-			if err := s.Open(); err != nil {
-				m.logger.Errorlogger.Printf("Error opening session %s: %v", s.Name, err)
-				return internal.TmuxErr{}
-			}
-			return internal.OpenMsg{}
-		}
+		return m.openSelected()
 	case internal.SwitchMsg:
-		if s := m.data[m.selected]; s.IsOpen() {
-			if err := internal.SwitchTmuxSession(m.selected); err != nil {
-				m.logger.Errorlogger.Printf("Error switching to session %s: %v", m.selected, err)
-				return m, func() tea.Msg { return internal.TmuxErr{} }
-			}
-		}
-		if err := m.data[m.selected].Open(); err != nil {
-			m.logger.Errorlogger.Printf("Error opening session %s: %v", m.selected, err)
-			return m, func() tea.Msg { return internal.TmuxErr{} }
-		}
-		return m, func() tea.Msg { return internal.TmuxSessionsChanged{} }
+		return m.switchToSelected()
 	case internal.DeleteMsg:
-		if s := m.data[m.selected]; s.IsOpen() {
-			if err := s.Delete(); err != nil {
-				m.logger.Errorlogger.Printf("Error deleting session %s: %v", m.selected, err)
-				return m, func() tea.Msg { return internal.TmuxErr{} }
-			}
-			return m, func() tea.Msg { return internal.TmuxSessionsChanged{} }
-		}
+		return m.deleteSelected()
+	case internal.KillMsg:
+		return m.killSelected()
+	case internal.ReloadMsg:
+
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "ctrl+c", "q", "esc":
@@ -159,6 +144,11 @@ func (m sessionListModel) Update(msg tea.Msg) (sessionListModel, tea.Cmd) {
 				m.selected = string(i)
 			}
 			return m, internal.Delete
+		case "K":
+			if i, ok := m.list.SelectedItem().(item); ok {
+				m.selected = string(i)
+			}
+			return m, internal.Kill
 		case "n":
 			return m, internal.New
 		}
@@ -168,30 +158,55 @@ func (m sessionListModel) Update(msg tea.Msg) (sessionListModel, tea.Cmd) {
 	return m, cmd
 }
 
-func ReadLayouts() []string {
-	var layoutFiles []string
-	f, err := os.Open("./")
-	if err != nil {
-		fmt.Printf("Error: %v", err)
-		os.Exit(1)
-	}
-	files, err := f.ReadDir(0)
-	if err != nil {
-		fmt.Printf("Error: %v", err)
-		os.Exit(1)
-	}
-	for _, file := range files {
-		if file.IsDir() {
-			continue
+// switchToSelected Switch to the selected session opening it if necessary
+func (m sessionListModel) switchToSelected() (sessionListModel, tea.Cmd) {
+	if s := m.data[m.selected]; s.IsOpen() {
+		if err := s.Switch(); err != nil {
+			m.logger.Errorlogger.Printf("Error switching to session %s: %v", m.selected, err)
+			return m, func() tea.Msg { return internal.TmuxErr{} }
 		}
-		ext := filepath.Ext(file.Name())
-		if ext != ".sh" {
-			continue
-		}
-		if !strings.Contains(file.Name(), "teamux") {
-			continue
-		}
-		layoutFiles = append(layoutFiles, file.Name())
 	}
-	return layoutFiles
+	if err := m.data[m.selected].Open(); err != nil {
+		m.logger.Errorlogger.Printf("Error opening session %s: %v", m.selected, err)
+		return m, func() tea.Msg { return internal.TmuxErr{} }
+	}
+	return m, func() tea.Msg { return internal.TmuxSessionsChanged{} }
+}
+
+// openSelected Opens the selected session. If it is already open nothing is
+// done.
+func (m sessionListModel) openSelected() (sessionListModel, tea.Cmd) {
+	if s := m.data[m.selected]; s.IsOpen() {
+		// TODO: does it make sense to return nil?
+		return m, func() tea.Msg { return nil }
+	}
+	return m, func() tea.Msg {
+		s := m.data[m.selected]
+		if err := s.Open(); err != nil {
+			m.logger.Errorlogger.Printf("Error opening session %s: %v", s.Name, err)
+			return internal.TmuxErr{}
+		}
+		return internal.TmuxSessionsChanged{}
+	}
+}
+
+func (m sessionListModel) deleteSelected() (sessionListModel, tea.Cmd) {
+	s := m.data[m.selected]
+	if err := s.Delete(); err != nil {
+		m.logger.Errorlogger.Printf("Error deleting session %s: %v", m.selected, err)
+		return m, func() tea.Msg { return internal.TmuxErr{} }
+	}
+	return m, func() tea.Msg { return internal.ReloadMsg{} }
+}
+
+func (m sessionListModel) killSelected() (sessionListModel, tea.Cmd) {
+	s := m.data[m.selected]
+	if !s.IsOpen() {
+		return m, nil
+	}
+	if err := s.Close(); err != nil {
+		m.logger.Errorlogger.Printf("Error killing session %s: %v", m.selected, err)
+		return m, func() tea.Msg { return internal.TmuxErr{} }
+	}
+	return m, func() tea.Msg { return internal.TmuxSessionsChanged{} }
 }
