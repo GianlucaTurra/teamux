@@ -14,14 +14,20 @@ import (
 )
 
 var (
-	titleStyle           = lipgloss.NewStyle().MarginLeft(2)
-	sessionStyle         = lipgloss.NewStyle().PaddingLeft(4)
-	selectedSessionStyle = lipgloss.NewStyle().PaddingLeft(2).Foreground(lipgloss.Color("140"))
-	paginationStyle      = list.DefaultStyles().TitleBar.PaddingLeft(4)
+	titleStyle               = lipgloss.NewStyle().MarginLeft(2)
+	sessionStyle             = lipgloss.NewStyle().PaddingLeft(4)
+	selectedSessionStyle     = lipgloss.NewStyle().PaddingLeft(2).Foreground(lipgloss.Color("140"))
+	paginationStyle          = list.DefaultStyles().TitleBar.PaddingLeft(4)
+	openSessionStyle         = lipgloss.NewStyle().Foreground(lipgloss.Color("205")).PaddingLeft(2)
+	selectedOpenSessionStyle = lipgloss.NewStyle().PaddingLeft(2).Foreground(lipgloss.Color("200"))
 )
 
 type (
-	item             string
+	item struct {
+		title string
+		desc  string
+		open  bool
+	}
 	SessionState     int
 	sessionListModel struct {
 		list         list.Model
@@ -44,11 +50,20 @@ func (d SessionDelegate) Render(w io.Writer, m list.Model, index int, listItem l
 	if !ok {
 		return
 	}
-	str := fmt.Sprintf("%d. %s", index+1, i)
+	str := fmt.Sprintf("%d. %s", index+1, i.title)
 	fn := sessionStyle.Render
+	if i.open {
+		fn = func(s ...string) string { return openSessionStyle.Render("* " + strings.Join(s, " ")) }
+	}
 	if index == m.Index() {
-		fn = func(s ...string) string {
-			return selectedSessionStyle.Render("> " + strings.Join(s, " "))
+		if i.open {
+			fn = func(s ...string) string {
+				return selectedOpenSessionStyle.Render(">*" + strings.Join(s, " "))
+			}
+		} else {
+			fn = func(s ...string) string {
+				return selectedSessionStyle.Render("> " + strings.Join(s, " "))
+			}
 		}
 	}
 	fmt.Fprint(w, fn(str))
@@ -85,7 +100,7 @@ func loadData(db *sql.DB, logger internal.Logger) (map[string]data.Session, []li
 	}
 	data := make(map[string]data.Session)
 	for _, s := range sessions {
-		layouts = append(layouts, item(s.Name))
+		layouts = append(layouts, item{title: s.Name, open: s.IsOpen()})
 		data[s.Name] = s
 	}
 	return data, layouts
@@ -130,23 +145,23 @@ func (m sessionListModel) Update(msg tea.Msg) (sessionListModel, tea.Cmd) {
 		case "enter", " ":
 			i, ok := m.list.SelectedItem().(item)
 			if ok {
-				m.selected = string(i)
+				m.selected = i.title
 			}
 			return m, func() tea.Msg { return internal.OpenMsg{} }
 		case "s":
 			if i, ok := m.list.SelectedItem().(item); ok {
-				m.selected = string(i)
+				m.selected = i.title
 			}
 			return m, internal.Switch
 		case "d":
 			i, ok := m.list.SelectedItem().(item)
 			if ok {
-				m.selected = string(i)
+				m.selected = i.title
 			}
 			return m, internal.Delete
 		case "K":
 			if i, ok := m.list.SelectedItem().(item); ok {
-				m.selected = string(i)
+				m.selected = i.title
 			}
 			return m, internal.Kill
 		case "n":
