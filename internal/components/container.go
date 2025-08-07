@@ -25,7 +25,7 @@ const (
 func InitialModel(db *sql.DB, logger internal.Logger) Model {
 	return Model{
 		newSessionListModel(db, logger),
-		newSessionInputModel(),
+		newSessionInputModel(db, logger),
 		newHelpModel(),
 		0,
 	}

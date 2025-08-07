@@ -1,9 +1,12 @@
 package components
 
 import (
+	"database/sql"
 	"fmt"
 	"strings"
 
+	"github.com/GianlucaTurra/teamux/internal"
+	"github.com/GianlucaTurra/teamux/internal/data"
 	"github.com/charmbracelet/bubbles/cursor"
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
@@ -23,14 +26,13 @@ type sessionInputModel struct {
 	inputs       []textinput.Model
 	cursorMode   cursor.Mode
 	quitting     bool
-}
-type sessionInputInfo struct {
-	File string
-	Name string
+	error        error
+	db           *sql.DB
+	logger       internal.Logger
 }
 
-func newSessionInputModel() sessionInputModel {
-	m := sessionInputModel{inputs: make([]textinput.Model, 2)}
+func newSessionInputModel(db *sql.DB, logger internal.Logger) sessionInputModel {
+	m := sessionInputModel{inputs: make([]textinput.Model, 2), db: db, logger: logger}
 	var t textinput.Model
 	for i := range m.inputs {
 		t = textinput.New()
@@ -38,14 +40,14 @@ func newSessionInputModel() sessionInputModel {
 		t.CharLimit = 32
 		switch i {
 		case 0:
-			t.Prompt = "File: "
+			t.Prompt = "Name: "
 			t.PromptStyle = blurredStyle
 			t.Focus()
 			t.PromptStyle = focusedStyle
 			t.TextStyle = focusedStyle
 			t.CharLimit = 50
 		case 1:
-			t.Prompt = "Name: "
+			t.Prompt = "WorkDir: "
 			t.PromptStyle = blurredStyle
 			t.CharLimit = 20
 		}
@@ -60,6 +62,9 @@ func (m sessionInputModel) Init() tea.Cmd {
 
 func (m sessionInputModel) Update(msg tea.Msg) (sessionInputModel, tea.Cmd) {
 	switch msg := msg.(type) {
+	case internal.InputErrMsg:
+		m.error = msg.Err
+		return m, nil
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "ctrl+c", "esc", "q":
@@ -93,8 +98,7 @@ func (m sessionInputModel) Update(msg tea.Msg) (sessionInputModel, tea.Cmd) {
 			return m, tea.Batch(cmds...)
 		case "enter":
 			if m.focusedIndex == len(m.inputs) {
-				m.readInputs()
-				return m, tea.Quit
+				return m, m.createSession()
 			}
 		}
 	}
@@ -110,12 +114,14 @@ func (m *sessionInputModel) updateInputs(msg tea.Msg) tea.Cmd {
 	return tea.Batch(cmds...)
 }
 
-func (m *sessionInputModel) readInputs() {
-	info := sessionInputInfo{
-		File: m.inputs[0].Value(),
-		Name: m.inputs[1].Value(),
+func (m *sessionInputModel) createSession() tea.Cmd {
+	session := data.NewSession(m.inputs[0].Value(), m.inputs[1].Value(), m.db)
+	if err := session.Save(); err != nil {
+		m.logger.Errorlogger.Printf("Error saving session: %v", err)
+		return func() tea.Msg { return internal.InputErrMsg{Err: err} }
 	}
-	fmt.Printf("Session Info: %+v\n", info)
+	m.error = nil
+	return nil
 }
 
 func (m sessionInputModel) View() string {
@@ -134,5 +140,8 @@ func (m sessionInputModel) View() string {
 		button = &focusedButton
 	}
 	fmt.Fprintf(&b, "\n\n%s\n\n", *button)
+	if m.error != nil {
+		fmt.Fprintf(&b, "\nError: %v", m.error)
+	}
 	return b.String()
 }

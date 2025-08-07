@@ -17,6 +17,7 @@ type (
 	DeleteMsg           struct{}
 	SwitchMsg           struct{}
 	NewMsg              struct{}
+	InputErrMsg         struct{ Err error }
 )
 
 func Open() tea.Msg   { return OpenMsg{} }
