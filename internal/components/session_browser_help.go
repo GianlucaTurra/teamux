@@ -8,7 +8,7 @@ import (
 	"github.com/charmbracelet/lipgloss"
 )
 
-type keyMap struct {
+type sessionBrowserKeyMap struct {
 	Up     key.Binding
 	Down   key.Binding
 	Left   key.Binding
@@ -18,22 +18,23 @@ type keyMap struct {
 	Switch key.Binding
 	Help   key.Binding
 	Quit   key.Binding
+	New    key.Binding
 }
 
-func (k keyMap) ShortHelp() []key.Binding {
+func (k sessionBrowserKeyMap) ShortHelp() []key.Binding {
 	return []key.Binding{k.Help, k.Quit}
 }
 
-func (k keyMap) FullHelp() [][]key.Binding {
+func (k sessionBrowserKeyMap) FullHelp() [][]key.Binding {
 	return [][]key.Binding{
-		{k.Up, k.Down, k.Left, k.Right},
-		{k.Open, k.Switch, k.Kill, k.Help, k.Quit},
+		{k.Up, k.Down, k.Left, k.Right, k.Help, k.Quit},
+		{k.Open, k.Switch, k.Kill, k.New},
 	}
 }
 
 var helpStyle = list.DefaultStyles().HelpStyle.PaddingLeft(4).PaddingBottom(1)
 
-var keys = keyMap{
+var keys = sessionBrowserKeyMap{
 	Up: key.NewBinding(
 		key.WithKeys("up", "k"),
 		key.WithHelp("↑/k", "move up"),
@@ -62,6 +63,10 @@ var keys = keyMap{
 		key.WithKeys("kill", "d"),
 		key.WithHelp("d", "kill open session"),
 	),
+	New: key.NewBinding(
+		key.WithKeys("new", "n"),
+		key.WithHelp("n", "create new session"),
+	),
 	Help: key.NewBinding(
 		key.WithKeys("?"),
 		key.WithHelp("?", "toggle help"),
@@ -72,22 +77,22 @@ var keys = keyMap{
 	),
 }
 
-type helpModel struct {
-	keys       keyMap
+type sessionBrowserHelpModel struct {
+	keys       sessionBrowserKeyMap
 	help       help.Model
 	inputStyle lipgloss.Style
 	quitting   bool
 }
 
-func newHelpModel() helpModel {
-	return helpModel{
+func newSessionBrowserHelpModel() sessionBrowserHelpModel {
+	return sessionBrowserHelpModel{
 		keys:       keys,
 		help:       help.New(),
 		inputStyle: helpStyle,
 	}
 }
 
-func (m helpModel) Update(msg tea.Msg) (helpModel, tea.Cmd) {
+func (m sessionBrowserHelpModel) Update(msg tea.Msg) (sessionBrowserHelpModel, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch {
@@ -100,13 +105,13 @@ func (m helpModel) Update(msg tea.Msg) (helpModel, tea.Cmd) {
 	return m, nil
 }
 
-func (m helpModel) View() string {
+func (m sessionBrowserHelpModel) View() string {
 	if m.quitting {
 		return ""
 	}
 	return m.help.View(m.keys)
 }
 
-func (m helpModel) Init() tea.Cmd {
+func (m sessionBrowserHelpModel) Init() tea.Cmd {
 	return nil
 }

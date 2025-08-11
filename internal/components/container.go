@@ -13,7 +13,6 @@ import (
 type Model struct {
 	sessionList  sessionListModel
 	sessionInput sessionInputModel
-	help         helpModel
 	focusedModel int
 }
 
@@ -26,13 +25,12 @@ func InitialModel(db *sql.DB, logger internal.Logger) Model {
 	return Model{
 		newSessionListModel(db, logger),
 		newSessionInputModel(db, logger),
-		newHelpModel(),
 		0,
 	}
 }
 
 func (m Model) Init() tea.Cmd {
-	return tea.Batch(m.sessionList.Init(), m.help.Init())
+	return tea.Batch(m.sessionList.Init())
 }
 
 func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -55,17 +53,17 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.sessionList = newList
 		cmds = append(cmds, cmd)
 	}
-	newHelp, cmd := m.help.Update(msg)
-	m.help = newHelp
-	cmds = append(cmds, cmd)
 	return m, tea.Batch(cmds...)
 }
 
 func (m Model) View() string {
 	switch m.focusedModel {
 	case sessionList:
-		return lipgloss.JoinVertical(lipgloss.Left, m.sessionList.View(), m.help.View())
+		return lipgloss.JoinVertical(
+			lipgloss.Left,
+			m.sessionList.View(),
+		)
 	default:
-		return lipgloss.JoinVertical(lipgloss.Left, m.sessionInput.View(), m.help.View())
+		return lipgloss.JoinVertical(lipgloss.Left, m.sessionInput.View())
 	}
 }
