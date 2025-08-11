@@ -40,6 +40,9 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case internal.NewMsg:
 		m.focusedModel = sessionInput
 		return m, nil
+	case internal.SessionCreatedMsg:
+		m.focusedModel = sessionList
+		return m, internal.Reaload
 	}
 	var cmds []tea.Cmd
 	switch m.focusedModel {

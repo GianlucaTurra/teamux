@@ -113,7 +113,7 @@ func (m sessionListModel) Init() tea.Cmd {
 func (m sessionListModel) View() string {
 	switch m.state {
 	case quitting:
-		return "See ya!"
+		return "Bye, have a nice day!"
 	}
 	return lipgloss.JoinVertical(
 		lipgloss.Top,
@@ -136,7 +136,7 @@ func (m sessionListModel) Update(msg tea.Msg) (sessionListModel, tea.Cmd) {
 	case internal.KillMsg:
 		return m.killSelected()
 	case internal.ReloadMsg:
-
+		return newSessionListModel(m.db, m.logger), nil
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "ctrl+c", "q", "esc":
@@ -175,7 +175,8 @@ func (m sessionListModel) Update(msg tea.Msg) (sessionListModel, tea.Cmd) {
 
 // switchToSelected Switch to the selected session opening it if necessary
 func (m sessionListModel) switchToSelected() (sessionListModel, tea.Cmd) {
-	if s := m.data[m.selected]; s.IsOpen() {
+	s := m.data[m.selected]
+	if s.IsOpen() {
 		if err := s.Switch(); err != nil {
 			m.logger.Errorlogger.Printf("Error switching to session %s: %v", m.selected, err)
 			return m, func() tea.Msg { return internal.TmuxErr{} }
@@ -185,6 +186,11 @@ func (m sessionListModel) switchToSelected() (sessionListModel, tea.Cmd) {
 		m.logger.Errorlogger.Printf("Error opening session %s: %v", m.selected, err)
 		return m, func() tea.Msg { return internal.TmuxErr{} }
 	}
+	if err := s.Switch(); err != nil {
+		m.logger.Errorlogger.Printf("Error switching to session %s: %v", m.selected, err)
+		return m, func() tea.Msg { return internal.TmuxErr{} }
+	}
+	m.refreshItems()
 	return m, func() tea.Msg { return internal.TmuxSessionsChanged{} }
 }
 
@@ -195,17 +201,18 @@ func (m sessionListModel) openSelected() (sessionListModel, tea.Cmd) {
 		// TODO: does it make sense to return nil?
 		return m, func() tea.Msg { return nil }
 	}
-	return m, func() tea.Msg {
-		s := m.data[m.selected]
-		if err := s.Open(); err != nil {
-			m.logger.Errorlogger.Printf("Error opening session %s: %v", s.Name, err)
-			return internal.TmuxErr{}
-		}
-		return internal.TmuxSessionsChanged{}
+	s := m.data[m.selected]
+	if err := s.Open(); err != nil {
+		m.logger.Errorlogger.Printf("Error opening session %s: %v", s.Name, err)
+		return m, func() tea.Msg { return internal.TmuxErr{} }
 	}
+	m.refreshItems()
+	return m, func() tea.Msg { return internal.TmuxSessionsChanged{} }
 }
 
+// deleteSelected kills the session if open and proceeds to delete it from the db
 func (m sessionListModel) deleteSelected() (sessionListModel, tea.Cmd) {
+	m.killSelected()
 	s := m.data[m.selected]
 	if err := s.Delete(); err != nil {
 		m.logger.Errorlogger.Printf("Error deleting session %s: %v", m.selected, err)
@@ -214,6 +221,7 @@ func (m sessionListModel) deleteSelected() (sessionListModel, tea.Cmd) {
 	return m, func() tea.Msg { return internal.ReloadMsg{} }
 }
 
+// killSelected kills the selected session. If it is not open nothing is done.
 func (m sessionListModel) killSelected() (sessionListModel, tea.Cmd) {
 	s := m.data[m.selected]
 	if !s.IsOpen() {
@@ -223,5 +231,21 @@ func (m sessionListModel) killSelected() (sessionListModel, tea.Cmd) {
 		m.logger.Errorlogger.Printf("Error killing session %s: %v", m.selected, err)
 		return m, func() tea.Msg { return internal.TmuxErr{} }
 	}
+	m.refreshItems()
 	return m, func() tea.Msg { return internal.TmuxSessionsChanged{} }
+}
+
+// refreshItems checks again if any item status has changed
+func (m *sessionListModel) refreshItems() {
+	var newList []list.Item
+	for _, l := range m.list.Items() {
+		i, ok := l.(item)
+		if !ok {
+			m.logger.Errorlogger.Printf("Failed to cast list item to item type: %v", l)
+			continue
+		}
+		i.open = m.data[l.(item).title].IsOpen()
+		newList = append(newList, i)
+	}
+	m.list.SetItems(newList)
 }

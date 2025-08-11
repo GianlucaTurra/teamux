@@ -121,7 +121,7 @@ func (m *sessionInputModel) createSession() tea.Cmd {
 		return func() tea.Msg { return internal.InputErrMsg{Err: err} }
 	}
 	m.error = nil
-	return nil
+	return internal.Created
 }
 
 func (m sessionInputModel) View() string {

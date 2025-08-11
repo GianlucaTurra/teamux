@@ -18,13 +18,16 @@ type (
 	KillMsg             struct{}
 	InputErrMsg         struct{ Err error }
 	ReloadMsg           struct{}
+	SessionCreatedMsg   struct{}
 )
 
-func Open() tea.Msg   { return OpenMsg{} }
-func Delete() tea.Msg { return DeleteMsg{} }
-func Switch() tea.Msg { return SwitchMsg{} }
-func New() tea.Msg    { return NewMsg{} }
-func Kill() tea.Msg   { return KillMsg{} }
+func Open() tea.Msg    { return OpenMsg{} }
+func Delete() tea.Msg  { return DeleteMsg{} }
+func Switch() tea.Msg  { return SwitchMsg{} }
+func New() tea.Msg     { return NewMsg{} }
+func Kill() tea.Msg    { return KillMsg{} }
+func Created() tea.Msg { return SessionCreatedMsg{} }
+func Reaload() tea.Msg { return ReloadMsg{} }
 
 func CountTmuxSessions() string {
 	cmd := exec.Command("sh", "-c", "tmux ls | wc -l")
