@@ -13,18 +13,8 @@ import (
 	"github.com/charmbracelet/lipgloss"
 )
 
-var (
-	titleStyle        = lipgloss.NewStyle().MarginLeft(2)
-	itemStyle         = lipgloss.NewStyle().PaddingLeft(4)
-	selectedStyle     = lipgloss.NewStyle().PaddingLeft(2).Foreground(lipgloss.Color("140"))
-	paginationStyle   = list.DefaultStyles().TitleBar.PaddingLeft(4)
-	openStyle         = lipgloss.NewStyle().Foreground(lipgloss.Color("205")).PaddingLeft(2)
-	selectedOpenStyle = lipgloss.NewStyle().PaddingLeft(2).Foreground(lipgloss.Color("200"))
-)
-
 type (
-	State int
-	item  struct {
+	item struct {
 		title string
 		desc  string
 		open  bool
@@ -68,12 +58,6 @@ func (d SessionDelegate) Render(w io.Writer, m list.Model, index int, listItem l
 	}
 	fmt.Fprint(w, fn(str))
 }
-
-const (
-	browsing State = iota
-	deleting
-	quitting
-)
 
 func (s item) FilterValue() string { return "" }
 
