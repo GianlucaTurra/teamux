@@ -14,6 +14,7 @@ type Model struct {
 	sessionList  sessionListModel
 	sessionInput sessionInputModel
 	focusedModel int
+	newPrefix    bool
 }
 
 const (
@@ -26,6 +27,7 @@ func InitialModel(db *sql.DB, logger internal.Logger) Model {
 		newSessionListModel(db, logger),
 		newSessionInputModel(db, logger),
 		0,
+		false,
 	}
 }
 
@@ -34,13 +36,28 @@ func (m Model) Init() tea.Cmd {
 }
 
 func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
-	switch msg.(type) {
-	case internal.NewMsg:
+	switch msg := msg.(type) {
+	case internal.NewSessionMsg:
 		m.focusedModel = sessionInput
 		return m, nil
 	case internal.SessionCreatedMsg:
 		m.focusedModel = sessionList
 		return m, internal.Reaload
+	case internal.BrowseMsg:
+		m.focusedModel = sessionList
+		return m, nil
+	case tea.KeyMsg:
+		if msg.String() == "n" && m.focusedModel == sessionList && m.sessionList.state != deleting {
+			m.newPrefix = true
+			return m, nil
+		}
+		if m.newPrefix {
+			m.newPrefix = false
+			switch msg.String() {
+			case "s":
+				return m, internal.NewSession
+			}
+		}
 	}
 	var cmds []tea.Cmd
 	switch m.focusedModel {
