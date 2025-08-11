@@ -29,10 +29,16 @@ type sessionInputModel struct {
 	error        error
 	db           *sql.DB
 	logger       internal.Logger
+	help         sessionEditorHelpModel
 }
 
 func newSessionInputModel(db *sql.DB, logger internal.Logger) sessionInputModel {
-	m := sessionInputModel{inputs: make([]textinput.Model, 2), db: db, logger: logger}
+	m := sessionInputModel{
+		inputs: make([]textinput.Model, 2),
+		db:     db,
+		logger: logger,
+		help:   newSessionEditorHelpModel(),
+	}
 	var t textinput.Model
 	for i := range m.inputs {
 		t = textinput.New()
@@ -67,10 +73,16 @@ func (m sessionInputModel) Update(msg tea.Msg) (sessionInputModel, tea.Cmd) {
 		return m, nil
 	case tea.KeyMsg:
 		switch msg.String() {
-		case "ctrl+c", "esc", "q":
+		case "?":
+			var cmd tea.Cmd
+			m.help, cmd = m.help.Update(msg)
+			return m, cmd
+		case "esc":
+			return m, internal.Browse
+		case "ctrl+c":
 			m.quitting = true
 			return m, tea.Quit
-		case "tab", "shift+tab", "up", "down":
+		case "tab", "shift+tab":
 			s := msg.String()
 			if s == "up" || s == "shift+tab" {
 				m.focusedIndex--
@@ -98,6 +110,10 @@ func (m sessionInputModel) Update(msg tea.Msg) (sessionInputModel, tea.Cmd) {
 			return m, tea.Batch(cmds...)
 		case "enter":
 			if m.focusedIndex == len(m.inputs) {
+				m.focusedIndex = 0
+				for i := range m.inputs {
+					m.inputs[i].Reset()
+				}
 				return m, m.createSession()
 			}
 		}
@@ -143,5 +159,6 @@ func (m sessionInputModel) View() string {
 	if m.error != nil {
 		fmt.Fprintf(&b, "\nError: %v", m.error)
 	}
+	fmt.Fprintf(&b, "%s", m.help.View())
 	return b.String()
 }

@@ -14,33 +14,33 @@ import (
 )
 
 var (
-	titleStyle               = lipgloss.NewStyle().MarginLeft(2)
-	sessionStyle             = lipgloss.NewStyle().PaddingLeft(4)
-	selectedSessionStyle     = lipgloss.NewStyle().PaddingLeft(2).Foreground(lipgloss.Color("140"))
-	paginationStyle          = list.DefaultStyles().TitleBar.PaddingLeft(4)
-	openSessionStyle         = lipgloss.NewStyle().Foreground(lipgloss.Color("205")).PaddingLeft(2)
-	selectedOpenSessionStyle = lipgloss.NewStyle().PaddingLeft(2).Foreground(lipgloss.Color("200"))
+	titleStyle        = lipgloss.NewStyle().MarginLeft(2)
+	itemStyle         = lipgloss.NewStyle().PaddingLeft(4)
+	selectedStyle     = lipgloss.NewStyle().PaddingLeft(2).Foreground(lipgloss.Color("140"))
+	paginationStyle   = list.DefaultStyles().TitleBar.PaddingLeft(4)
+	openStyle         = lipgloss.NewStyle().Foreground(lipgloss.Color("205")).PaddingLeft(2)
+	selectedOpenStyle = lipgloss.NewStyle().PaddingLeft(2).Foreground(lipgloss.Color("200"))
 )
 
 type (
-	item struct {
+	State int
+	item  struct {
 		title string
 		desc  string
 		open  bool
 	}
-	SessionState     int
 	sessionListModel struct {
 		list         list.Model
 		selected     string
 		openSessions string
 		data         map[string]data.Session
-		state        SessionState
+		state        State
 		db           *sql.DB
 		logger       internal.Logger
+		help         sessionBrowserHelpModel
 	}
+	SessionDelegate struct{}
 )
-
-type SessionDelegate struct{}
 
 func (d SessionDelegate) Height() int                             { return 1 }
 func (d SessionDelegate) Spacing() int                            { return 0 }
@@ -51,18 +51,18 @@ func (d SessionDelegate) Render(w io.Writer, m list.Model, index int, listItem l
 		return
 	}
 	str := fmt.Sprintf("%d. %s", index+1, i.title)
-	fn := sessionStyle.Render
+	fn := itemStyle.Render
 	if i.open {
-		fn = func(s ...string) string { return openSessionStyle.Render("* " + strings.Join(s, " ")) }
+		fn = func(s ...string) string { return openStyle.Render("* " + strings.Join(s, " ")) }
 	}
 	if index == m.Index() {
 		if i.open {
 			fn = func(s ...string) string {
-				return selectedOpenSessionStyle.Render(">*" + strings.Join(s, " "))
+				return selectedOpenStyle.Render(">*" + strings.Join(s, " "))
 			}
 		} else {
 			fn = func(s ...string) string {
-				return selectedSessionStyle.Render("> " + strings.Join(s, " "))
+				return selectedStyle.Render("> " + strings.Join(s, " "))
 			}
 		}
 	}
@@ -70,9 +70,8 @@ func (d SessionDelegate) Render(w io.Writer, m list.Model, index int, listItem l
 }
 
 const (
-	browsing SessionState = iota
-	creating
-	editing
+	browsing State = iota
+	deleting
 	quitting
 )
 
@@ -89,7 +88,15 @@ func newSessionListModel(db *sql.DB, logger internal.Logger) sessionListModel {
 	l.Styles.PaginationStyle = paginationStyle
 	l.Styles.HelpStyle = helpStyle
 	openSessions := internal.CountTmuxSessions()
-	return sessionListModel{list: l, openSessions: openSessions, data: data, state: browsing, logger: logger, db: db}
+	return sessionListModel{
+		list:         l,
+		openSessions: openSessions,
+		data:         data,
+		state:        browsing,
+		logger:       logger,
+		db:           db,
+		help:         newSessionBrowserHelpModel(),
+	}
 }
 
 func loadData(db *sql.DB, logger internal.Logger) (map[string]data.Session, []list.Item) {
@@ -114,11 +121,14 @@ func (m sessionListModel) View() string {
 	switch m.state {
 	case quitting:
 		return "Bye, have a nice day!"
+	case deleting:
+		return fmt.Sprintf("You are about to delete %s, press y to confirm", m.selected)
 	}
 	return lipgloss.JoinVertical(
 		lipgloss.Top,
 		m.list.View(),
 		fmt.Sprintf("Open sessions: %s", m.openSessions),
+		m.help.View(),
 	)
 }
 
@@ -138,6 +148,16 @@ func (m sessionListModel) Update(msg tea.Msg) (sessionListModel, tea.Cmd) {
 	case internal.ReloadMsg:
 		return newSessionListModel(m.db, m.logger), nil
 	case tea.KeyMsg:
+		if m.state == deleting {
+			switch msg.String() {
+			case "y":
+				m.state = browsing
+				return m, internal.Delete
+			default:
+				m.state = browsing
+				return m, nil
+			}
+		}
 		switch msg.String() {
 		case "ctrl+c", "q", "esc":
 			m.state = quitting
@@ -158,19 +178,24 @@ func (m sessionListModel) Update(msg tea.Msg) (sessionListModel, tea.Cmd) {
 			if ok {
 				m.selected = i.title
 			}
-			return m, internal.Delete
+			m.state = deleting
+			return m, nil
 		case "K":
 			if i, ok := m.list.SelectedItem().(item); ok {
 				m.selected = i.title
 			}
 			return m, internal.Kill
-		case "n":
-			return m, internal.New
 		}
 	}
+	// handle sub-models updates
+	var cmds []tea.Cmd
 	var cmd tea.Cmd
 	m.list, cmd = m.list.Update(msg)
-	return m, cmd
+	cmds = append(cmds, cmd)
+	newHelp, cmd := m.help.Update(msg)
+	m.help = newHelp
+	cmds = append(cmds, cmd)
+	return m, tea.Batch(cmds...)
 }
 
 // switchToSelected Switch to the selected session opening it if necessary
