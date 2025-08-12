@@ -2,7 +2,9 @@ package data
 
 import (
 	"database/sql"
+	"fmt"
 	"os"
+	"os/exec"
 	"strings"
 
 	_ "github.com/mattn/go-sqlite3"
@@ -79,4 +81,30 @@ func ReadWindowByID(db *sql.DB, id int) (*Window, error) {
 	}
 	w.db = db // Assign the db to the window
 	return &w, nil
+}
+
+func (w Window) Delete() error {
+	query := "DELETE FROM windows WHERE id = ?"
+	if _, err := w.db.Exec(query, w.ID); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (w Window) Open() error {
+	cmd := exec.Command(
+		"sh",
+		"-c",
+		fmt.Sprintf("tmux neww -d -n \"%s\" -c %s", w.Name, w.WorkingDirectory),
+	)
+	return cmd.Run()
+}
+
+func (w Window) OpenWithTarget(target string) error {
+	cmd := exec.Command(
+		"sh",
+		"-c",
+		fmt.Sprintf("tmux neww -t %s -d -n \"%s\" -c %s", target, w.Name, w.WorkingDirectory),
+	)
+	return cmd.Run()
 }
