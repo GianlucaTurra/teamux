@@ -46,6 +46,8 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case internal.BrowseMsg:
 		m.focusedModel = sessionList
 		return m, nil
+	case internal.EditMsg:
+		m.focusedModel = sessionInput
 	case tea.KeyMsg:
 		if msg.String() == "n" && m.focusedModel == sessionList && m.sessionList.state != deleting {
 			m.newPrefix = true

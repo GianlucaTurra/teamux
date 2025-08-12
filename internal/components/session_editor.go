@@ -3,6 +3,7 @@ package components
 import (
 	"database/sql"
 	"fmt"
+	"os"
 	"strings"
 
 	"github.com/GianlucaTurra/teamux/internal"
@@ -55,7 +56,7 @@ func newSessionInputModel(db *sql.DB, logger internal.Logger) sessionInputModel 
 		case 1:
 			t.Prompt = "WorkDir: "
 			t.PromptStyle = blurredStyle
-			t.CharLimit = 20
+			t.CharLimit = 100
 		}
 		m.inputs[i] = t
 	}
@@ -70,6 +71,19 @@ func (m sessionInputModel) Update(msg tea.Msg) (sessionInputModel, tea.Cmd) {
 	switch msg := msg.(type) {
 	case internal.InputErrMsg:
 		m.error = msg.Err
+		return m, nil
+	case internal.EditMsg:
+		m.inputs[0].SetValue(msg.Session.Name)
+		var homeDir string
+		var err error
+		if homeDir, err = os.UserHomeDir(); err != nil {
+			m.logger.Errorlogger.Printf("Error getting home directory: %v", err)
+		}
+		if homeDir == msg.Session.WorkingDirectory {
+			m.inputs[1].SetValue("")
+		} else {
+			m.inputs[1].SetValue(msg.Session.WorkingDirectory)
+		}
 		return m, nil
 	case tea.KeyMsg:
 		switch msg.String() {

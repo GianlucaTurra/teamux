@@ -152,6 +152,11 @@ func (m sessionListModel) Update(msg tea.Msg) (sessionListModel, tea.Cmd) {
 				m.selected = i.title
 			}
 			return m, func() tea.Msg { return internal.OpenMsg{} }
+		case "e":
+			if i, ok := m.list.SelectedItem().(item); ok {
+				m.selected = i.title
+			}
+			return m, func() tea.Msg { return internal.Edit(m.data[m.selected]) }
 		case "s":
 			if i, ok := m.list.SelectedItem().(item); ok {
 				m.selected = i.title
