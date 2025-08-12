@@ -11,21 +11,24 @@ import (
 )
 
 type Model struct {
-	sessionList  sessionListModel
-	sessionInput sessionInputModel
-	focusedModel int
-	newPrefix    bool
+	sessionList   sessionListModel
+	sessionInput  sessionInputModel
+	windowBrowser windowBrowserModel
+	focusedModel  int
+	newPrefix     bool
 }
 
 const (
 	sessionList = iota
 	sessionInput
+	windwowBrowser
 )
 
 func InitialModel(db *sql.DB, logger internal.Logger) Model {
 	return Model{
 		newSessionListModel(db, logger),
 		newSessionInputModel(db, logger),
+		newWindowBrowserModel(db, logger),
 		0,
 		false,
 	}
@@ -60,6 +63,10 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				return m, internal.NewSession
 			}
 		}
+		if msg.String() == "b" && m.focusedModel == sessionList {
+			m.focusedModel = windwowBrowser
+			return m, nil
+		}
 	}
 	var cmds []tea.Cmd
 	switch m.focusedModel {
@@ -71,6 +78,10 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		newList, cmd := m.sessionList.Update(msg)
 		m.sessionList = newList
 		cmds = append(cmds, cmd)
+	case windwowBrowser:
+		newList, cmd := m.windowBrowser.Update(msg)
+		m.windowBrowser = newList
+		cmds = append(cmds, cmd)
 	}
 	return m, tea.Batch(cmds...)
 }
@@ -81,6 +92,11 @@ func (m Model) View() string {
 		return lipgloss.JoinVertical(
 			lipgloss.Left,
 			m.sessionList.View(),
+		)
+	case windwowBrowser:
+		return lipgloss.JoinVertical(
+			lipgloss.Left,
+			m.windowBrowser.View(),
 		)
 	default:
 		return lipgloss.JoinVertical(lipgloss.Left, m.sessionInput.View())
