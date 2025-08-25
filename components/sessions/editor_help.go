@@ -1,6 +1,7 @@
-package components
+package sessions
 
 import (
+	"github.com/GianlucaTurra/teamux/common"
 	"github.com/charmbracelet/bubbles/help"
 	"github.com/charmbracelet/bubbles/key"
 	tea "github.com/charmbracelet/bubbletea"
@@ -65,7 +66,7 @@ func newSessionEditorHelpModel() sessionEditorHelpModel {
 	return sessionEditorHelpModel{
 		keys:       sessionEditorKeys,
 		help:       help.New(),
-		inputStyle: helpStyle,
+		inputStyle: common.HelpStyle,
 	}
 }
 

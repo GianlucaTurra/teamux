@@ -1,4 +1,4 @@
-package components
+package sessions
 
 import (
 	"database/sql"
@@ -6,8 +6,8 @@ import (
 	"io"
 	"strings"
 
-	"github.com/GianlucaTurra/teamux/internal"
-	"github.com/GianlucaTurra/teamux/internal/data"
+	"github.com/GianlucaTurra/teamux/common"
+	"github.com/GianlucaTurra/teamux/components/data"
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
@@ -19,14 +19,14 @@ type (
 		desc  string
 		open  bool
 	}
-	sessionListModel struct {
+	SessionBrowserModel struct {
 		list         list.Model
 		selected     string
 		openSessions string
-		data         map[string]data.Session
-		state        State
+		sessions     map[string]data.Session
+		State        common.State
 		db           *sql.DB
-		logger       internal.Logger
+		logger       common.Logger
 		help         sessionBrowserHelpModel
 	}
 	SessionDelegate struct{}
@@ -41,18 +41,18 @@ func (d SessionDelegate) Render(w io.Writer, m list.Model, index int, listItem l
 		return
 	}
 	str := fmt.Sprintf("%d. %s", index+1, i.title)
-	fn := itemStyle.Render
+	fn := common.ItemStyle.Render
 	if i.open {
-		fn = func(s ...string) string { return openStyle.Render("* " + strings.Join(s, " ")) }
+		fn = func(s ...string) string { return common.OpenStyle.Render("* " + strings.Join(s, " ")) }
 	}
 	if index == m.Index() {
 		if i.open {
 			fn = func(s ...string) string {
-				return selectedOpenStyle.Render(">*" + strings.Join(s, " "))
+				return common.SelectedOpenStyle.Render(">*" + strings.Join(s, " "))
 			}
 		} else {
 			fn = func(s ...string) string {
-				return selectedStyle.Render("> " + strings.Join(s, " "))
+				return common.SelectedStyle.Render("> " + strings.Join(s, " "))
 			}
 		}
 	}
@@ -61,29 +61,29 @@ func (d SessionDelegate) Render(w io.Writer, m list.Model, index int, listItem l
 
 func (s item) FilterValue() string { return "" }
 
-func newSessionListModel(db *sql.DB, logger internal.Logger) sessionListModel {
-	data, layouts := loadData(db, logger)
+func NewSessionBrowserModel(db *sql.DB, logger common.Logger) SessionBrowserModel {
+	sessions, layouts := loadData(db, logger)
 	l := list.New(layouts, SessionDelegate{}, 100, 10)
 	l.Title = "Available session layouts"
-	l.Styles.Title = titleStyle
+	l.Styles.Title = common.TitleStyle
 	l.SetFilteringEnabled(false)
 	l.SetShowStatusBar(false)
 	l.SetShowHelp(false)
-	l.Styles.PaginationStyle = paginationStyle
-	l.Styles.HelpStyle = helpStyle
-	openSessions := internal.CountTmuxSessions()
-	return sessionListModel{
+	l.Styles.PaginationStyle = common.PaginationStyle
+	l.Styles.HelpStyle = common.HelpStyle
+	openSessions := data.CountTmuxSessions()
+	return SessionBrowserModel{
 		list:         l,
 		openSessions: openSessions,
-		data:         data,
-		state:        browsing,
+		sessions:     sessions,
+		State:        common.Browsing,
 		logger:       logger,
 		db:           db,
 		help:         newSessionBrowserHelpModel(),
 	}
 }
 
-func loadData(db *sql.DB, logger internal.Logger) (map[string]data.Session, []list.Item) {
+func loadData(db *sql.DB, logger common.Logger) (map[string]data.Session, []list.Item) {
 	layouts := []list.Item{}
 	sessions, err := data.ReadAllSessions(db)
 	if err != nil {
@@ -97,15 +97,15 @@ func loadData(db *sql.DB, logger internal.Logger) (map[string]data.Session, []li
 	return data, layouts
 }
 
-func (m sessionListModel) Init() tea.Cmd {
+func (m SessionBrowserModel) Init() tea.Cmd {
 	return nil
 }
 
-func (m sessionListModel) View() string {
-	switch m.state {
-	case quitting:
+func (m SessionBrowserModel) View() string {
+	switch m.State {
+	case common.Quitting:
 		return "Bye, have a nice day!"
-	case deleting:
+	case common.Deleting:
 		return fmt.Sprintf("You are about to delete %s, press y to confirm", m.selected)
 	}
 	return lipgloss.JoinVertical(
@@ -116,64 +116,64 @@ func (m sessionListModel) View() string {
 	)
 }
 
-func (m sessionListModel) Update(msg tea.Msg) (sessionListModel, tea.Cmd) {
+func (m SessionBrowserModel) Update(msg tea.Msg) (SessionBrowserModel, tea.Cmd) {
 	switch msg := msg.(type) {
-	case internal.TmuxSessionsChanged:
-		m.openSessions = internal.CountTmuxSessions()
+	case common.TmuxSessionsChanged:
+		m.openSessions = data.CountTmuxSessions()
 		return m, nil
-	case internal.OpenMsg:
+	case common.OpenMsg:
 		return m.openSelected()
-	case internal.SwitchMsg:
+	case common.SwitchMsg:
 		return m.switchToSelected()
-	case internal.DeleteMsg:
+	case common.DeleteMsg:
 		return m.deleteSelected()
-	case internal.KillMsg:
+	case common.KillMsg:
 		return m.killSelected()
-	case internal.ReloadMsg:
-		return newSessionListModel(m.db, m.logger), nil
+	case common.ReloadMsg:
+		return NewSessionBrowserModel(m.db, m.logger), nil
 	case tea.KeyMsg:
-		if m.state == deleting {
+		if m.State == common.Deleting {
 			switch msg.String() {
 			case "y":
-				m.state = browsing
-				return m, internal.Delete
+				m.State = common.Browsing
+				return m, common.Delete
 			default:
-				m.state = browsing
+				m.State = common.Browsing
 				return m, nil
 			}
 		}
 		switch msg.String() {
 		case "ctrl+c", "q", "esc":
-			m.state = quitting
+			m.State = common.Quitting
 			return m, tea.Quit
 		case "enter", " ":
 			i, ok := m.list.SelectedItem().(item)
 			if ok {
 				m.selected = i.title
 			}
-			return m, func() tea.Msg { return internal.OpenMsg{} }
+			return m, func() tea.Msg { return common.OpenMsg{} }
 		case "e":
 			if i, ok := m.list.SelectedItem().(item); ok {
 				m.selected = i.title
 			}
-			return m, func() tea.Msg { return internal.Edit(m.data[m.selected]) }
+			return m, func() tea.Msg { return common.Edit(m.sessions[m.selected]) }
 		case "s":
 			if i, ok := m.list.SelectedItem().(item); ok {
 				m.selected = i.title
 			}
-			return m, internal.Switch
+			return m, common.Switch
 		case "d":
 			i, ok := m.list.SelectedItem().(item)
 			if ok {
 				m.selected = i.title
 			}
-			m.state = deleting
+			m.State = common.Deleting
 			return m, nil
 		case "K":
 			if i, ok := m.list.SelectedItem().(item); ok {
 				m.selected = i.title
 			}
-			return m, internal.Kill
+			return m, common.Kill
 		}
 	}
 	// handle sub-models updates
@@ -188,69 +188,69 @@ func (m sessionListModel) Update(msg tea.Msg) (sessionListModel, tea.Cmd) {
 }
 
 // switchToSelected Switch to the selected session opening it if necessary
-func (m sessionListModel) switchToSelected() (sessionListModel, tea.Cmd) {
-	s := m.data[m.selected]
+func (m SessionBrowserModel) switchToSelected() (SessionBrowserModel, tea.Cmd) {
+	s := m.sessions[m.selected]
 	if s.IsOpen() {
 		if err := s.Switch(); err != nil {
 			m.logger.Errorlogger.Printf("Error switching to session %s: %v", m.selected, err)
-			return m, func() tea.Msg { return internal.TmuxErr{} }
+			return m, func() tea.Msg { return common.TmuxErr{} }
 		}
 	}
-	if err := m.data[m.selected].Open(); err != nil {
+	if err := m.sessions[m.selected].Open(); err != nil {
 		m.logger.Errorlogger.Printf("Error opening session %s: %v", m.selected, err)
-		return m, func() tea.Msg { return internal.TmuxErr{} }
+		return m, func() tea.Msg { return common.TmuxErr{} }
 	}
 	if err := s.Switch(); err != nil {
 		m.logger.Errorlogger.Printf("Error switching to session %s: %v", m.selected, err)
-		return m, func() tea.Msg { return internal.TmuxErr{} }
+		return m, func() tea.Msg { return common.TmuxErr{} }
 	}
 	m.refreshItems()
-	return m, func() tea.Msg { return internal.TmuxSessionsChanged{} }
+	return m, func() tea.Msg { return common.TmuxSessionsChanged{} }
 }
 
 // openSelected Opens the selected session. If it is already open nothing is
 // done.
-func (m sessionListModel) openSelected() (sessionListModel, tea.Cmd) {
-	if s := m.data[m.selected]; s.IsOpen() {
+func (m SessionBrowserModel) openSelected() (SessionBrowserModel, tea.Cmd) {
+	if s := m.sessions[m.selected]; s.IsOpen() {
 		// TODO: does it make sense to return nil?
 		return m, func() tea.Msg { return nil }
 	}
-	s := m.data[m.selected]
+	s := m.sessions[m.selected]
 	if err := s.Open(); err != nil {
 		m.logger.Errorlogger.Printf("Error opening session %s: %v", s.Name, err)
-		return m, func() tea.Msg { return internal.TmuxErr{} }
+		return m, func() tea.Msg { return common.TmuxErr{} }
 	}
 	m.refreshItems()
-	return m, func() tea.Msg { return internal.TmuxSessionsChanged{} }
+	return m, func() tea.Msg { return common.TmuxSessionsChanged{} }
 }
 
 // deleteSelected kills the session if open and proceeds to delete it from the db
-func (m sessionListModel) deleteSelected() (sessionListModel, tea.Cmd) {
+func (m SessionBrowserModel) deleteSelected() (SessionBrowserModel, tea.Cmd) {
 	m.killSelected()
-	s := m.data[m.selected]
+	s := m.sessions[m.selected]
 	if err := s.Delete(); err != nil {
 		m.logger.Errorlogger.Printf("Error deleting session %s: %v", m.selected, err)
-		return m, func() tea.Msg { return internal.TmuxErr{} }
+		return m, func() tea.Msg { return common.TmuxErr{} }
 	}
-	return m, func() tea.Msg { return internal.ReloadMsg{} }
+	return m, func() tea.Msg { return common.ReloadMsg{} }
 }
 
 // killSelected kills the selected session. If it is not open nothing is done.
-func (m sessionListModel) killSelected() (sessionListModel, tea.Cmd) {
-	s := m.data[m.selected]
+func (m SessionBrowserModel) killSelected() (SessionBrowserModel, tea.Cmd) {
+	s := m.sessions[m.selected]
 	if !s.IsOpen() {
 		return m, nil
 	}
 	if err := s.Close(); err != nil {
 		m.logger.Errorlogger.Printf("Error killing session %s: %v", m.selected, err)
-		return m, func() tea.Msg { return internal.TmuxErr{} }
+		return m, func() tea.Msg { return common.TmuxErr{} }
 	}
 	m.refreshItems()
-	return m, func() tea.Msg { return internal.TmuxSessionsChanged{} }
+	return m, func() tea.Msg { return common.TmuxSessionsChanged{} }
 }
 
 // refreshItems checks again if any item status has changed
-func (m *sessionListModel) refreshItems() {
+func (m *SessionBrowserModel) refreshItems() {
 	var newList []list.Item
 	for _, l := range m.list.Items() {
 		i, ok := l.(item)
@@ -258,7 +258,7 @@ func (m *sessionListModel) refreshItems() {
 			m.logger.Errorlogger.Printf("Failed to cast list item to item type: %v", l)
 			continue
 		}
-		i.open = m.data[l.(item).title].IsOpen()
+		i.open = m.sessions[l.(item).title].IsOpen()
 		newList = append(newList, i)
 	}
 	m.list.SetItems(newList)

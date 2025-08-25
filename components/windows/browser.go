@@ -1,4 +1,4 @@
-package components
+package windows
 
 import (
 	"database/sql"
@@ -6,8 +6,8 @@ import (
 	"io"
 	"strings"
 
-	"github.com/GianlucaTurra/teamux/internal"
-	"github.com/GianlucaTurra/teamux/internal/data"
+	"github.com/GianlucaTurra/teamux/common"
+	"github.com/GianlucaTurra/teamux/components/data"
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
@@ -18,13 +18,13 @@ type (
 		title string
 		desc  string
 	}
-	windowBrowserModel struct {
+	WindowBrowserModel struct {
 		list     list.Model
 		selected string
-		state    State
+		state    common.State
 		data     map[string]data.Window
 		db       *sql.DB
-		logger   internal.Logger
+		logger   common.Logger
 		help     windowBrowserHelpModel
 	}
 	WindowDelegate struct{}
@@ -41,36 +41,36 @@ func (d WindowDelegate) Render(w io.Writer, m list.Model, index int, listItem li
 		return
 	}
 	str := fmt.Sprintf("%d. %s", index+1, i.title)
-	fn := itemStyle.Render
+	fn := common.ItemStyle.Render
 	if index == m.Index() {
 		fn = func(s ...string) string {
-			return selectedStyle.Render("> " + strings.Join(s, " "))
+			return common.SelectedStyle.Render("> " + strings.Join(s, " "))
 		}
 	}
 	fmt.Fprint(w, fn(str))
 }
 
-func newWindowBrowserModel(db *sql.DB, logger internal.Logger) windowBrowserModel {
+func NewWindowBrowserModel(db *sql.DB, logger common.Logger) WindowBrowserModel {
 	data, layouts := loadWindowData(db, logger)
 	l := list.New(layouts, WindowDelegate{}, 100, 10)
 	l.Title = "Available window layouts"
-	l.Styles.Title = titleStyle
+	l.Styles.Title = common.TitleStyle
 	l.SetFilteringEnabled(false)
 	l.SetShowStatusBar(false)
 	l.SetShowHelp(false)
-	l.Styles.PaginationStyle = paginationStyle
-	l.Styles.HelpStyle = helpStyle
-	return windowBrowserModel{
+	l.Styles.PaginationStyle = common.PaginationStyle
+	l.Styles.HelpStyle = common.HelpStyle
+	return WindowBrowserModel{
 		list:   l,
 		data:   data,
-		state:  browsing,
+		state:  common.Browsing,
 		logger: logger,
 		db:     db,
 		help:   newWindowBrowserHelpModel(),
 	}
 }
 
-func loadWindowData(db *sql.DB, logger internal.Logger) (map[string]data.Window, []list.Item) {
+func loadWindowData(db *sql.DB, logger common.Logger) (map[string]data.Window, []list.Item) {
 	layouts := []list.Item{}
 	windowData := make(map[string]data.Window)
 	windows, err := data.ReadAllWindows(db)
@@ -85,11 +85,11 @@ func loadWindowData(db *sql.DB, logger internal.Logger) (map[string]data.Window,
 	return windowData, layouts
 }
 
-func (m windowBrowserModel) View() string {
+func (m WindowBrowserModel) View() string {
 	switch m.state {
-	case quitting:
+	case common.Quitting:
 		return "Bye, have a nice day!"
-	case deleting:
+	case common.Deleting:
 		return fmt.Sprintf("You are about to delete %s, press y to confirm", m.selected)
 	}
 	return lipgloss.JoinVertical(
@@ -99,50 +99,50 @@ func (m windowBrowserModel) View() string {
 	)
 }
 
-func (m windowBrowserModel) Update(msg tea.Msg) (windowBrowserModel, tea.Cmd) {
+func (m WindowBrowserModel) Update(msg tea.Msg) (WindowBrowserModel, tea.Cmd) {
 	switch msg := msg.(type) {
-	case internal.OpenMsg:
+	case common.OpenMsg:
 		return m.openSelected()
-	case internal.DeleteMsg:
+	case common.DeleteMsg:
 		return m.deleteSelected()
 	case tea.KeyMsg:
-		if m.state == deleting {
+		if m.state == common.Deleting {
 			switch msg.String() {
 			case "y":
-				m.state = browsing
-				return m, internal.Delete
+				m.state = common.Browsing
+				return m, common.Delete
 			default:
-				m.state = browsing
+				m.state = common.Browsing
 				return m, nil
 			}
 		}
 		switch msg.String() {
 		case "ctrl+c", "q", "esc":
-			m.state = quitting
+			m.state = common.Quitting
 			return m, tea.Quit
 		case "enter", " ":
 			i, ok := m.list.SelectedItem().(windowItem)
 			if ok {
 				m.selected = i.title
 			}
-			return m, func() tea.Msg { return internal.OpenMsg{} }
+			return m, func() tea.Msg { return common.OpenMsg{} }
 		case "s":
 			if i, ok := m.list.SelectedItem().(windowItem); ok {
 				m.selected = i.title
 			}
-			return m, internal.Switch
+			return m, common.Switch
 		case "d":
 			i, ok := m.list.SelectedItem().(windowItem)
 			if ok {
 				m.selected = i.title
 			}
-			m.state = deleting
+			m.state = common.Deleting
 			return m, nil
 		case "K":
 			if i, ok := m.list.SelectedItem().(windowItem); ok {
 				m.selected = i.title
 			}
-			return m, internal.Kill
+			return m, common.Kill
 		}
 	}
 	// handle sub-models updates
@@ -156,26 +156,26 @@ func (m windowBrowserModel) Update(msg tea.Msg) (windowBrowserModel, tea.Cmd) {
 	return m, tea.Batch(cmds...)
 }
 
-func (m windowBrowserModel) Init() tea.Cmd {
+func (m WindowBrowserModel) Init() tea.Cmd {
 	return nil
 }
 
 // openSelected Opens the selected window.
-func (m windowBrowserModel) openSelected() (windowBrowserModel, tea.Cmd) {
+func (m WindowBrowserModel) openSelected() (WindowBrowserModel, tea.Cmd) {
 	w := m.data[m.selected]
 	if err := w.Open(); err != nil {
 		m.logger.Errorlogger.Printf("Error opening window %s: %v", w.Name, err)
-		return m, func() tea.Msg { return internal.TmuxErr{} }
+		return m, func() tea.Msg { return common.TmuxErr{} }
 	}
 	return m, func() tea.Msg { return nil }
 }
 
 // deleteSelected delete the window from the db
-func (m windowBrowserModel) deleteSelected() (windowBrowserModel, tea.Cmd) {
+func (m WindowBrowserModel) deleteSelected() (WindowBrowserModel, tea.Cmd) {
 	w := m.data[m.selected]
 	if err := w.Delete(); err != nil {
 		m.logger.Errorlogger.Printf("Error deleting window %s: %v", m.selected, err)
-		return m, func() tea.Msg { return internal.TmuxErr{} }
+		return m, func() tea.Msg { return common.TmuxErr{} }
 	}
-	return m, func() tea.Msg { return internal.ReloadMsg{} }
+	return m, func() tea.Msg { return common.ReloadMsg{} }
 }

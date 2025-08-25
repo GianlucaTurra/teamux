@@ -6,7 +6,7 @@ import (
 	"os/exec"
 	"testing"
 
-	"github.com/GianlucaTurra/teamux/internal/data"
+	"github.com/GianlucaTurra/teamux/components/data"
 	_ "github.com/mattn/go-sqlite3"
 )
 

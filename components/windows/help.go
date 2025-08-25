@@ -1,40 +1,36 @@
-package components
+package windows
 
 import (
+	"github.com/GianlucaTurra/teamux/common"
 	"github.com/charmbracelet/bubbles/help"
 	"github.com/charmbracelet/bubbles/key"
-	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 )
 
-type sessionBrowserKeyMap struct {
-	Up     key.Binding
-	Down   key.Binding
-	Left   key.Binding
-	Right  key.Binding
-	Open   key.Binding
-	Kill   key.Binding
-	Switch key.Binding
-	Help   key.Binding
-	Quit   key.Binding
-	New    key.Binding
+type windowBrowserKeyMap struct {
+	Up    key.Binding
+	Down  key.Binding
+	Left  key.Binding
+	Right key.Binding
+	Open  key.Binding
+	Help  key.Binding
+	Quit  key.Binding
+	New   key.Binding
 }
 
-func (k sessionBrowserKeyMap) ShortHelp() []key.Binding {
+func (k windowBrowserKeyMap) ShortHelp() []key.Binding {
 	return []key.Binding{k.Help, k.Quit}
 }
 
-func (k sessionBrowserKeyMap) FullHelp() [][]key.Binding {
+func (k windowBrowserKeyMap) FullHelp() [][]key.Binding {
 	return [][]key.Binding{
 		{k.Up, k.Down, k.Left, k.Right, k.Help, k.Quit},
-		{k.Open, k.Switch, k.Kill, k.New},
+		{k.Open, k.New},
 	}
 }
 
-var helpStyle = list.DefaultStyles().HelpStyle.PaddingLeft(4).PaddingBottom(1)
-
-var keys = sessionBrowserKeyMap{
+var windowBrowserKeys = windowBrowserKeyMap{
 	Up: key.NewBinding(
 		key.WithKeys("up", "k"),
 		key.WithHelp("↑/k", "move up"),
@@ -53,19 +49,11 @@ var keys = sessionBrowserKeyMap{
 	),
 	Open: key.NewBinding(
 		key.WithKeys("space", "enter"),
-		key.WithHelp("enter", "open or switch if open"),
-	),
-	Switch: key.NewBinding(
-		key.WithKeys("s", "switch"),
-		key.WithHelp("s", "switch to session"),
-	),
-	Kill: key.NewBinding(
-		key.WithKeys("kill", "d"),
-		key.WithHelp("d", "kill open session"),
+		key.WithHelp("enter/space", "open"),
 	),
 	New: key.NewBinding(
 		key.WithKeys("new", "n"),
-		key.WithHelp("n", "create new session"),
+		key.WithHelp("n", "create new window"),
 	),
 	Help: key.NewBinding(
 		key.WithKeys("?"),
@@ -77,22 +65,22 @@ var keys = sessionBrowserKeyMap{
 	),
 }
 
-type sessionBrowserHelpModel struct {
-	keys       sessionBrowserKeyMap
+type windowBrowserHelpModel struct {
+	keys       windowBrowserKeyMap
 	help       help.Model
 	inputStyle lipgloss.Style
 	quitting   bool
 }
 
-func newSessionBrowserHelpModel() sessionBrowserHelpModel {
-	return sessionBrowserHelpModel{
-		keys:       keys,
+func newWindowBrowserHelpModel() windowBrowserHelpModel {
+	return windowBrowserHelpModel{
+		keys:       windowBrowserKeys,
 		help:       help.New(),
-		inputStyle: helpStyle,
+		inputStyle: common.HelpStyle,
 	}
 }
 
-func (m sessionBrowserHelpModel) Update(msg tea.Msg) (sessionBrowserHelpModel, tea.Cmd) {
+func (m windowBrowserHelpModel) Update(msg tea.Msg) (windowBrowserHelpModel, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch {
@@ -105,13 +93,13 @@ func (m sessionBrowserHelpModel) Update(msg tea.Msg) (sessionBrowserHelpModel, t
 	return m, nil
 }
 
-func (m sessionBrowserHelpModel) View() string {
+func (m windowBrowserHelpModel) View() string {
 	if m.quitting {
 		return ""
 	}
 	return m.help.View(m.keys)
 }
 
-func (m sessionBrowserHelpModel) Init() tea.Cmd {
+func (m windowBrowserHelpModel) Init() tea.Cmd {
 	return nil
 }

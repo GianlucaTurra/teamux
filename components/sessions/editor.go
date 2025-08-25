@@ -1,4 +1,4 @@
-package components
+package sessions
 
 import (
 	"database/sql"
@@ -6,8 +6,8 @@ import (
 	"os"
 	"strings"
 
-	"github.com/GianlucaTurra/teamux/internal"
-	"github.com/GianlucaTurra/teamux/internal/data"
+	"github.com/GianlucaTurra/teamux/common"
+	"github.com/GianlucaTurra/teamux/components/data"
 	"github.com/charmbracelet/bubbles/cursor"
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
@@ -22,19 +22,19 @@ var (
 	blurredButton = fmt.Sprintf("[ %s ]", blurredStyle.Render("Submit"))
 )
 
-type sessionInputModel struct {
+type SessionEditorModel struct {
 	focusedIndex int
 	inputs       []textinput.Model
 	cursorMode   cursor.Mode
 	quitting     bool
 	error        error
 	db           *sql.DB
-	logger       internal.Logger
+	logger       common.Logger
 	help         sessionEditorHelpModel
 }
 
-func newSessionInputModel(db *sql.DB, logger internal.Logger) sessionInputModel {
-	m := sessionInputModel{
+func NewSessionEditorModel(db *sql.DB, logger common.Logger) SessionEditorModel {
+	m := SessionEditorModel{
 		inputs: make([]textinput.Model, 2),
 		db:     db,
 		logger: logger,
@@ -63,16 +63,16 @@ func newSessionInputModel(db *sql.DB, logger internal.Logger) sessionInputModel 
 	return m
 }
 
-func (m sessionInputModel) Init() tea.Cmd {
+func (m SessionEditorModel) Init() tea.Cmd {
 	return textinput.Blink
 }
 
-func (m sessionInputModel) Update(msg tea.Msg) (sessionInputModel, tea.Cmd) {
+func (m SessionEditorModel) Update(msg tea.Msg) (SessionEditorModel, tea.Cmd) {
 	switch msg := msg.(type) {
-	case internal.InputErrMsg:
+	case common.InputErrMsg:
 		m.error = msg.Err
 		return m, nil
-	case internal.EditMsg:
+	case common.EditMsg:
 		m.inputs[0].SetValue(msg.Session.Name)
 		var homeDir string
 		var err error
@@ -92,7 +92,7 @@ func (m sessionInputModel) Update(msg tea.Msg) (sessionInputModel, tea.Cmd) {
 			m.help, cmd = m.help.Update(msg)
 			return m, cmd
 		case "esc":
-			return m, internal.Browse
+			return m, common.Browse
 		case "ctrl+c":
 			m.quitting = true
 			return m, tea.Quit
@@ -136,7 +136,7 @@ func (m sessionInputModel) Update(msg tea.Msg) (sessionInputModel, tea.Cmd) {
 	return m, cmd
 }
 
-func (m *sessionInputModel) updateInputs(msg tea.Msg) tea.Cmd {
+func (m *SessionEditorModel) updateInputs(msg tea.Msg) tea.Cmd {
 	cmds := make([]tea.Cmd, len(m.inputs))
 	for i := range m.inputs {
 		m.inputs[i], cmds[i] = m.inputs[i].Update(msg)
@@ -144,17 +144,17 @@ func (m *sessionInputModel) updateInputs(msg tea.Msg) tea.Cmd {
 	return tea.Batch(cmds...)
 }
 
-func (m *sessionInputModel) createSession() tea.Cmd {
+func (m *SessionEditorModel) createSession() tea.Cmd {
 	session := data.NewSession(m.inputs[0].Value(), m.inputs[1].Value(), m.db)
 	if err := session.Save(); err != nil {
 		m.logger.Errorlogger.Printf("Error saving session: %v", err)
-		return func() tea.Msg { return internal.InputErrMsg{Err: err} }
+		return func() tea.Msg { return common.InputErrMsg{Err: err} }
 	}
 	m.error = nil
-	return internal.Created
+	return common.Created
 }
 
-func (m sessionInputModel) View() string {
+func (m SessionEditorModel) View() string {
 	if m.quitting {
 		return ""
 	}

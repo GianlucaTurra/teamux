@@ -5,15 +5,17 @@ package components
 import (
 	"database/sql"
 
-	"github.com/GianlucaTurra/teamux/internal"
+	"github.com/GianlucaTurra/teamux/common"
+	"github.com/GianlucaTurra/teamux/components/sessions"
+	"github.com/GianlucaTurra/teamux/components/windows"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 )
 
 type Model struct {
-	sessionList   sessionListModel
-	sessionInput  sessionInputModel
-	windowBrowser windowBrowserModel
+	sessionList   sessions.SessionBrowserModel
+	sessionInput  sessions.SessionEditorModel
+	windowBrowser windows.WindowBrowserModel
 	focusedModel  int
 	newPrefix     bool
 }
@@ -24,11 +26,11 @@ const (
 	windwowBrowser
 )
 
-func InitialModel(db *sql.DB, logger internal.Logger) Model {
+func InitialModel(db *sql.DB, logger common.Logger) Model {
 	return Model{
-		newSessionListModel(db, logger),
-		newSessionInputModel(db, logger),
-		newWindowBrowserModel(db, logger),
+		sessions.NewSessionBrowserModel(db, logger),
+		sessions.NewSessionEditorModel(db, logger),
+		windows.NewWindowBrowserModel(db, logger),
 		0,
 		false,
 	}
@@ -40,19 +42,19 @@ func (m Model) Init() tea.Cmd {
 
 func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
-	case internal.NewSessionMsg:
+	case common.NewSessionMsg:
 		m.focusedModel = sessionInput
 		return m, nil
-	case internal.SessionCreatedMsg:
+	case common.SessionCreatedMsg:
 		m.focusedModel = sessionList
-		return m, internal.Reaload
-	case internal.BrowseMsg:
+		return m, common.Reaload
+	case common.BrowseMsg:
 		m.focusedModel = sessionList
 		return m, nil
-	case internal.EditMsg:
+	case common.EditMsg:
 		m.focusedModel = sessionInput
 	case tea.KeyMsg:
-		if msg.String() == "n" && m.focusedModel == sessionList && m.sessionList.state != deleting {
+		if msg.String() == "n" && m.focusedModel == sessionList && m.sessionList.State != common.Deleting {
 			m.newPrefix = true
 			return m, nil
 		}
@@ -60,7 +62,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.newPrefix = false
 			switch msg.String() {
 			case "s":
-				return m, internal.NewSession
+				return m, common.NewSession
 			}
 		}
 		if msg.String() == "b" && m.focusedModel == sessionList {

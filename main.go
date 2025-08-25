@@ -6,8 +6,8 @@ import (
 	"log"
 	"os"
 
-	"github.com/GianlucaTurra/teamux/internal"
-	"github.com/GianlucaTurra/teamux/internal/components"
+	"github.com/GianlucaTurra/teamux/common"
+	"github.com/GianlucaTurra/teamux/components"
 	tea "github.com/charmbracelet/bubbletea"
 	_ "github.com/mattn/go-sqlite3"
 )
@@ -19,7 +19,7 @@ func main() {
 		log.Fatalln("Unable to setup syslog:", err.Error())
 	}
 	defer logfile.Close()
-	logger := internal.Logger{
+	logger := common.Logger{
 		Infologger:    log.New(logfile, "INFO: ", log.Ldate|log.Ltime|log.Lshortfile),
 		Warninglogger: log.New(logfile, "WARNING: ", log.Ldate|log.Ltime|log.Lshortfile),
 		Errorlogger:   log.New(logfile, "ERROR: ", log.Ldate|log.Ltime|log.Lshortfile),
@@ -31,6 +31,7 @@ func main() {
 	}
 	defer db.Close()
 	p := tea.NewProgram(components.InitialModel(db, logger))
+
 	if _, err := p.Run(); err != nil {
 		fmt.Printf("ERROR: %v", err)
 		os.Exit(1)
