@@ -92,7 +92,7 @@ func (m SessionEditorModel) Update(msg tea.Msg) (SessionEditorModel, tea.Cmd) {
 			return NewSessionEditorModel(m.db, m.logger), common.Browse
 		case "ctrl+c":
 			m.quitting = true
-			return m, tea.Quit
+			return m, common.Quit
 		case "tab", "shift+tab":
 			s := msg.String()
 			if s == "up" || s == "shift+tab" {

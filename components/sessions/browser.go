@@ -104,7 +104,7 @@ func (m SessionBrowserModel) Init() tea.Cmd {
 func (m SessionBrowserModel) View() string {
 	switch m.State {
 	case common.Quitting:
-		return "Bye, have a nice day!"
+		return ""
 	case common.Deleting:
 		return fmt.Sprintf("You are about to delete %s, press y to confirm", m.selected)
 	}
@@ -145,7 +145,7 @@ func (m SessionBrowserModel) Update(msg tea.Msg) (SessionBrowserModel, tea.Cmd) 
 		switch msg.String() {
 		case "ctrl+c", "q", "esc":
 			m.State = common.Quitting
-			return m, tea.Quit
+			return m, common.Quit
 		case "enter", " ":
 			i, ok := m.list.SelectedItem().(item)
 			if ok {

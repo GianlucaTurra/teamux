@@ -119,7 +119,7 @@ func (m WindowBrowserModel) Update(msg tea.Msg) (WindowBrowserModel, tea.Cmd) {
 		switch msg.String() {
 		case "ctrl+c", "q", "esc":
 			m.state = common.Quitting
-			return m, tea.Quit
+			return m, common.Quit
 		case "enter", " ":
 			i, ok := m.list.SelectedItem().(windowItem)
 			if ok {

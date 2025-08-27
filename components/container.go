@@ -4,6 +4,7 @@ package components
 
 import (
 	"database/sql"
+	"strings"
 
 	"github.com/GianlucaTurra/teamux/common"
 	"github.com/GianlucaTurra/teamux/components/sessions"
@@ -13,72 +14,72 @@ import (
 )
 
 type Model struct {
-	sessionList   sessions.SessionBrowserModel
-	sessionInput  sessions.SessionEditorModel
-	windowBrowser windows.WindowBrowserModel
-	focusedModel  int
-	newPrefix     bool
+	tabs             []string
+	sessionContainer sessions.SessionContainerModel
+	windowBrowser    windows.WindowBrowserModel
+	focusedTab       int
+	newPrefix        bool
+	quitting         bool
 }
 
 const (
-	sessionList = iota
-	sessionInput
+	SESSIONS = "Sessions"
+	WINDOWS  = "Windows"
+)
+
+const (
+	sessionsContainer = iota
 	windwowBrowser
 )
 
 func InitialModel(db *sql.DB, logger common.Logger) Model {
 	return Model{
-		sessions.NewSessionBrowserModel(db, logger),
-		sessions.NewSessionEditorModel(db, logger),
+		[]string{SESSIONS, WINDOWS},
+		sessions.NewSessionContainerModel(db, logger),
 		windows.NewWindowBrowserModel(db, logger),
 		0,
+		false,
 		false,
 	}
 }
 
 func (m Model) Init() tea.Cmd {
-	return tea.Batch(m.sessionList.Init())
+	return m.sessionContainer.Init()
 }
 
 func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
-	case common.NewSessionMsg:
-		m.focusedModel = sessionInput
+	case common.QuitMsg:
+		m.quitting = true
+		return m, tea.Quit
+	case common.NextTabMsg:
+		if m.focusedTab == len(m.tabs)-1 {
+			m.focusedTab = 0
+		} else {
+			m.focusedTab += 1
+		}
 		return m, nil
-	case common.SessionCreatedMsg:
-		m.focusedModel = sessionList
-		return m, common.Reaload
-	case common.BrowseMsg:
-		m.focusedModel = sessionList
-		return m, nil
-	case common.EditMsg:
-		m.focusedModel = sessionInput
 	case tea.KeyMsg:
-		if msg.String() == "n" && m.focusedModel == sessionList && m.sessionList.State != common.Deleting {
-			m.newPrefix = true
-			return m, nil
+		if msg.String() == "tab" {
+			return m, common.NextTab
 		}
-		if m.newPrefix {
-			m.newPrefix = false
-			switch msg.String() {
-			case "s":
-				return m, common.NewSession
-			}
-		}
-		if msg.String() == "b" && m.focusedModel == sessionList {
-			m.focusedModel = windwowBrowser
-			return m, nil
-		}
+		// if m.newPrefix {
+		// 	m.newPrefix = false
+		// 	switch msg.String() {
+		// 	case "s":
+		// 		return m, common.NewSession
+		// 	}
+		// }
+		// if msg.String() == "b" && m.focusedModel == sessionBrowser {
+		// 	m.focusedModel = windwowBrowser
+		// 	return m, nil
+		// }
 	}
 	var cmds []tea.Cmd
-	switch m.focusedModel {
-	case sessionInput:
-		newInput, cmd := m.sessionInput.Update(msg)
-		m.sessionInput = newInput
-		cmds = append(cmds, cmd)
-	case sessionList:
-		newList, cmd := m.sessionList.Update(msg)
-		m.sessionList = newList
+	switch m.focusedTab {
+	case sessionsContainer:
+		newInput, cmd := m.sessionContainer.Update(msg)
+		m.sessionContainer = newInput
 		cmds = append(cmds, cmd)
 	case windwowBrowser:
 		newList, cmd := m.windowBrowser.Update(msg)
@@ -89,18 +90,34 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m Model) View() string {
-	switch m.focusedModel {
-	case sessionList:
-		return lipgloss.JoinVertical(
-			lipgloss.Left,
-			m.sessionList.View(),
-		)
-	case windwowBrowser:
-		return lipgloss.JoinVertical(
-			lipgloss.Left,
-			m.windowBrowser.View(),
-		)
-	default:
-		return lipgloss.JoinVertical(lipgloss.Left, m.sessionInput.View())
+	if m.quitting {
+		return ""
 	}
+	tabHeader := strings.Builder{}
+	var separator string
+	for i, t := range m.tabs {
+		if i == len(m.tabs)-1 {
+			separator = ""
+		} else {
+			separator = " | "
+		}
+		if i == m.focusedTab {
+			tabHeader.WriteString(common.FocusedStyle.Render(t))
+		} else {
+			tabHeader.WriteString(common.BlurredStyle.Render(t))
+		}
+		tabHeader.WriteString(separator)
+	}
+	var focusedView string
+	switch m.focusedTab {
+	case sessionsContainer:
+		focusedView = m.sessionContainer.View()
+	case windwowBrowser:
+		focusedView = m.windowBrowser.View()
+	}
+	return lipgloss.JoinVertical(
+		lipgloss.Left,
+		tabHeader.String(),
+		focusedView,
+	)
 }
