@@ -15,3 +15,6 @@ func Created() tea.Msg            { return SessionCreatedMsg{} }
 func Reaload() tea.Msg            { return ReloadMsg{} }
 func Browse() tea.Msg             { return BrowseMsg{} }
 func Edit(s data.Session) tea.Msg { return EditMsg{s} }
+func Quit() tea.Msg               { return QuitMsg{} }
+func NextTab() tea.Msg            { return NextTabMsg{} }
+func PreviousTab() tea.Msg        { return PreviousTabMsg{} }

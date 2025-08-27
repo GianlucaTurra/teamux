@@ -16,4 +16,7 @@ type (
 	SessionCreatedMsg   struct{}
 	BrowseMsg           struct{}
 	EditMsg             struct{ Session data.Session }
+	QuitMsg             struct{}
+	NextTabMsg          struct{}
+	PreviousTabMsg      struct{}
 )
