@@ -45,7 +45,6 @@ func (m SessionContainerModel) Update(msg tea.Msg) (SessionContainerModel, tea.C
 		return m, nil
 	case common.EditMsg:
 		m.focusedModel = sessionEditor
-		// return m, nil
 	case tea.KeyMsg:
 		if msg.String() == "n" && m.focusedModel == sessionBrowser && m.sessionBrowser.State != common.Deleting {
 			return m, common.NewSession

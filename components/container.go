@@ -59,9 +59,19 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.focusedTab += 1
 		}
 		return m, nil
+	case common.PreviousTabMsg:
+		if m.focusedTab == 0 {
+			m.focusedTab = len(m.tabs) - 1
+		} else {
+			m.focusedTab -= 1
+		}
+		return m, nil
 	case tea.KeyMsg:
-		if msg.String() == "tab" {
+		switch msg.Type {
+		case tea.KeyTab:
 			return m, common.NextTab
+		case tea.KeyShiftTab:
+			return m, common.PreviousTab
 		}
 		// if m.newPrefix {
 		// 	m.newPrefix = false
@@ -117,7 +127,7 @@ func (m Model) View() string {
 	}
 	return lipgloss.JoinVertical(
 		lipgloss.Left,
-		tabHeader.String(),
+		common.TitleStyle.PaddingLeft(2).Render(tabHeader.String()),
 		focusedView,
 	)
 }
