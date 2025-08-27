@@ -11,15 +11,12 @@ import (
 	"github.com/charmbracelet/bubbles/cursor"
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
 )
 
 var (
-	focusedStyle  = lipgloss.NewStyle().Foreground(lipgloss.Color("205"))
-	blurredStyle  = lipgloss.NewStyle().Foreground(lipgloss.Color("240"))
-	cursorStyle   = focusedStyle
-	focusedButton = focusedStyle.Render("[ Submit ]")
-	blurredButton = fmt.Sprintf("[ %s ]", blurredStyle.Render("Submit"))
+	cursorStyle   = common.FocusedStyle
+	focusedButton = common.FocusedStyle.Render("[ Submit ]")
+	blurredButton = fmt.Sprintf("[ %s ]", common.BlurredStyle.Render("Submit"))
 )
 
 type SessionEditorModel struct {
@@ -48,14 +45,14 @@ func NewSessionEditorModel(db *sql.DB, logger common.Logger) SessionEditorModel 
 		switch i {
 		case 0:
 			t.Prompt = "Name: "
-			t.PromptStyle = blurredStyle
+			t.PromptStyle = common.BlurredStyle
 			t.Focus()
-			t.PromptStyle = focusedStyle
-			t.TextStyle = focusedStyle
+			t.PromptStyle = common.FocusedStyle
+			t.TextStyle = common.FocusedStyle
 			t.CharLimit = 50
 		case 1:
 			t.Prompt = "WorkDir: "
-			t.PromptStyle = blurredStyle
+			t.PromptStyle = common.BlurredStyle
 			t.CharLimit = 100
 		}
 		m.inputs[i] = t
@@ -92,7 +89,7 @@ func (m SessionEditorModel) Update(msg tea.Msg) (SessionEditorModel, tea.Cmd) {
 			m.help, cmd = m.help.Update(msg)
 			return m, cmd
 		case "esc":
-			return m, common.Browse
+			return NewSessionEditorModel(m.db, m.logger), common.Browse
 		case "ctrl+c":
 			m.quitting = true
 			return m, tea.Quit
@@ -113,13 +110,13 @@ func (m SessionEditorModel) Update(msg tea.Msg) (SessionEditorModel, tea.Cmd) {
 			for i := 0; i <= len(m.inputs)-1; i++ {
 				if i == m.focusedIndex {
 					cmds[i] = m.inputs[i].Focus()
-					m.inputs[i].PromptStyle = focusedStyle
-					m.inputs[i].TextStyle = focusedStyle
+					m.inputs[i].PromptStyle = common.FocusedStyle
+					m.inputs[i].TextStyle = common.FocusedStyle
 					continue
 				}
 				m.inputs[i].Blur()
-				m.inputs[i].PromptStyle = blurredStyle
-				m.inputs[i].TextStyle = blurredStyle
+				m.inputs[i].PromptStyle = common.BlurredStyle
+				m.inputs[i].TextStyle = common.BlurredStyle
 			}
 			return m, tea.Batch(cmds...)
 		case "enter":
