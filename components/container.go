@@ -67,23 +67,12 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 		return m, nil
 	case tea.KeyMsg:
-		switch msg.Type {
-		case tea.KeyTab:
+		if msg.String() == "]" {
 			return m, common.NextTab
-		case tea.KeyShiftTab:
+		}
+		if msg.String() == "[" {
 			return m, common.PreviousTab
 		}
-		// if m.newPrefix {
-		// 	m.newPrefix = false
-		// 	switch msg.String() {
-		// 	case "s":
-		// 		return m, common.NewSession
-		// 	}
-		// }
-		// if msg.String() == "b" && m.focusedModel == sessionBrowser {
-		// 	m.focusedModel = windwowBrowser
-		// 	return m, nil
-		// }
 	}
 	var cmds []tea.Cmd
 	switch m.focusedTab {
@@ -104,15 +93,10 @@ func (m Model) View() string {
 		return ""
 	}
 	tabHeader := strings.Builder{}
-	var separator string
+	separator := " "
 	for i, t := range m.tabs {
-		if i == len(m.tabs)-1 {
-			separator = ""
-		} else {
-			separator = " | "
-		}
 		if i == m.focusedTab {
-			tabHeader.WriteString(common.FocusedStyle.Render(t))
+			tabHeader.WriteString(common.FocusedStyle.Render("*" + t))
 		} else {
 			tabHeader.WriteString(common.BlurredStyle.Render(t))
 		}

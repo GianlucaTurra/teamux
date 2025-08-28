@@ -9,16 +9,18 @@ import (
 )
 
 type sessionBrowserKeyMap struct {
-	Up     key.Binding
-	Down   key.Binding
-	Left   key.Binding
-	Right  key.Binding
+	Up   key.Binding
+	Down key.Binding
+	// Left   key.Binding
+	// Right  key.Binding
 	Open   key.Binding
 	Kill   key.Binding
 	Switch key.Binding
 	Help   key.Binding
 	Quit   key.Binding
 	New    key.Binding
+	Edit   key.Binding
+	Delete key.Binding
 }
 
 func (k sessionBrowserKeyMap) ShortHelp() []key.Binding {
@@ -27,8 +29,8 @@ func (k sessionBrowserKeyMap) ShortHelp() []key.Binding {
 
 func (k sessionBrowserKeyMap) FullHelp() [][]key.Binding {
 	return [][]key.Binding{
-		{k.Up, k.Down, k.Left, k.Right, k.Help, k.Quit},
-		{k.Open, k.Switch, k.Kill, k.New},
+		{k.Up, k.Down, k.Help, k.Quit},
+		{k.Open, k.Switch, k.Kill, k.New, k.Edit, k.Delete},
 	}
 }
 
@@ -41,14 +43,14 @@ var keys = sessionBrowserKeyMap{
 		key.WithKeys("down", "j"),
 		key.WithHelp("↓/j", "move down"),
 	),
-	Left: key.NewBinding(
-		key.WithKeys("left", "h"),
-		key.WithHelp("←/h", "move left"),
-	),
-	Right: key.NewBinding(
-		key.WithKeys("right", "l"),
-		key.WithHelp("→/l", "move right"),
-	),
+	// Left: key.NewBinding(
+	// 	key.WithKeys("left", "h"),
+	// 	key.WithHelp("←/h", "move left"),
+	// ),
+	// Right: key.NewBinding(
+	// 	key.WithKeys("right", "l"),
+	// 	key.WithHelp("→/l", "move right"),
+	// ),
 	Open: key.NewBinding(
 		key.WithKeys("space", "enter"),
 		key.WithHelp("enter", "open or switch if open"),
@@ -58,12 +60,20 @@ var keys = sessionBrowserKeyMap{
 		key.WithHelp("s", "switch to session"),
 	),
 	Kill: key.NewBinding(
-		key.WithKeys("kill", "d"),
-		key.WithHelp("d", "kill open session"),
+		key.WithKeys("kill", "K"),
+		key.WithHelp("K", "kill open session"),
+	),
+	Edit: key.NewBinding(
+		key.WithKeys("edit", "e"),
+		key.WithHelp("e", "edit session"),
 	),
 	New: key.NewBinding(
 		key.WithKeys("new", "n"),
 		key.WithHelp("n", "create new session"),
+	),
+	Delete: key.NewBinding(
+		key.WithKeys("delete", "d"),
+		key.WithHelp("d", "delete session"),
 	),
 	Help: key.NewBinding(
 		key.WithKeys("?"),
