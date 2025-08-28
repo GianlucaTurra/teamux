@@ -29,44 +29,15 @@ type (
 		logger       common.Logger
 		help         sessionBrowserHelpModel
 	}
-	SessionDelegate struct{}
 )
-
-func (d SessionDelegate) Height() int                             { return 1 }
-func (d SessionDelegate) Spacing() int                            { return 0 }
-func (d SessionDelegate) Update(_ tea.Msg, _ *list.Model) tea.Cmd { return nil }
-func (d SessionDelegate) Render(w io.Writer, m list.Model, index int, listItem list.Item) {
-	i, ok := listItem.(item)
-	if !ok {
-		return
-	}
-	str := fmt.Sprintf("%d. %s", index+1, i.title)
-	fn := common.ItemStyle.Render
-	if i.open {
-		fn = func(s ...string) string { return common.OpenStyle.Render("* " + strings.Join(s, " ")) }
-	}
-	if index == m.Index() {
-		if i.open {
-			fn = func(s ...string) string {
-				return common.SelectedOpenStyle.Render(">*" + strings.Join(s, " "))
-			}
-		} else {
-			fn = func(s ...string) string {
-				return common.SelectedStyle.Render("> " + strings.Join(s, " "))
-			}
-		}
-	}
-	fmt.Fprint(w, fn(str))
-}
 
 func (s item) FilterValue() string { return "" }
 
 func NewSessionBrowserModel(db *sql.DB, logger common.Logger) SessionBrowserModel {
 	sessions, layouts := loadData(db, logger)
-	l := list.New(layouts, SessionDelegate{}, 100, 10)
-	l.Title = "Available session layouts"
-	l.Styles.Title = common.TitleStyle
+	l := list.New(layouts, sessionDelegate{}, 100, 10)
 	l.SetFilteringEnabled(false)
+	l.SetShowTitle(false)
 	l.SetShowStatusBar(false)
 	l.SetShowHelp(false)
 	l.Styles.PaginationStyle = common.PaginationStyle

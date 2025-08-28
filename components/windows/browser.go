@@ -27,33 +27,14 @@ type (
 		logger   common.Logger
 		help     windowBrowserHelpModel
 	}
-	WindowDelegate struct{}
 )
 
 func (s windowItem) FilterValue() string { return "" }
 
-func (d WindowDelegate) Height() int                             { return 1 }
-func (d WindowDelegate) Spacing() int                            { return 0 }
-func (d WindowDelegate) Update(_ tea.Msg, _ *list.Model) tea.Cmd { return nil }
-func (d WindowDelegate) Render(w io.Writer, m list.Model, index int, listItem list.Item) {
-	i, ok := listItem.(windowItem)
-	if !ok {
-		return
-	}
-	str := fmt.Sprintf("%d. %s", index+1, i.title)
-	fn := common.ItemStyle.Render
-	if index == m.Index() {
-		fn = func(s ...string) string {
-			return common.SelectedStyle.Render("> " + strings.Join(s, " "))
-		}
-	}
-	fmt.Fprint(w, fn(str))
-}
-
 func NewWindowBrowserModel(db *sql.DB, logger common.Logger) WindowBrowserModel {
 	data, layouts := loadWindowData(db, logger)
 	l := list.New(layouts, WindowDelegate{}, 100, 10)
-	l.Title = "Available window layouts"
+	l.SetShowTitle(false)
 	l.Styles.Title = common.TitleStyle
 	l.SetFilteringEnabled(false)
 	l.SetShowStatusBar(false)
