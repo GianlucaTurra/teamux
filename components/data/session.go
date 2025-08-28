@@ -16,6 +16,7 @@ type Session struct {
 	ID               int
 	Name             string
 	WorkingDirectory string
+	Windows          []Window
 }
 
 func NewSession(name string, workingDirectory string, db *sql.DB) Session {
@@ -123,25 +124,32 @@ func (s Session) Switch() error {
 
 // GetAllWindows reads all Window.ID from the association table based on the
 // current Session.ID
-func (s Session) GetAllWindows() ([]int, error) {
-	var windowsIds []int
-	query := "SELECT window_id FROM Session_Windows WHERE session_id = ?"
+func (s *Session) GetAllWindows() ([]Window, error) {
+	var windows []Window
+	// query := "SELECT window_id FROM Session_Windows WHERE session_id = ?"
+	query := `
+		SELECT w.id, w.name, w.working_directory
+		FROM Session_Windows sw
+		JOIN Windows w ON sw.window_id = w.id
+		WHERE sw.session_id = ?
+	`
 	rows, err := s.db.Query(query, s.ID)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
 	for rows.Next() {
-		var id int
-		if err := rows.Scan(&id); err != nil {
+		var window Window
+		if err := rows.Scan(&window.ID, &window.Name, &window.WorkingDirectory); err != nil {
 			return nil, err
 		}
-		windowsIds = append(windowsIds, id)
+		window.db = s.db
+		s.Windows = append(s.Windows, window)
 	}
 	if err = rows.Err(); err != nil {
-		return windowsIds, err
+		return windows, err
 	}
-	return windowsIds, nil
+	return windows, nil
 }
 
 func CountTmuxSessions() string {

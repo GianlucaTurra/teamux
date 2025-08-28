@@ -3,8 +3,6 @@ package windows
 import (
 	"database/sql"
 	"fmt"
-	"io"
-	"strings"
 
 	"github.com/GianlucaTurra/teamux/common"
 	"github.com/GianlucaTurra/teamux/components/data"

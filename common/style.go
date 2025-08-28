@@ -6,7 +6,7 @@ import (
 )
 
 var (
-	TitleStyle        = lipgloss.NewStyle().Bold(true).MarginBottom(1).MarginTop(1)
+	TitleStyle        = lipgloss.NewStyle().MarginBottom(1).MarginTop(1)
 	ItemStyle         = lipgloss.NewStyle().PaddingLeft(2)
 	SelectedStyle     = lipgloss.NewStyle().Foreground(lipgloss.Color("5"))
 	PaginationStyle   = list.DefaultStyles().TitleBar.PaddingLeft(4)
