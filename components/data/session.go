@@ -1,3 +1,5 @@
+// Package data declares the data structure to map db entities and the
+// functions to interact with them
 package data
 
 import (
@@ -124,8 +126,7 @@ func (s Session) Switch() error {
 
 // GetAllWindows reads all Window.ID from the association table based on the
 // current Session.ID
-func (s *Session) GetAllWindows() ([]Window, error) {
-	var windows []Window
+func (s *Session) GetAllWindows() error {
 	// query := "SELECT window_id FROM Session_Windows WHERE session_id = ?"
 	query := `
 		SELECT w.id, w.name, w.working_directory
@@ -135,21 +136,21 @@ func (s *Session) GetAllWindows() ([]Window, error) {
 	`
 	rows, err := s.db.Query(query, s.ID)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	defer rows.Close()
 	for rows.Next() {
 		var window Window
 		if err := rows.Scan(&window.ID, &window.Name, &window.WorkingDirectory); err != nil {
-			return nil, err
+			return err
 		}
 		window.db = s.db
 		s.Windows = append(s.Windows, window)
 	}
 	if err = rows.Err(); err != nil {
-		return windows, err
+		return err
 	}
-	return windows, nil
+	return nil
 }
 
 func CountTmuxSessions() string {
