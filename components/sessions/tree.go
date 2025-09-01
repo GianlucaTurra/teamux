@@ -18,7 +18,7 @@ type (
 		level  int
 		isLast bool
 	}
-	sessionTreeModel struct {
+	SessionTreeModel struct {
 		list   list.Model
 		db     *sql.DB
 		logger common.Logger
@@ -39,7 +39,7 @@ func (d treeDelegate) Render(w io.Writer, m list.Model, index int, listItem list
 	} else {
 		treeSymbol = "├──"
 	}
-	padding := 1 * (i.level * 2)
+	padding := i.level * 2
 	fn := common.ItemStyle.PaddingLeft(padding).Render
 	str := fmt.Sprintf("%s %s", treeSymbol, i.title)
 	fmt.Fprint(w, fn(str))
@@ -47,4 +47,19 @@ func (d treeDelegate) Render(w io.Writer, m list.Model, index int, listItem list
 
 func (s treeItem) FilterValue() string { return "" }
 
-func NewSessionTreeModel(db *sql.DB, logger common.Logger, session data.Session) {}
+func NewSessionTreeModel(db *sql.DB, logger common.Logger, session data.Session) SessionTreeModel {
+	layouts := []list.Item{}
+	if err := session.GetAllWindows(); err != nil {
+		logger.Errorlogger.Printf("Error loading sessions windows %v", err)
+	}
+	layouts = append(layouts, treeItem{session.Name, 0, false})
+	for i, window := range session.Windows {
+		if i == len(session.Windows) {
+			layouts = append(layouts, treeItem{window.Name, 1, true})
+		} else {
+			layouts = append(layouts, treeItem{window.Name, 1, false})
+		}
+	}
+	l := list.New(layouts, treeDelegate{}, 100, 10)
+	return SessionTreeModel{l, db, logger}
+}
