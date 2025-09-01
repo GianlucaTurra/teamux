@@ -1,3 +1,4 @@
+// Package windows declares the UI components to interact with TMUX windows
 package windows
 
 import (

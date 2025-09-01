@@ -146,12 +146,12 @@ func TestGetAllWindows(t *testing.T) {
 	if err := associateWindowsToSession(db); err != nil {
 		t.Errorf("Failed to associate windows to session: %v", err)
 	}
-	windowIds, err := s.GetAllWindows()
+	err = s.GetAllWindows()
 	if err != nil {
 		t.Errorf("Failed to read related windows: %v", err)
 	}
-	if len(windowIds) != 3 {
-		t.Errorf("Expected 3 windows found: %d", len(windowIds))
+	if len(s.Windows) != 3 {
+		t.Errorf("Expected 3 windows found: %d", len(s.Windows))
 	}
 }
 
