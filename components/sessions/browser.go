@@ -86,6 +86,8 @@ func (m SessionBrowserModel) View() string {
 }
 
 func (m SessionBrowserModel) Update(msg tea.Msg) (SessionBrowserModel, tea.Cmd) {
+	var cmds []tea.Cmd
+	var cmd tea.Cmd
 	switch msg := msg.(type) {
 	case common.TmuxSessionsChanged:
 		m.openSessions = data.CountTmuxSessions()
@@ -143,11 +145,14 @@ func (m SessionBrowserModel) Update(msg tea.Msg) (SessionBrowserModel, tea.Cmd) 
 				m.selected = i.title
 			}
 			return m, common.Kill
+		case "j", "k":
+			i, ok := m.list.SelectedItem().(item)
+			if ok {
+				s := m.sessions[i.title]
+				cmds = append(cmds, func() tea.Msg { return common.UpDownMsg{Session: s} })
+			}
 		}
 	}
-	// handle sub-models updates
-	var cmds []tea.Cmd
-	var cmd tea.Cmd
 	m.list, cmd = m.list.Update(msg)
 	cmds = append(cmds, cmd)
 	newHelp, cmd := m.help.Update(msg)

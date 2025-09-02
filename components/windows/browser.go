@@ -1,3 +1,5 @@
+// Package windows declares the UI models to show and interact with saved
+// TMUX window layouts
 package windows
 
 import (
@@ -33,12 +35,10 @@ func NewWindowBrowserModel(db *sql.DB, logger common.Logger) WindowBrowserModel 
 	data, layouts := loadWindowData(db, logger)
 	l := list.New(layouts, WindowDelegate{}, 100, 10)
 	l.SetShowTitle(false)
-	l.Styles.Title = common.TitleStyle
 	l.SetFilteringEnabled(false)
 	l.SetShowStatusBar(false)
 	l.SetShowHelp(false)
 	l.Styles.PaginationStyle = common.PaginationStyle
-	l.Styles.HelpStyle = common.HelpStyle
 	return WindowBrowserModel{
 		list:   l,
 		data:   data,

@@ -17,9 +17,12 @@ type Model struct {
 	tabs             []string
 	sessionContainer sessions.SessionContainerModel
 	windowBrowser    windows.WindowBrowserModel
+	tree             sessions.SessionTreeModel
 	focusedTab       int
 	newPrefix        bool
 	quitting         bool
+	db               *sql.DB
+	logger           common.Logger
 }
 
 const (
@@ -34,12 +37,15 @@ const (
 
 func InitialModel(db *sql.DB, logger common.Logger) Model {
 	return Model{
-		[]string{SESSIONS, WINDOWS},
-		sessions.NewSessionContainerModel(db, logger),
-		windows.NewWindowBrowserModel(db, logger),
-		0,
-		false,
-		false,
+		tabs:             []string{SESSIONS, WINDOWS},
+		sessionContainer: sessions.NewSessionContainerModel(db, logger),
+		windowBrowser:    windows.NewWindowBrowserModel(db, logger),
+		tree:             sessions.NewSessionTreeModel(db, logger, nil),
+		focusedTab:       0,
+		newPrefix:        false,
+		quitting:         false,
+		db:               db,
+		logger:           logger,
 	}
 }
 
@@ -73,6 +79,8 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if msg.String() == "[" {
 			return m, common.PreviousTab
 		}
+	case common.UpDownMsg:
+		m.tree = sessions.NewSessionTreeModel(m.db, m.logger, &msg.Session)
 	}
 	var cmds []tea.Cmd
 	switch m.focusedTab {
@@ -109,9 +117,10 @@ func (m Model) View() string {
 	case windwowBrowser:
 		focusedView = m.windowBrowser.View()
 	}
-	return lipgloss.JoinVertical(
+	left := lipgloss.JoinVertical(
 		lipgloss.Left,
 		common.TitleStyle.PaddingLeft(2).Render(tabHeader.String()),
 		focusedView,
 	)
+	return lipgloss.JoinHorizontal(lipgloss.Top, left, m.tree.View())
 }

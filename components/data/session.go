@@ -1,3 +1,4 @@
+// Package data declares the data structures to map db entities
 package data
 
 import (
@@ -124,9 +125,7 @@ func (s Session) Switch() error {
 
 // GetAllWindows reads all Window.ID from the association table based on the
 // current Session.ID
-func (s *Session) GetAllWindows() ([]Window, error) {
-	var windows []Window
-	// query := "SELECT window_id FROM Session_Windows WHERE session_id = ?"
+func (s *Session) GetAllWindows() error {
 	query := `
 		SELECT w.id, w.name, w.working_directory
 		FROM Session_Windows sw
@@ -135,21 +134,38 @@ func (s *Session) GetAllWindows() ([]Window, error) {
 	`
 	rows, err := s.db.Query(query, s.ID)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	defer rows.Close()
 	for rows.Next() {
 		var window Window
 		if err := rows.Scan(&window.ID, &window.Name, &window.WorkingDirectory); err != nil {
-			return nil, err
+			return err
 		}
 		window.db = s.db
 		s.Windows = append(s.Windows, window)
 	}
 	if err = rows.Err(); err != nil {
-		return windows, err
+		return err
 	}
-	return windows, nil
+	return nil
+}
+
+func GetFirstSession(db *sql.DB) (Session, error) {
+	query := "SELECT s.id, s.name, s.working_directory FROM Sessions s LIMIT 1"
+	row, err := db.Query(query)
+	if err != nil {
+		return Session{}, err
+	}
+	defer row.Close()
+	var session Session
+	for row.Next() {
+		if err := row.Scan(&session.ID, &session.Name, &session.WorkingDirectory); err != nil {
+			return Session{}, err
+		}
+		session.db = db
+	}
+	return session, nil
 }
 
 func CountTmuxSessions() string {
