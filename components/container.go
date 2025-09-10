@@ -72,6 +72,9 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.focusedTab -= 1
 		}
 		return m, nil
+	case common.NewFocus:
+		m.tree = sessions.NewSessionTreeModel(m.db, m.logger, &msg.Session)
+		return m, nil
 	case tea.KeyMsg:
 		if msg.String() == "]" {
 			return m, common.NextTab
@@ -120,5 +123,6 @@ func (m Model) View() string {
 		common.TitleStyle.PaddingLeft(2).Render(tabHeader.String()),
 		focusedView,
 	)
-	return lipgloss.JoinHorizontal(lipgloss.Top, left, m.tree.View())
+	right := lipgloss.NewStyle().Render(m.tree.View())
+	return lipgloss.JoinHorizontal(lipgloss.Top, left, right)
 }
