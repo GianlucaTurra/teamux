@@ -79,8 +79,6 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if msg.String() == "[" {
 			return m, common.PreviousTab
 		}
-	case common.UpDownMsg:
-		m.tree = sessions.NewSessionTreeModel(m.db, m.logger, &msg.Session)
 	}
 	var cmds []tea.Cmd
 	switch m.focusedTab {

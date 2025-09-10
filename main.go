@@ -31,7 +31,6 @@ func main() {
 	}
 	defer db.Close()
 	p := tea.NewProgram(components.InitialModel(db, logger))
-
 	if _, err := p.Run(); err != nil {
 		fmt.Printf("ERROR: %v", err)
 		os.Exit(1)

@@ -102,6 +102,12 @@ func (m SessionBrowserModel) Update(msg tea.Msg) (SessionBrowserModel, tea.Cmd) 
 		return m.killSelected()
 	case common.ReloadMsg:
 		return NewSessionBrowserModel(m.db, m.logger), nil
+	case common.UpDownMsg:
+		i, ok := m.list.SelectedItem().(item)
+		if ok {
+			m.selected = i.title
+		}
+		return m, func() tea.Msg { return common.NewFocus{Session: m.sessions[m.selected]} }
 	case tea.KeyMsg:
 		if m.State == common.Deleting {
 			switch msg.String() {
