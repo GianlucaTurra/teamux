@@ -58,6 +58,12 @@ func loadData(db *sql.DB, logger common.Logger) (map[string]data.Session, []list
 	if err != nil {
 		logger.Fatallogger.Fatalf("Failed to read sessions: %v", err)
 	}
+	for i := range sessions {
+		s := &sessions[i]
+		if err := s.GetPWD(); err != nil {
+			logger.Errorlogger.Printf("Error reading session %s working directory.\n%v", s.Name, err)
+		}
+	}
 	data := make(map[string]data.Session)
 	for _, s := range sessions {
 		layouts = append(layouts, item{title: s.Name, open: s.IsOpen()})
@@ -152,11 +158,7 @@ func (m SessionBrowserModel) Update(msg tea.Msg) (SessionBrowserModel, tea.Cmd) 
 			}
 			return m, common.Kill
 		case "j", "k":
-			i, ok := m.list.SelectedItem().(item)
-			if ok {
-				s := m.sessions[i.title]
-				cmds = append(cmds, func() tea.Msg { return common.UpDownMsg{Session: s} })
-			}
+			cmds = append(cmds, common.UpDown)
 		}
 	}
 	m.list, cmd = m.list.Update(msg)

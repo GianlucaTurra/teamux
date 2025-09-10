@@ -125,6 +125,25 @@ func (s *Session) GetAllWindows() error {
 	return nil
 }
 
+func (s *Session) GetPWD() error {
+	row, err := s.db.Query(selectSessionWorkingDirectory, s.ID)
+	if err != nil {
+		return err
+	}
+	defer row.Close()
+	for row.Next() {
+		if err := row.Scan(&s.WorkingDirectory); err != nil {
+			return err
+		}
+	}
+	checkedPath, err := getPWD(s.WorkingDirectory)
+	if err != nil {
+		return err
+	}
+	s.WorkingDirectory = checkedPath
+	return nil
+}
+
 func GetFirstSession(db *sql.DB) (Session, error) {
 	row, err := db.Query(selectFirstSession)
 	if err != nil {
@@ -139,15 +158,4 @@ func GetFirstSession(db *sql.DB) (Session, error) {
 		session.db = db
 	}
 	return session, nil
-}
-
-func CountTmuxSessions() string {
-	cmd := exec.Command("sh", "-c", "tmux ls | wc -l")
-	var out bytes.Buffer
-	cmd.Stdout = &out
-	if err := cmd.Run(); err != nil {
-		fmt.Printf("Error counting sessions %v", err)
-		return "Error executing tmux ls"
-	}
-	return out.String()
 }

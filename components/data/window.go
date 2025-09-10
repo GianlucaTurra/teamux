@@ -15,6 +15,7 @@ type Window struct {
 	ID               int
 	Name             string
 	WorkingDirectory string
+	Panes            []Pane
 }
 
 func NewWindow(name string, workingDirectory string, db *sql.DB) Window {
@@ -104,4 +105,30 @@ func (w Window) OpenWithTarget(target string) error {
 		fmt.Sprintf("tmux neww -t %s -d -n \"%s\" -c %s", target, w.Name, w.WorkingDirectory),
 	)
 	return cmd.Run()
+}
+
+func (w *Window) GetAllPanes() error {
+	rows, err := w.db.Query(selectWindowPanes, w.ID)
+	if err != nil {
+		return err
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var pane Pane
+		if err := rows.Scan(
+			&pane.ID,
+			&pane.Name,
+			&pane.WorkingDirectory,
+			&pane.splitDirection,
+			&pane.SplitRatio,
+		); err != nil {
+			return err
+		}
+		pane.db = w.db
+		w.Panes = append(w.Panes, pane)
+	}
+	if err := rows.Err(); err != nil {
+		return err
+	}
+	return nil
 }
