@@ -62,20 +62,70 @@ func (p Pane) IsHorizontal() bool { return p.splitDirection == horizontal }
 func (p Pane) Save() error {
 	var query string
 	if p.ID == 0 {
-		query = `
-			INSERT INTO 
-			panes (name, working_directory, split_direction, split_ratio)
-			VALUES (?, ?, ?, ?)
-		`
+		query = insertPane
 	} else {
-		query = `
-			UPDATE panes 
-			SET name = ?, working_directory = ?, split_direction = ?, split_ratio = ? 
-			WHERE id = ?
-		`
+		query = updatePane
 	}
-	if _, err := p.db.Exec(query, p.Name, p.WorkingDirectory, p.splitDirection, p.SplitRatio, p.ID); err != nil {
+	if _, err := p.db.Exec(
+		query,
+		p.Name,
+		p.WorkingDirectory,
+		p.splitDirection,
+		p.SplitRatio,
+		p.ID,
+	); err != nil {
 		return err
 	}
 	return nil
+}
+
+func (p Pane) Delete() error {
+	if _, err := p.db.Exec(deletePaneByID, p.ID); err != nil {
+		return err
+	}
+	return nil
+}
+
+func GetAllPanes(db *sql.DB) ([]Pane, error) {
+	rows, err := db.Query(selectAllPanes)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var panes []Pane
+	for rows.Next() {
+		var p Pane
+		if err := rows.Scan(
+			&p.ID,
+			&p.Name,
+			&p.WorkingDirectory,
+			&p.splitDirection,
+			&p.SplitRatio,
+		); err != nil {
+			return nil, err
+		}
+		p.db = db
+		// TODO: handle this error
+		p.WorkingDirectory, _ = GetPWDorPlaceholder(p.WorkingDirectory)
+		panes = append(panes, p)
+	}
+	return panes, nil
+}
+
+func GetPaneByID(db *sql.DB, id int) (*Pane, error) {
+	row := db.QueryRow(selectPaneByID, id)
+	var p Pane
+	if err := row.Scan(
+		&p.ID,
+		&p.Name,
+		&p.WorkingDirectory,
+		&p.splitDirection,
+		&p.SplitRatio,
+	); err != nil {
+		return nil, err
+	}
+	p.db = db
+	// TODO: handle this error
+	p.WorkingDirectory, _ = GetPWDorPlaceholder(p.WorkingDirectory)
+	return &p, nil
 }
