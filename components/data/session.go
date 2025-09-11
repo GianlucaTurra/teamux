@@ -107,6 +107,9 @@ func (s Session) Switch() error {
 // GetAllWindows reads all Window.ID from the association table based on the
 // current Session.ID
 func (s *Session) GetAllWindows() error {
+	if s.db == nil {
+		return nil
+	}
 	rows, err := s.db.Query(selectAllSessionWindows, s.ID)
 	if err != nil {
 		return err
@@ -137,7 +140,7 @@ func (s *Session) GetPWD() error {
 			return err
 		}
 	}
-	checkedPath, err := getPWD(s.WorkingDirectory)
+	checkedPath, err := GetPWDorPlaceholder(s.WorkingDirectory)
 	if err != nil {
 		return err
 	}

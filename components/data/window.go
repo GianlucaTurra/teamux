@@ -71,13 +71,7 @@ func ReadWindowByID(db *sql.DB, id int) (*Window, error) {
 	if err := row.Scan(&w.ID, &w.Name, &w.WorkingDirectory); err != nil {
 		return nil, err
 	}
-	if strings.TrimSpace(w.WorkingDirectory) == "" {
-		if home, err := os.UserHomeDir(); err != nil {
-			return nil, err
-		} else {
-			w.WorkingDirectory = home
-		}
-	}
+	w.WorkingDirectory, _ = GetPWDorPlaceholder(w.WorkingDirectory)
 	w.db = db
 	return &w, nil
 }
