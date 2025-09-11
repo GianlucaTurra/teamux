@@ -10,28 +10,20 @@ import (
 	"github.com/charmbracelet/lipgloss"
 )
 
-type (
-	treeDelegate struct{}
-	treeItem     struct {
-		title            string
-		workingDirectory string
-		level            int
-		isLast           bool
-	}
-	SessionTreeModel struct {
-		session data.Session
-		db      *sql.DB
-		logger  common.Logger
-	}
-)
-
-func (s treeItem) FilterValue() string { return "" }
+type SessionTreeModel struct {
+	session data.Session
+	db      *sql.DB
+	logger  common.Logger
+}
 
 func NewSessionTreeModel(db *sql.DB, logger common.Logger, session *data.Session) SessionTreeModel {
 	if session == nil {
 		firstSession, err := data.GetFirstSession(db)
 		if err != nil {
 			logger.Errorlogger.Printf("Error loading first session, falling back to default one.\n %v", err)
+		}
+		if err := firstSession.GetPWD(); err != nil {
+			logger.Errorlogger.Printf("Error loading working directory for first session, falling back to blank directory.\n %v", err)
 		}
 		session = &firstSession
 	}
@@ -43,7 +35,7 @@ func NewSessionTreeModel(db *sql.DB, logger common.Logger, session *data.Session
 
 func (m SessionTreeModel) View() string {
 	var items []string
-	title := renderTreeItem("Session Details", "PWD", 0, false)
+	title := renderTreeItem("Session Details", "", 0, false)
 	items = append(items, common.TitleStyle.Foreground(lipgloss.Color("2")).Render(title))
 	items = append(items, renderTreeItem(m.session.Name, m.session.WorkingDirectory, 0, false))
 	for i, w := range m.session.Windows {
@@ -73,9 +65,10 @@ func renderTreeItem(name string, pwd string, level int, isLast bool) string {
 	case 1:
 		prefix = treeSymbol + " "
 	case 2:
-		prefix = "│   " + treeSymbol + " "
+		// prefix = "│   " + treeSymbol + " "
+		prefix = "   " + treeSymbol + " "
 	}
-	nameCol := fmt.Sprintf("%-*s", 24, prefix+name)
+	nameCol := fmt.Sprintf("%-*s", 16, prefix+name)
 	return lipgloss.JoinHorizontal(
 		lipgloss.Top,
 		common.ItemStyle.Render(nameCol),

@@ -28,16 +28,18 @@ type Model struct {
 const (
 	SESSIONS = "Sessions"
 	WINDOWS  = "Windows"
+	PANES    = "Panes"
 )
 
 const (
 	sessionsContainer = iota
 	windwowBrowser
+	panesContainer
 )
 
 func InitialModel(db *sql.DB, logger common.Logger) Model {
 	return Model{
-		tabs:             []string{SESSIONS, WINDOWS},
+		tabs:             []string{SESSIONS, WINDOWS, PANES},
 		sessionContainer: sessions.NewSessionContainerModel(db, logger),
 		windowBrowser:    windows.NewWindowBrowserModel(db, logger),
 		tree:             sessions.NewSessionTreeModel(db, logger, nil),

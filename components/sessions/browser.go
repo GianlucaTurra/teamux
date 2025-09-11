@@ -157,7 +157,7 @@ func (m SessionBrowserModel) Update(msg tea.Msg) (SessionBrowserModel, tea.Cmd) 
 				m.selected = i.title
 			}
 			return m, common.Kill
-		case "j", "k":
+		case "j", "k", "up", "down":
 			cmds = append(cmds, common.UpDown)
 		}
 	}

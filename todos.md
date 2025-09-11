@@ -40,9 +40,10 @@
 
 ## Bugs
 
-- [ ] The first time sessions are loaded the blank pwd is not translated to $HOME
+- [x] The first time sessions are loaded the blank pwd is not translated to $HOME
 - [x] Creating a new session does not save the name nor the pwd
 - [x] Open and not selected session has excessive padding
 - [x] Sessions are loading with the wrong order (should be based on id asc)
-- [ ] Editing a session creates a new session and does not update the existing one
-- [ ] Up and Down keys do not trigger the updownmessage
+- [x] Editing a session creates a new session and does not update the existing one
+- [x] Up and Down keys do not trigger the `UpDownMsg`
+- [ ] Extending the help text pushes the detail to the right
