@@ -4,4 +4,4 @@ CREATE TABLE IF NOT EXISTS Session_Windows (
     window_id INTEGER,
     FOREIGN KEY(session_id) REFERENCES Sessions(id),
     FOREIGN KEY(window_id) REFERENCES Windows(id)
-)
+);

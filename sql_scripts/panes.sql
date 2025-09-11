@@ -4,4 +4,4 @@ CREATE TABLE IF NOT EXISTS Panes (
     working_directory TEXT NOT NULL,
     split_direction INTEGER NOT NULL,
     split_ratio REAL NOT NULL
-)
+);
