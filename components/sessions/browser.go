@@ -58,6 +58,12 @@ func loadData(db *sql.DB, logger common.Logger) (map[string]data.Session, []list
 	if err != nil {
 		logger.Fatallogger.Fatalf("Failed to read sessions: %v", err)
 	}
+	for i := range sessions {
+		s := &sessions[i]
+		if err := s.GetPWD(); err != nil {
+			logger.Errorlogger.Printf("Error reading session %s working directory.\n%v", s.Name, err)
+		}
+	}
 	data := make(map[string]data.Session)
 	for _, s := range sessions {
 		layouts = append(layouts, item{title: s.Name, open: s.IsOpen()})
@@ -86,6 +92,8 @@ func (m SessionBrowserModel) View() string {
 }
 
 func (m SessionBrowserModel) Update(msg tea.Msg) (SessionBrowserModel, tea.Cmd) {
+	var cmds []tea.Cmd
+	var cmd tea.Cmd
 	switch msg := msg.(type) {
 	case common.TmuxSessionsChanged:
 		m.openSessions = data.CountTmuxSessions()
@@ -100,6 +108,12 @@ func (m SessionBrowserModel) Update(msg tea.Msg) (SessionBrowserModel, tea.Cmd) 
 		return m.killSelected()
 	case common.ReloadMsg:
 		return NewSessionBrowserModel(m.db, m.logger), nil
+	case common.UpDownMsg:
+		i, ok := m.list.SelectedItem().(item)
+		if ok {
+			m.selected = i.title
+		}
+		return m, func() tea.Msg { return common.NewFocus{Session: m.sessions[m.selected]} }
 	case tea.KeyMsg:
 		if m.State == common.Deleting {
 			switch msg.String() {
@@ -143,11 +157,10 @@ func (m SessionBrowserModel) Update(msg tea.Msg) (SessionBrowserModel, tea.Cmd) 
 				m.selected = i.title
 			}
 			return m, common.Kill
+		case "j", "k":
+			cmds = append(cmds, common.UpDown)
 		}
 	}
-	// handle sub-models updates
-	var cmds []tea.Cmd
-	var cmd tea.Cmd
 	m.list, cmd = m.list.Update(msg)
 	cmds = append(cmds, cmd)
 	newHelp, cmd := m.help.Update(msg)

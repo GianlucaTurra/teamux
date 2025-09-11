@@ -15,6 +15,7 @@ type Window struct {
 	ID               int
 	Name             string
 	WorkingDirectory string
+	Panes            []Pane
 }
 
 func NewWindow(name string, workingDirectory string, db *sql.DB) Window {
@@ -29,9 +30,9 @@ func NewWindow(name string, workingDirectory string, db *sql.DB) Window {
 func (w Window) Save() error {
 	var query string
 	if w.ID == 0 {
-		query = "INSERT INTO windows (name, working_directory) VALUES (?, ?)"
+		query = insertWindow
 	} else {
-		query = "UPDATE windows SET name = ?, working_directory = ? WHERE id = ?"
+		query = updateWindow
 	}
 	if _, err := w.db.Exec(query, w.Name, w.WorkingDirectory, w.ID); err != nil {
 		return err
@@ -40,8 +41,7 @@ func (w Window) Save() error {
 }
 
 func ReadAllWindows(db *sql.DB) ([]Window, error) {
-	query := "SELECT id, name, working_directory FROM windows"
-	rows, err := db.Query(query)
+	rows, err := db.Query(selectAllWindows)
 	if err != nil {
 		return nil, err
 	}
@@ -59,15 +59,14 @@ func ReadAllWindows(db *sql.DB) ([]Window, error) {
 				w.WorkingDirectory = home
 			}
 		}
-		w.db = db // Assign the db to the window
+		w.db = db
 		windows = append(windows, w)
 	}
 	return windows, nil
 }
 
 func ReadWindowByID(db *sql.DB, id int) (*Window, error) {
-	query := "SELECT id, name, working_directory FROM windows WHERE id = ?"
-	row := db.QueryRow(query, id)
+	row := db.QueryRow(selectWindowByID, id)
 	var w Window
 	if err := row.Scan(&w.ID, &w.Name, &w.WorkingDirectory); err != nil {
 		return nil, err
@@ -79,13 +78,12 @@ func ReadWindowByID(db *sql.DB, id int) (*Window, error) {
 			w.WorkingDirectory = home
 		}
 	}
-	w.db = db // Assign the db to the window
+	w.db = db
 	return &w, nil
 }
 
 func (w Window) Delete() error {
-	query := "DELETE FROM windows WHERE id = ?"
-	if _, err := w.db.Exec(query, w.ID); err != nil {
+	if _, err := w.db.Exec(deleteWindowByID, w.ID); err != nil {
 		return err
 	}
 	return nil
@@ -107,4 +105,30 @@ func (w Window) OpenWithTarget(target string) error {
 		fmt.Sprintf("tmux neww -t %s -d -n \"%s\" -c %s", target, w.Name, w.WorkingDirectory),
 	)
 	return cmd.Run()
+}
+
+func (w *Window) GetAllPanes() error {
+	rows, err := w.db.Query(selectWindowPanes, w.ID)
+	if err != nil {
+		return err
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var pane Pane
+		if err := rows.Scan(
+			&pane.ID,
+			&pane.Name,
+			&pane.WorkingDirectory,
+			&pane.splitDirection,
+			&pane.SplitRatio,
+		); err != nil {
+			return err
+		}
+		pane.db = w.db
+		w.Panes = append(w.Panes, pane)
+	}
+	if err := rows.Err(); err != nil {
+		return err
+	}
+	return nil
 }

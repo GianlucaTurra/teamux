@@ -15,8 +15,11 @@
 
 - [x] manage properly the log
 - [x] manage properly the db connection
-- [ ] create a log file in the .local directories
-- [ ] handle help text for each component
+- [ ] ~~create a log file in the .local directories~~
+- [x] handle help text for each component
+- [x] create a log file in the temp directory
+- [ ] display a message box for errors and confirms
+- [ ] during editing or creation the tree should not be displayed
 
 ## Session creation
 
@@ -24,8 +27,8 @@
 - [x] create a input component
 - [x] generate sql from input
 - [x] handle key bindings in the vim way
-- [ ] allow to return to browser without creating a new session
-- [ ] clear input after pressing enter or returning to browser
+- [x] allow to return to browser without creating a new session
+- [x] clear input after pressing enter or returning to browser
 
 ## DB
 
@@ -34,3 +37,12 @@
 ## Errors
 
 - [ ] display a simple message to the user to notify errors
+
+## Bugs
+
+- [ ] The first time sessions are loaded the blank pwd is not translated to $HOME
+- [x] Creating a new session does not save the name nor the pwd
+- [x] Open and not selected session has excessive padding
+- [x] Sessions are loading with the wrong order (should be based on id asc)
+- [ ] Editing a session creates a new session and does not update the existing one
+- [ ] Up and Down keys do not trigger the updownmessage

@@ -13,17 +13,20 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 )
 
-var (
-	cursorStyle   = common.FocusedStyle
-	focusedButton = common.FocusedStyle.Render("[ Submit ]")
-	blurredButton = fmt.Sprintf("[ %s ]", common.BlurredStyle.Render("Submit"))
+var cursorStyle = common.FocusedStyle
+
+const (
+	creating = iota
+	editing
+	quitting
 )
 
 type SessionEditorModel struct {
 	focusedIndex int
 	inputs       []textinput.Model
 	cursorMode   cursor.Mode
-	quitting     bool
+	mode         int
+	session      *data.Session
 	error        error
 	db           *sql.DB
 	logger       common.Logger
@@ -36,6 +39,7 @@ func NewSessionEditorModel(db *sql.DB, logger common.Logger) SessionEditorModel 
 		db:     db,
 		logger: logger,
 		help:   newSessionEditorHelpModel(),
+		mode:   creating,
 	}
 	var t textinput.Model
 	for i := range m.inputs {
@@ -70,6 +74,8 @@ func (m SessionEditorModel) Update(msg tea.Msg) (SessionEditorModel, tea.Cmd) {
 		m.error = msg.Err
 		return m, nil
 	case common.EditMsg:
+		m.mode = editing
+		m.session = &msg.Session
 		m.inputs[0].SetValue(msg.Session.Name)
 		var homeDir string
 		var err error
@@ -91,7 +97,7 @@ func (m SessionEditorModel) Update(msg tea.Msg) (SessionEditorModel, tea.Cmd) {
 		case "esc":
 			return NewSessionEditorModel(m.db, m.logger), common.Browse
 		case "ctrl+c":
-			m.quitting = true
+			m.mode = quitting
 			return m, common.Quit
 		case "tab", "shift+tab":
 			s := msg.String()
@@ -120,13 +126,18 @@ func (m SessionEditorModel) Update(msg tea.Msg) (SessionEditorModel, tea.Cmd) {
 			}
 			return m, tea.Batch(cmds...)
 		case "enter":
-			if m.focusedIndex == len(m.inputs) {
-				m.focusedIndex = 0
-				for i := range m.inputs {
-					m.inputs[i].Reset()
-				}
-				return m, m.createSession()
+			var cmd tea.Cmd
+			switch m.mode {
+			case creating:
+				cmd = m.createSession()
+			case editing:
+				cmd = m.editSession()
 			}
+			m.focusedIndex = 0
+			for i := range m.inputs {
+				m.inputs[i].Reset()
+			}
+			return m, cmd
 		}
 	}
 	cmd := m.updateInputs(msg)
@@ -144,6 +155,19 @@ func (m *SessionEditorModel) updateInputs(msg tea.Msg) tea.Cmd {
 func (m *SessionEditorModel) createSession() tea.Cmd {
 	session := data.NewSession(m.inputs[0].Value(), m.inputs[1].Value(), m.db)
 	if err := session.Save(); err != nil {
+		m.error = err
+		m.logger.Errorlogger.Printf("Error saving session: %v", err)
+		return func() tea.Msg { return common.InputErrMsg{Err: err} }
+	}
+	m.error = nil
+	return common.Created
+}
+
+func (m *SessionEditorModel) editSession() tea.Cmd {
+	m.session.Name = m.inputs[0].Value()
+	m.session.WorkingDirectory = m.inputs[1].Value()
+	if err := m.session.Save(); err != nil {
+		m.error = err
 		m.logger.Errorlogger.Printf("Error saving session: %v", err)
 		return func() tea.Msg { return common.InputErrMsg{Err: err} }
 	}
@@ -152,7 +176,7 @@ func (m *SessionEditorModel) createSession() tea.Cmd {
 }
 
 func (m SessionEditorModel) View() string {
-	if m.quitting {
+	if m.mode == quitting {
 		return ""
 	}
 	var b strings.Builder
@@ -162,11 +186,7 @@ func (m SessionEditorModel) View() string {
 			b.WriteRune('\n')
 		}
 	}
-	button := &blurredButton
-	if m.focusedIndex == len(m.inputs) {
-		button = &focusedButton
-	}
-	fmt.Fprintf(&b, "\n\n%s\n\n", *button)
+	fmt.Fprintf(&b, "\n\n")
 	if m.error != nil {
 		fmt.Fprintf(&b, "\nError: %v", m.error)
 	}

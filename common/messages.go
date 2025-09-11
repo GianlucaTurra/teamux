@@ -19,4 +19,6 @@ type (
 	QuitMsg             struct{}
 	NextTabMsg          struct{}
 	PreviousTabMsg      struct{}
+	UpDownMsg           struct{}
+	NewFocus            struct{ Session data.Session }
 )

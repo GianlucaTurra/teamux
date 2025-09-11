@@ -3,12 +3,9 @@
 package data
 
 import (
-	"bytes"
 	"database/sql"
 	"fmt"
-	"os"
 	"os/exec"
-	"strings"
 
 	_ "github.com/mattn/go-sqlite3"
 )
@@ -34,9 +31,9 @@ func NewSession(name string, workingDirectory string, db *sql.DB) Session {
 func (s Session) Save() error {
 	var query string
 	if s.ID == 0 {
-		query = "INSERT INTO sessions (name, working_directory) VALUES (?, ?)"
+		query = insertSessions
 	} else {
-		query = "UPDATE sessions SET name = ?, working_directory = ? WHERE id = ?"
+		query = updateSession
 	}
 	if _, err := s.db.Exec(query, s.Name, s.WorkingDirectory, s.ID); err != nil {
 		return err
@@ -47,8 +44,7 @@ func (s Session) Save() error {
 // ReadAllSessions from the database. If a session is missing the working
 // directory it is set to the user's home directory.
 func ReadAllSessions(db *sql.DB) ([]Session, error) {
-	query := "SELECT id, name, working_directory FROM sessions"
-	rows, err := db.Query(query)
+	rows, err := db.Query(selectAllSessions)
 	if err != nil {
 		return nil, err
 	}
@@ -56,44 +52,28 @@ func ReadAllSessions(db *sql.DB) ([]Session, error) {
 	var sessions []Session
 	for rows.Next() {
 		var s Session
-		if err := rows.Scan(&s.ID, &s.Name, &s.WorkingDirectory); err != nil {
+		if err := rows.Scan(&s.ID, &s.Name); err != nil {
 			return nil, err
 		}
-		if strings.TrimSpace(s.WorkingDirectory) == "" {
-			if home, err := os.UserHomeDir(); err != nil {
-				return nil, err
-			} else {
-				s.WorkingDirectory = home
-			}
-		}
-		s.db = db // Assign the db to the session
+		s.db = db
 		sessions = append(sessions, s)
 	}
 	return sessions, nil
 }
 
 func ReadSessionByID(db *sql.DB, id int) (*Session, error) {
-	query := "SELECT id, name, working_directory FROM sessions WHERE id = ?"
-	row := db.QueryRow(query, id)
+	row := db.QueryRow(selectSessionByID, id)
 	var s Session
 	if err := row.Scan(&s.ID, &s.Name, &s.WorkingDirectory); err != nil {
 		return nil, err
 	}
-	if strings.TrimSpace(s.WorkingDirectory) == "" {
-		if home, err := os.UserHomeDir(); err != nil {
-			return nil, err
-		} else {
-			s.WorkingDirectory = home
-		}
-	}
-	s.db = db // Assign the db to the session
+	s.db = db
 	return &s, nil
 }
 
 // Delete removes a session from the database by its ID.
 func (s Session) Delete() error {
-	query := "DELETE FROM sessions WHERE id = ?"
-	if _, err := s.db.Exec(query, s.ID); err != nil {
+	if _, err := s.db.Exec(deleteSessionByID, s.ID); err != nil {
 		return err
 	}
 	return nil
@@ -127,14 +107,7 @@ func (s Session) Switch() error {
 // GetAllWindows reads all Window.ID from the association table based on the
 // current Session.ID
 func (s *Session) GetAllWindows() error {
-	// query := "SELECT window_id FROM Session_Windows WHERE session_id = ?"
-	query := `
-		SELECT w.id, w.name, w.working_directory
-		FROM Session_Windows sw
-		JOIN Windows w ON sw.window_id = w.id
-		WHERE sw.session_id = ?
-	`
-	rows, err := s.db.Query(query, s.ID)
+	rows, err := s.db.Query(selectAllSessionWindows, s.ID)
 	if err != nil {
 		return err
 	}
@@ -153,13 +126,37 @@ func (s *Session) GetAllWindows() error {
 	return nil
 }
 
-func CountTmuxSessions() string {
-	cmd := exec.Command("sh", "-c", "tmux ls | wc -l")
-	var out bytes.Buffer
-	cmd.Stdout = &out
-	if err := cmd.Run(); err != nil {
-		fmt.Printf("Error counting sessions %v", err)
-		return "Error executing tmux ls"
+func (s *Session) GetPWD() error {
+	row, err := s.db.Query(selectSessionWorkingDirectory, s.ID)
+	if err != nil {
+		return err
 	}
-	return out.String()
+	defer row.Close()
+	for row.Next() {
+		if err := row.Scan(&s.WorkingDirectory); err != nil {
+			return err
+		}
+	}
+	checkedPath, err := getPWD(s.WorkingDirectory)
+	if err != nil {
+		return err
+	}
+	s.WorkingDirectory = checkedPath
+	return nil
+}
+
+func GetFirstSession(db *sql.DB) (Session, error) {
+	row, err := db.Query(selectFirstSession)
+	if err != nil {
+		return Session{}, err
+	}
+	defer row.Close()
+	var session Session
+	for row.Next() {
+		if err := row.Scan(&session.ID, &session.Name, &session.WorkingDirectory); err != nil {
+			return Session{}, err
+		}
+		session.db = db
+	}
+	return session, nil
 }
