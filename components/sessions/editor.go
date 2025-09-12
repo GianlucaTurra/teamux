@@ -3,7 +3,6 @@ package sessions
 import (
 	"database/sql"
 	"fmt"
-	"os"
 	"strings"
 
 	"github.com/GianlucaTurra/teamux/common"
@@ -73,16 +72,11 @@ func (m SessionEditorModel) Update(msg tea.Msg) (SessionEditorModel, tea.Cmd) {
 	case common.InputErrMsg:
 		m.error = msg.Err
 		return m, nil
-	case common.EditMsg:
+	case common.EditSMsg:
 		m.mode = editing
 		m.session = &msg.Session
 		m.inputs[0].SetValue(msg.Session.Name)
-		var homeDir string
-		var err error
-		if homeDir, err = os.UserHomeDir(); err != nil {
-			m.logger.Errorlogger.Printf("Error getting home directory: %v", err)
-		}
-		if homeDir == msg.Session.WorkingDirectory {
+		if msg.Session.WorkingDirectory == "$HOME" {
 			m.inputs[1].SetValue("")
 		} else {
 			m.inputs[1].SetValue(msg.Session.WorkingDirectory)
@@ -106,11 +100,11 @@ func (m SessionEditorModel) Update(msg tea.Msg) (SessionEditorModel, tea.Cmd) {
 			} else {
 				m.focusedIndex++
 			}
-			if m.focusedIndex > len(m.inputs) {
-				m.focusedIndex = 0
+			if m.focusedIndex == -1 {
+				m.focusedIndex = len(m.inputs) - 1
 			}
-			if m.focusedIndex < 0 {
-				m.focusedIndex = len(m.inputs)
+			if m.focusedIndex == len(m.inputs) {
+				m.focusedIndex = 0
 			}
 			cmds := make([]tea.Cmd, len(m.inputs))
 			for i := 0; i <= len(m.inputs)-1; i++ {
@@ -160,7 +154,7 @@ func (m *SessionEditorModel) createSession() tea.Cmd {
 		return func() tea.Msg { return common.InputErrMsg{Err: err} }
 	}
 	m.error = nil
-	return common.Created
+	return common.SessionCreated
 }
 
 func (m *SessionEditorModel) editSession() tea.Cmd {
@@ -172,7 +166,8 @@ func (m *SessionEditorModel) editSession() tea.Cmd {
 		return func() tea.Msg { return common.InputErrMsg{Err: err} }
 	}
 	m.error = nil
-	return common.Created
+	// TODO: this is a little confusing
+	return common.SessionCreated
 }
 
 func (m SessionEditorModel) View() string {

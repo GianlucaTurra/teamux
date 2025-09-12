@@ -4,6 +4,7 @@ package panes
 
 import (
 	"database/sql"
+	"fmt"
 
 	"github.com/GianlucaTurra/teamux/common"
 	"github.com/GianlucaTurra/teamux/components/data"
@@ -69,11 +70,46 @@ func (m PaneBrowserModel) Init() tea.Cmd {
 func (m PaneBrowserModel) Update(msg tea.Msg) (PaneBrowserModel, tea.Cmd) {
 	var cmd tea.Cmd
 	switch msg := msg.(type) {
+	case common.ReloadMsg:
+		return NewPaneBrowserModel(m.db, m.logger), nil
+	case common.DeleteMsg:
+		return m.deleteSelected()
 	case tea.KeyMsg:
+		if m.state == common.Deleting {
+			switch msg.String() {
+			case "y":
+				m.state = common.Browsing
+				return m, common.Delete
+			default:
+				m.state = common.Browsing
+				return m, nil
+			}
+		}
 		switch msg.String() {
+		case "enter", " ":
+			i, ok := m.list.SelectedItem().(paneItem)
+			if ok {
+				m.selected = i.title
+			}
+			return m, func() tea.Msg { return common.OpenMsg{} }
 		case "q", "esc", "ctrl+c":
 			m.state = common.Quitting
 			return m, tea.Quit
+		case "d":
+			i, ok := m.list.SelectedItem().(paneItem)
+			if ok {
+				m.selected = i.title
+			}
+			m.state = common.Deleting
+			return m, nil
+		case "e":
+			i, ok := m.list.SelectedItem().(paneItem)
+			if ok {
+				m.selected = i.title
+			}
+			return m, func() tea.Msg { return common.EditP(m.data[m.selected]) }
+		case "n":
+			return m, func() tea.Msg { return common.NewPaneMsg{} }
 		}
 	}
 	m.list, cmd = m.list.Update(msg)
@@ -83,6 +119,8 @@ func (m PaneBrowserModel) Update(msg tea.Msg) (PaneBrowserModel, tea.Cmd) {
 
 func (m PaneBrowserModel) View() string {
 	switch m.state {
+	case common.Deleting:
+		return fmt.Sprintf("You are about to delete %s, press y to confirm", m.selected)
 	case common.Quitting:
 		return ""
 	}
@@ -90,4 +128,14 @@ func (m PaneBrowserModel) View() string {
 		lipgloss.Top,
 		m.list.View(),
 	)
+}
+
+func (m PaneBrowserModel) deleteSelected() (PaneBrowserModel, tea.Cmd) {
+	p := m.data[m.selected]
+	if err := p.Delete(); err != nil {
+		m.logger.Errorlogger.Printf("Failed to delete pane %s: %v", m.selected, err)
+		// TODO: actually do something
+		return m, nil
+	}
+	return m, func() tea.Msg { return common.ReloadMsg{} }
 }

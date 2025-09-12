@@ -12,7 +12,7 @@ type Pane struct {
 	Name             string
 	WorkingDirectory string
 	splitDirection   int
-	SplitRatio       float32
+	SplitRatio       int
 }
 
 const (
@@ -23,7 +23,7 @@ const (
 func NewVerticalPane(
 	name string,
 	workingDirectory string,
-	splitRatio float32,
+	splitRatio int,
 	db *sql.DB,
 ) Pane {
 	return newPane(name, workingDirectory, vertical, splitRatio, db)
@@ -32,7 +32,7 @@ func NewVerticalPane(
 func NewHorizontalPane(
 	name string,
 	workingDirectory string,
-	splitRatio float32,
+	splitRatio int,
 	db *sql.DB,
 ) Pane {
 	return newPane(name, workingDirectory, horizontal, splitRatio, db)
@@ -42,7 +42,7 @@ func newPane(
 	name string,
 	workingDirectory string,
 	splitDirection int,
-	splitRatio float32,
+	splitRatio int,
 	db *sql.DB,
 ) Pane {
 	return Pane{
@@ -85,6 +85,10 @@ func (p Pane) Delete() error {
 	}
 	return nil
 }
+
+func (p *Pane) SetHorizontal() { p.splitDirection = horizontal }
+
+func (p *Pane) SetVertical() { p.splitDirection = vertical }
 
 func GetAllPanes(db *sql.DB) ([]Pane, error) {
 	rows, err := db.Query(selectAllPanes)

@@ -17,8 +17,8 @@ import (
 type Model struct {
 	tabs             []string
 	sessionContainer sessions.SessionContainerModel
-	windowBrowser    windows.WindowBrowserModel
-	paneBrowserModel panes.PaneBrowserModel
+	windowContainer  windows.WindowContainerModel
+	paneContainer    panes.PaneContainerModel
 	tree             sessions.SessionTreeModel
 	focusedTab       int
 	newPrefix        bool
@@ -36,15 +36,15 @@ const (
 const (
 	sessionsContainer = iota
 	windwowBrowser
-	panesContainer
+	paneContainer
 )
 
 func InitialModel(db *sql.DB, logger common.Logger) Model {
 	return Model{
 		tabs:             []string{SESSIONS, WINDOWS, PANES},
 		sessionContainer: sessions.NewSessionContainerModel(db, logger),
-		windowBrowser:    windows.NewWindowBrowserModel(db, logger),
-		paneBrowserModel: panes.NewPaneBrowserModel(db, logger),
+		windowContainer:  windows.NewWindowContainerModel(db, logger),
+		paneContainer:    panes.NewPaneContainerModel(db, logger),
 		tree:             sessions.NewSessionTreeModel(db, logger, nil),
 		focusedTab:       0,
 		newPrefix:        false,
@@ -95,12 +95,12 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.sessionContainer = newInput
 		cmds = append(cmds, cmd)
 	case windwowBrowser:
-		newList, cmd := m.windowBrowser.Update(msg)
-		m.windowBrowser = newList
+		newList, cmd := m.windowContainer.Update(msg)
+		m.windowContainer = newList
 		cmds = append(cmds, cmd)
-	case panesContainer:
-		newPanes, cmd := m.paneBrowserModel.Update(msg)
-		m.paneBrowserModel = newPanes
+	case paneContainer:
+		newPanes, cmd := m.paneContainer.Update(msg)
+		m.paneContainer = newPanes
 		cmds = append(cmds, cmd)
 	}
 	return m, tea.Batch(cmds...)
@@ -125,9 +125,9 @@ func (m Model) View() string {
 	case sessionsContainer:
 		focusedView = m.sessionContainer.View()
 	case windwowBrowser:
-		focusedView = m.windowBrowser.View()
-	case panesContainer:
-		focusedView = m.paneBrowserModel.View()
+		focusedView = m.windowContainer.View()
+	case paneContainer:
+		focusedView = m.paneContainer.View()
 	}
 	left := lipgloss.JoinVertical(
 		lipgloss.Left,

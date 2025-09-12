@@ -139,7 +139,7 @@ func (m SessionBrowserModel) Update(msg tea.Msg) (SessionBrowserModel, tea.Cmd) 
 			if i, ok := m.list.SelectedItem().(item); ok {
 				m.selected = i.title
 			}
-			return m, func() tea.Msg { return common.Edit(m.sessions[m.selected]) }
+			return m, func() tea.Msg { return common.EditS(m.sessions[m.selected]) }
 		case "s":
 			if i, ok := m.list.SelectedItem().(item); ok {
 				m.selected = i.title
@@ -157,6 +157,8 @@ func (m SessionBrowserModel) Update(msg tea.Msg) (SessionBrowserModel, tea.Cmd) 
 				m.selected = i.title
 			}
 			return m, common.Kill
+		case "n":
+			return m, common.NewWindow
 		case "j", "k", "up", "down":
 			cmds = append(cmds, common.UpDown)
 		}

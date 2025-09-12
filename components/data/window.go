@@ -92,6 +92,15 @@ func (w Window) Open() error {
 	return cmd.Run()
 }
 
+func (w Window) Kill() error {
+	cmd := exec.Command(
+		"sh",
+		"-c",
+		fmt.Sprintf("tmux kill-window -t \"%s\"", w.Name),
+	)
+	return cmd.Run()
+}
+
 func (w Window) OpenWithTarget(target string) error {
 	cmd := exec.Command(
 		"sh",

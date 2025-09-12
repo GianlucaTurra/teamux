@@ -84,6 +84,11 @@ func (m WindowBrowserModel) Update(msg tea.Msg) (WindowBrowserModel, tea.Cmd) {
 		return m.openSelected()
 	case common.DeleteMsg:
 		return m.deleteSelected()
+	case common.KillMsg:
+		return m.killSelected()
+	case common.ReloadMsg:
+		return NewWindowBrowserModel(m.db, m.logger), nil
+	// global keybindings
 	case tea.KeyMsg:
 		if m.state == common.Deleting {
 			switch msg.String() {
@@ -122,6 +127,14 @@ func (m WindowBrowserModel) Update(msg tea.Msg) (WindowBrowserModel, tea.Cmd) {
 				m.selected = i.title
 			}
 			return m, common.Kill
+		case "e":
+			i, ok := m.list.SelectedItem().(windowItem)
+			if ok {
+				m.selected = i.title
+			}
+			return m, func() tea.Msg { return common.EditW(m.data[m.selected]) }
+		case "n":
+			return m, func() tea.Msg { return common.NewWindowMsg{} }
 		}
 	}
 	// handle sub-models updates
@@ -154,6 +167,15 @@ func (m WindowBrowserModel) deleteSelected() (WindowBrowserModel, tea.Cmd) {
 	w := m.data[m.selected]
 	if err := w.Delete(); err != nil {
 		m.logger.Errorlogger.Printf("Error deleting window %s: %v", m.selected, err)
+		return m, func() tea.Msg { return common.TmuxErr{} }
+	}
+	return m, func() tea.Msg { return common.ReloadMsg{} }
+}
+
+func (m WindowBrowserModel) killSelected() (WindowBrowserModel, tea.Cmd) {
+	w := m.data[m.selected]
+	if err := w.Kill(); err != nil {
+		m.logger.Errorlogger.Printf("Error killing window %s: %v", m.selected, err)
 		return m, func() tea.Msg { return common.TmuxErr{} }
 	}
 	return m, func() tea.Msg { return common.ReloadMsg{} }

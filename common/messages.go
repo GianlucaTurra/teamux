@@ -10,12 +10,17 @@ type (
 	SwitchMsg           struct{}
 	NewSessionMsg       struct{}
 	NewWindowMsg        struct{}
+	NewPaneMsg          struct{}
 	KillMsg             struct{}
 	InputErrMsg         struct{ Err error }
 	ReloadMsg           struct{}
 	SessionCreatedMsg   struct{}
+	WindowCreatedMsg    struct{}
+	PaneCreatedMsg      struct{}
 	BrowseMsg           struct{}
-	EditMsg             struct{ Session data.Session }
+	EditSMsg            struct{ Session data.Session }
+	EditWMsg            struct{ Window data.Window }
+	EditPMsg            struct{ Pane data.Pane }
 	QuitMsg             struct{}
 	NextTabMsg          struct{}
 	PreviousTabMsg      struct{}
