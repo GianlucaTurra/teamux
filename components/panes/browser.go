@@ -74,6 +74,8 @@ func (m PaneBrowserModel) Update(msg tea.Msg) (PaneBrowserModel, tea.Cmd) {
 		return NewPaneBrowserModel(m.db, m.logger), nil
 	case common.DeleteMsg:
 		return m.deleteSelected()
+	case common.OpenMsg:
+		return m.openSelected()
 	case tea.KeyMsg:
 		if m.state == common.Deleting {
 			switch msg.String() {
@@ -128,6 +130,15 @@ func (m PaneBrowserModel) View() string {
 		lipgloss.Top,
 		m.list.View(),
 	)
+}
+
+func (m PaneBrowserModel) openSelected() (PaneBrowserModel, tea.Cmd) {
+	p := m.data[m.selected]
+	if err := p.Open(nil); err != nil {
+		m.logger.Errorlogger.Printf("Failed to open pane %s: %v", m.selected, err)
+		return m, nil
+	}
+	return m, func() tea.Msg { return common.ReloadMsg{} }
 }
 
 func (m PaneBrowserModel) deleteSelected() (PaneBrowserModel, tea.Cmd) {

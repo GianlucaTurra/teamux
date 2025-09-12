@@ -2,6 +2,9 @@ package data
 
 import (
 	"database/sql"
+	"fmt"
+	"os/exec"
+	"strconv"
 
 	_ "github.com/mattn/go-sqlite3"
 )
@@ -89,6 +92,31 @@ func (p Pane) Delete() error {
 func (p *Pane) SetHorizontal() { p.splitDirection = horizontal }
 
 func (p *Pane) SetVertical() { p.splitDirection = vertical }
+
+func (p Pane) Open(target *string) error {
+	var tmuxCommand string
+	if target != nil {
+		tmuxCommand = fmt.Sprintf(
+			"tmux split-window -t \"%s\" -l %s -c \"%s\"",
+			*target,
+			strconv.Itoa(p.SplitRatio)+"%",
+			p.WorkingDirectory,
+		)
+	} else {
+		tmuxCommand = fmt.Sprintf(
+			"tmux split-window -l %s -c \"%s\"",
+			strconv.Itoa(p.SplitRatio)+"%",
+			p.WorkingDirectory,
+		)
+	}
+	if p.IsHorizontal() {
+		tmuxCommand += " -h"
+	} else {
+		tmuxCommand += " -v"
+	}
+	cmd := exec.Command("sh", "-c", tmuxCommand)
+	return cmd.Run()
+}
 
 func GetAllPanes(db *sql.DB) ([]Pane, error) {
 	rows, err := db.Query(selectAllPanes)
