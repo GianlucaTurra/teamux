@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/GianlucaTurra/teamux/common"
+	"github.com/GianlucaTurra/teamux/components/panes"
 	"github.com/GianlucaTurra/teamux/components/sessions"
 	"github.com/GianlucaTurra/teamux/components/windows"
 	tea "github.com/charmbracelet/bubbletea"
@@ -17,6 +18,7 @@ type Model struct {
 	tabs             []string
 	sessionContainer sessions.SessionContainerModel
 	windowBrowser    windows.WindowBrowserModel
+	paneBrowserModel panes.PaneBrowserModel
 	tree             sessions.SessionTreeModel
 	focusedTab       int
 	newPrefix        bool
@@ -42,6 +44,7 @@ func InitialModel(db *sql.DB, logger common.Logger) Model {
 		tabs:             []string{SESSIONS, WINDOWS, PANES},
 		sessionContainer: sessions.NewSessionContainerModel(db, logger),
 		windowBrowser:    windows.NewWindowBrowserModel(db, logger),
+		paneBrowserModel: panes.NewPaneBrowserModel(db, logger),
 		tree:             sessions.NewSessionTreeModel(db, logger, nil),
 		focusedTab:       0,
 		newPrefix:        false,
@@ -95,6 +98,10 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		newList, cmd := m.windowBrowser.Update(msg)
 		m.windowBrowser = newList
 		cmds = append(cmds, cmd)
+	case panesContainer:
+		newPanes, cmd := m.paneBrowserModel.Update(msg)
+		m.paneBrowserModel = newPanes
+		cmds = append(cmds, cmd)
 	}
 	return m, tea.Batch(cmds...)
 }
@@ -119,6 +126,8 @@ func (m Model) View() string {
 		focusedView = m.sessionContainer.View()
 	case windwowBrowser:
 		focusedView = m.windowBrowser.View()
+	case panesContainer:
+		focusedView = m.paneBrowserModel.View()
 	}
 	left := lipgloss.JoinVertical(
 		lipgloss.Left,
