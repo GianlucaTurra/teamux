@@ -79,6 +79,7 @@ func (m WindowBrowserModel) View() string {
 }
 
 func (m WindowBrowserModel) Update(msg tea.Msg) (WindowBrowserModel, tea.Cmd) {
+	var cmds []tea.Cmd
 	switch msg := msg.(type) {
 	case common.OpenMsg:
 		return m.openSelected()
@@ -88,6 +89,12 @@ func (m WindowBrowserModel) Update(msg tea.Msg) (WindowBrowserModel, tea.Cmd) {
 		return m.killSelected()
 	case common.ReloadMsg:
 		return NewWindowBrowserModel(m.db, m.logger), nil
+	case common.UpDownMsg:
+		i, ok := m.list.SelectedItem().(windowItem)
+		if ok {
+			m.selected = i.title
+		}
+		return m, func() tea.Msg { return common.NewWFocus{Window: m.data[m.selected]} }
 	// global keybindings
 	case tea.KeyMsg:
 		if m.state == common.Deleting {
@@ -135,10 +142,11 @@ func (m WindowBrowserModel) Update(msg tea.Msg) (WindowBrowserModel, tea.Cmd) {
 			return m, func() tea.Msg { return common.EditW(m.data[m.selected]) }
 		case "n":
 			return m, func() tea.Msg { return common.NewWindowMsg{} }
+		case "j", "k", "up", "down":
+			cmds = append(cmds, common.UpDown)
 		}
 	}
 	// handle sub-models updates
-	var cmds []tea.Cmd
 	var cmd tea.Cmd
 	m.list, cmd = m.list.Update(msg)
 	cmds = append(cmds, cmd)

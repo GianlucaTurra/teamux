@@ -135,3 +135,17 @@ func (w *Window) GetAllPanes() error {
 	}
 	return nil
 }
+
+func GetFirstWindow(db *sql.DB) (Window, error) {
+	row := db.QueryRow(selectFirstWindow)
+	var window Window
+	if err := row.Scan(
+		&window.ID,
+		&window.Name,
+		&window.WorkingDirectory,
+	); err != nil {
+		return window, err
+	}
+	window.db = db
+	return window, nil
+}

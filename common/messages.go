@@ -25,5 +25,6 @@ type (
 	NextTabMsg          struct{}
 	PreviousTabMsg      struct{}
 	UpDownMsg           struct{}
-	NewFocus            struct{ Session data.Session }
+	NewSFocus           struct{ Session data.Session }
+	NewWFocus           struct{ Window data.Window }
 )

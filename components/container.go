@@ -19,7 +19,8 @@ type Model struct {
 	sessionContainer sessions.SessionContainerModel
 	windowContainer  windows.WindowContainerModel
 	paneContainer    panes.PaneContainerModel
-	tree             sessions.SessionTreeModel
+	sessionDetail    sessions.SessionDetailModel
+	windowDetail     windows.WindowDetailModel
 	focusedTab       int
 	newPrefix        bool
 	quitting         bool
@@ -39,13 +40,20 @@ const (
 	paneContainer
 )
 
+const (
+	sessionDetail = iota
+	windowDetail
+	paneDetail
+)
+
 func InitialModel(db *sql.DB, logger common.Logger) Model {
 	return Model{
 		tabs:             []string{SESSIONS, WINDOWS, PANES},
 		sessionContainer: sessions.NewSessionContainerModel(db, logger),
 		windowContainer:  windows.NewWindowContainerModel(db, logger),
 		paneContainer:    panes.NewPaneContainerModel(db, logger),
-		tree:             sessions.NewSessionTreeModel(db, logger, nil),
+		sessionDetail:    sessions.NewSessionTreeModel(db, logger, nil),
+		windowDetail:     windows.NewWindowDetailModel(db, logger, nil),
 		focusedTab:       0,
 		newPrefix:        false,
 		quitting:         false,
@@ -77,8 +85,11 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.focusedTab -= 1
 		}
 		return m, nil
-	case common.NewFocus:
-		m.tree = sessions.NewSessionTreeModel(m.db, m.logger, &msg.Session)
+	case common.NewSFocus:
+		m.sessionDetail = sessions.NewSessionTreeModel(m.db, m.logger, &msg.Session)
+		return m, nil
+	case common.NewWFocus:
+		m.windowDetail = windows.NewWindowDetailModel(m.db, m.logger, &msg.Window)
 		return m, nil
 	case tea.KeyMsg:
 		if msg.String() == "]" {
@@ -121,11 +132,14 @@ func (m Model) View() string {
 		tabHeader.WriteString(separator)
 	}
 	var focusedView string
+	var currentDetail string
 	switch m.focusedTab {
 	case sessionsContainer:
 		focusedView = m.sessionContainer.View()
+		currentDetail = m.sessionDetail.View()
 	case windwowBrowser:
 		focusedView = m.windowContainer.View()
+		currentDetail = m.windowDetail.View()
 	case paneContainer:
 		focusedView = m.paneContainer.View()
 	}
@@ -134,6 +148,6 @@ func (m Model) View() string {
 		common.TitleStyle.PaddingLeft(2).Render(tabHeader.String()),
 		focusedView,
 	)
-	right := lipgloss.NewStyle().Render(m.tree.View())
+	right := lipgloss.NewStyle().Render(currentDetail)
 	return lipgloss.JoinHorizontal(lipgloss.Top, left, right)
 }

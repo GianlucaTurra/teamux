@@ -113,7 +113,7 @@ func (m SessionBrowserModel) Update(msg tea.Msg) (SessionBrowserModel, tea.Cmd) 
 		if ok {
 			m.selected = i.title
 		}
-		return m, func() tea.Msg { return common.NewFocus{Session: m.sessions[m.selected]} }
+		return m, func() tea.Msg { return common.NewSFocus{Session: m.sessions[m.selected]} }
 	case tea.KeyMsg:
 		if m.State == common.Deleting {
 			switch msg.String() {

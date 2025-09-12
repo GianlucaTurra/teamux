@@ -29,4 +29,9 @@ const (
 		JOIN panes p ON wp.pane_id = p.id
 		WHERE w.id = ?
 	`
+	selectFirstWindow = `
+		SELECT id, name, working_directory
+		FROM windows
+		LIMIT 1
+	`
 )

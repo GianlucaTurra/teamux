@@ -10,13 +10,13 @@ import (
 	"github.com/charmbracelet/lipgloss"
 )
 
-type SessionTreeModel struct {
+type SessionDetailModel struct {
 	session data.Session
 	db      *sql.DB
 	logger  common.Logger
 }
 
-func NewSessionTreeModel(db *sql.DB, logger common.Logger, session *data.Session) SessionTreeModel {
+func NewSessionTreeModel(db *sql.DB, logger common.Logger, session *data.Session) SessionDetailModel {
 	if session == nil {
 		firstSession, err := data.GetFirstSession(db)
 		if err != nil {
@@ -30,10 +30,10 @@ func NewSessionTreeModel(db *sql.DB, logger common.Logger, session *data.Session
 	if err := session.GetAllWindows(); err != nil {
 		logger.Errorlogger.Printf("Error loading windows for session %s\n%v", session.Name, err)
 	}
-	return SessionTreeModel{*session, db, logger}
+	return SessionDetailModel{*session, db, logger}
 }
 
-func (m SessionTreeModel) View() string {
+func (m SessionDetailModel) View() string {
 	var items []string
 	title := renderTreeItem("Session Details", "", 0, false)
 	items = append(items, common.TitleStyle.Foreground(lipgloss.Color("2")).Render(title))
@@ -76,10 +76,10 @@ func renderTreeItem(name string, pwd string, level int, isLast bool) string {
 	)
 }
 
-func (m SessionTreeModel) Update(msg tea.Msg) (SessionTreeModel, tea.Cmd) {
+func (m SessionDetailModel) Update(msg tea.Msg) (SessionDetailModel, tea.Cmd) {
 	return m, nil
 }
 
-func (m SessionTreeModel) Init() tea.Cmd {
+func (m SessionDetailModel) Init() tea.Cmd {
 	return nil
 }
