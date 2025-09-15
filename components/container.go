@@ -21,6 +21,7 @@ type Model struct {
 	paneContainer    panes.PaneContainerModel
 	sessionDetail    sessions.SessionDetailModel
 	windowDetail     windows.WindowDetailModel
+	messageBox       MessageBoxModel
 	focusedTab       int
 	newPrefix        bool
 	quitting         bool
@@ -54,6 +55,7 @@ func InitialModel(db *sql.DB, logger common.Logger) Model {
 		paneContainer:    panes.NewPaneContainerModel(db, logger),
 		sessionDetail:    sessions.NewSessionTreeModel(db, logger, nil),
 		windowDetail:     windows.NewWindowDetailModel(db, logger, nil),
+		messageBox:       NewMessageBoxModel(),
 		focusedTab:       0,
 		newPrefix:        false,
 		quitting:         false,
@@ -98,6 +100,9 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if msg.String() == "[" {
 			return m, common.PreviousTab
 		}
+	case common.OutputMsg:
+		m.messageBox, _ = m.messageBox.Update(msg)
+		return m, nil
 	}
 	var cmds []tea.Cmd
 	switch m.focusedTab {
@@ -149,5 +154,9 @@ func (m Model) View() string {
 		focusedView,
 	)
 	right := lipgloss.NewStyle().Render(currentDetail)
-	return lipgloss.JoinHorizontal(lipgloss.Top, left, right)
+	return lipgloss.JoinVertical(
+		lipgloss.Left,
+		m.messageBox.View(),
+		lipgloss.JoinHorizontal(lipgloss.Top, left, right),
+	)
 }

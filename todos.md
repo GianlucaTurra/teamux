@@ -16,7 +16,7 @@
 - [x] handle key bindings in the vim way
 - [x] allow to return to browser without creating a new session
 - [x] clear input after pressing enter or returning to browser
-- [ ] allow to open related windows
+- [ ] allow to show related windows
 - [ ] allow to manage related windows
 
 ## General
@@ -26,7 +26,7 @@
 - [ ] ~~create a log file in the .local directories~~
 - [x] handle help text for each component
 - [x] create a log file in the temp directory
-- [ ] display a message box for errors and confirms
+- [x] display a message box for errors and confirms
 - [ ] ~~during editing or creation the tree should not be displayed~~
 
 ## Window Management

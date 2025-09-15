@@ -7,3 +7,11 @@ const (
 	Deleting
 	Quitting
 )
+
+type Severity int
+
+const (
+	Info Severity = iota
+	Warning
+	Error
+)

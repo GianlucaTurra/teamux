@@ -4,7 +4,6 @@ import "github.com/GianlucaTurra/teamux/components/data"
 
 type (
 	TmuxSessionsChanged struct{}
-	TmuxErr             struct{}
 	OpenMsg             struct{}
 	DeleteMsg           struct{}
 	SwitchMsg           struct{}
@@ -27,4 +26,8 @@ type (
 	UpDownMsg           struct{}
 	NewSFocus           struct{ Session data.Session }
 	NewWFocus           struct{ Window data.Window }
+	OutputMsg           struct {
+		Err      error
+		Severity Severity
+	}
 )

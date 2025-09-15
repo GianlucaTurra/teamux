@@ -177,16 +177,16 @@ func (m SessionBrowserModel) switchToSelected() (SessionBrowserModel, tea.Cmd) {
 	if s.IsOpen() {
 		if err := s.Switch(); err != nil {
 			m.logger.Errorlogger.Printf("Error switching to session %s: %v", m.selected, err)
-			return m, func() tea.Msg { return common.TmuxErr{} }
+			return m, func() tea.Msg { return common.OutputMsg{Err: err, Severity: common.Error} }
 		}
 	}
 	if err := m.sessions[m.selected].Open(); err != nil {
 		m.logger.Errorlogger.Printf("Error opening session %s: %v", m.selected, err)
-		return m, func() tea.Msg { return common.TmuxErr{} }
+		return m, func() tea.Msg { return common.OutputMsg{Err: err, Severity: common.Error} }
 	}
 	if err := s.Switch(); err != nil {
 		m.logger.Errorlogger.Printf("Error switching to session %s: %v", m.selected, err)
-		return m, func() tea.Msg { return common.TmuxErr{} }
+		return m, func() tea.Msg { return common.OutputMsg{Err: err, Severity: common.Error} }
 	}
 	m.refreshItems()
 	return m, func() tea.Msg { return common.TmuxSessionsChanged{} }
@@ -202,7 +202,7 @@ func (m SessionBrowserModel) openSelected() (SessionBrowserModel, tea.Cmd) {
 	s := m.sessions[m.selected]
 	if err := s.Open(); err != nil {
 		m.logger.Errorlogger.Printf("Error opening session %s: %v", s.Name, err)
-		return m, func() tea.Msg { return common.TmuxErr{} }
+		return m, func() tea.Msg { return common.OutputMsg{Err: err, Severity: common.Error} }
 	}
 	m.refreshItems()
 	return m, func() tea.Msg { return common.TmuxSessionsChanged{} }
@@ -214,7 +214,7 @@ func (m SessionBrowserModel) deleteSelected() (SessionBrowserModel, tea.Cmd) {
 	s := m.sessions[m.selected]
 	if err := s.Delete(); err != nil {
 		m.logger.Errorlogger.Printf("Error deleting session %s: %v", m.selected, err)
-		return m, func() tea.Msg { return common.TmuxErr{} }
+		return m, func() tea.Msg { return common.OutputMsg{Err: err, Severity: common.Error} }
 	}
 	return m, func() tea.Msg { return common.ReloadMsg{} }
 }
@@ -227,7 +227,7 @@ func (m SessionBrowserModel) killSelected() (SessionBrowserModel, tea.Cmd) {
 	}
 	if err := s.Close(); err != nil {
 		m.logger.Errorlogger.Printf("Error killing session %s: %v", m.selected, err)
-		return m, func() tea.Msg { return common.TmuxErr{} }
+		return m, func() tea.Msg { return common.OutputMsg{Err: err, Severity: common.Error} }
 	}
 	m.refreshItems()
 	return m, func() tea.Msg { return common.TmuxSessionsChanged{} }
