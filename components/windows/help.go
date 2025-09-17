@@ -1,11 +1,9 @@
 package windows
 
 import (
-	"github.com/GianlucaTurra/teamux/common"
 	"github.com/charmbracelet/bubbles/help"
 	"github.com/charmbracelet/bubbles/key"
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
 )
 
 type windowBrowserKeyMap struct {
@@ -20,13 +18,13 @@ type windowBrowserKeyMap struct {
 }
 
 func (k windowBrowserKeyMap) ShortHelp() []key.Binding {
-	return []key.Binding{k.Help, k.Quit}
+	return []key.Binding{}
 }
 
 func (k windowBrowserKeyMap) FullHelp() [][]key.Binding {
 	return [][]key.Binding{
-		{k.Up, k.Down, k.Left, k.Right, k.Help, k.Quit},
-		{k.Open, k.New},
+		{k.Up, k.Down},
+		{k.New, k.Open},
 	}
 }
 
@@ -39,14 +37,6 @@ var windowBrowserKeys = windowBrowserKeyMap{
 		key.WithKeys("down", "j"),
 		key.WithHelp("↓/j", "move down"),
 	),
-	Left: key.NewBinding(
-		key.WithKeys("left", "h"),
-		key.WithHelp("←/h", "move left"),
-	),
-	Right: key.NewBinding(
-		key.WithKeys("right", "l"),
-		key.WithHelp("→/l", "move right"),
-	),
 	Open: key.NewBinding(
 		key.WithKeys("space", "enter"),
 		key.WithHelp("enter/space", "open"),
@@ -55,37 +45,31 @@ var windowBrowserKeys = windowBrowserKeyMap{
 		key.WithKeys("new", "n"),
 		key.WithHelp("n", "create new window"),
 	),
-	Help: key.NewBinding(
-		key.WithKeys("?"),
-		key.WithHelp("?", "toggle help"),
-	),
-	Quit: key.NewBinding(
-		key.WithKeys("q", "esc", "ctrl+c"),
-		key.WithHelp("q", "quit"),
-	),
 }
 
-type windowBrowserHelpModel struct {
-	keys       windowBrowserKeyMap
-	help       help.Model
-	inputStyle lipgloss.Style
-	quitting   bool
+type WindowBrowserHelpModel struct {
+	keys     windowBrowserKeyMap
+	Help     help.Model
+	quitting bool
 }
 
-func newWindowBrowserHelpModel() windowBrowserHelpModel {
-	return windowBrowserHelpModel{
-		keys:       windowBrowserKeys,
-		help:       help.New(),
-		inputStyle: common.HelpStyle,
+func NewWindowBrowserHelpModel() WindowBrowserHelpModel {
+	return WindowBrowserHelpModel{
+		keys: windowBrowserKeys,
+		Help: help.New(),
 	}
 }
 
-func (m windowBrowserHelpModel) Update(msg tea.Msg) (windowBrowserHelpModel, tea.Cmd) {
+func (m WindowBrowserHelpModel) ViewHelp() string {
+	return m.Help.View(m.keys)
+}
+
+func (m WindowBrowserHelpModel) Update(msg tea.Msg) (WindowBrowserHelpModel, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch {
 		case key.Matches(msg, m.keys.Help):
-			m.help.ShowAll = !m.help.ShowAll
+			m.Help.ShowAll = !m.Help.ShowAll
 		case key.Matches(msg, m.keys.Quit):
 			m.quitting = true
 		}
@@ -93,13 +77,13 @@ func (m windowBrowserHelpModel) Update(msg tea.Msg) (windowBrowserHelpModel, tea
 	return m, nil
 }
 
-func (m windowBrowserHelpModel) View() string {
+func (m WindowBrowserHelpModel) View() string {
 	if m.quitting {
 		return ""
 	}
-	return m.help.View(m.keys)
+	return m.Help.View(m.keys)
 }
 
-func (m windowBrowserHelpModel) Init() tea.Cmd {
+func (m WindowBrowserHelpModel) Init() tea.Cmd {
 	return nil
 }

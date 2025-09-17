@@ -30,4 +30,5 @@ type (
 		Err      error
 		Severity Severity
 	}
+	ShowFullHelpMsg struct{ Component ComponentWithHelp }
 )

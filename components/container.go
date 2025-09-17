@@ -22,6 +22,7 @@ type Model struct {
 	sessionDetail    sessions.SessionDetailModel
 	windowDetail     windows.WindowDetailModel
 	messageBox       MessageBoxModel
+	helpModel        HelpModel
 	focusedTab       int
 	newPrefix        bool
 	quitting         bool
@@ -56,6 +57,7 @@ func InitialModel(db *sql.DB, logger common.Logger) Model {
 		sessionDetail:    sessions.NewSessionTreeModel(db, logger, nil),
 		windowDetail:     windows.NewWindowDetailModel(db, logger, nil),
 		messageBox:       NewMessageBoxModel(),
+		helpModel:        NewHelpModel(),
 		focusedTab:       0,
 		newPrefix:        false,
 		quitting:         false,
@@ -119,6 +121,9 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.paneContainer = newPanes
 		cmds = append(cmds, cmd)
 	}
+	newHelp, cmd := m.helpModel.Update(msg)
+	m.helpModel = newHelp
+	cmds = append(cmds, cmd)
 	return m, tea.Batch(cmds...)
 }
 
@@ -156,7 +161,8 @@ func (m Model) View() string {
 	right := lipgloss.NewStyle().Render(currentDetail)
 	return lipgloss.JoinVertical(
 		lipgloss.Left,
-		m.messageBox.View(),
 		lipgloss.JoinHorizontal(lipgloss.Top, left, right),
+		m.messageBox.View(),
+		m.helpModel.View(),
 	)
 }

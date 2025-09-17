@@ -15,3 +15,14 @@ const (
 	Warning
 	Error
 )
+
+type ComponentWithHelp int
+
+const (
+	PaneBrowser ComponentWithHelp = iota
+	PaneEditor
+	WindowBrowser
+	WindowEditor
+	SessionBrowser
+	SessionEditor
+)

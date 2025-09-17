@@ -25,7 +25,6 @@ type (
 		data     map[string]data.Window
 		db       *sql.DB
 		logger   common.Logger
-		help     windowBrowserHelpModel
 	}
 )
 
@@ -45,7 +44,6 @@ func NewWindowBrowserModel(db *sql.DB, logger common.Logger) WindowBrowserModel 
 		state:  common.Browsing,
 		logger: logger,
 		db:     db,
-		help:   newWindowBrowserHelpModel(),
 	}
 }
 
@@ -74,7 +72,6 @@ func (m WindowBrowserModel) View() string {
 	return lipgloss.JoinVertical(
 		lipgloss.Top,
 		m.list.View(),
-		m.help.View(),
 	)
 }
 
@@ -144,14 +141,13 @@ func (m WindowBrowserModel) Update(msg tea.Msg) (WindowBrowserModel, tea.Cmd) {
 			return m, func() tea.Msg { return common.NewWindowMsg{} }
 		case "j", "k", "up", "down":
 			cmds = append(cmds, common.UpDown)
+		case "?":
+			return m, func() tea.Msg { return common.ShowFullHelpMsg{Component: common.WindowBrowser} }
 		}
 	}
 	// handle sub-models updates
 	var cmd tea.Cmd
 	m.list, cmd = m.list.Update(msg)
-	cmds = append(cmds, cmd)
-	newHelp, cmd := m.help.Update(msg)
-	m.help = newHelp
 	cmds = append(cmds, cmd)
 	return m, tea.Batch(cmds...)
 }

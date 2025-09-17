@@ -29,7 +29,6 @@ type SessionEditorModel struct {
 	error        error
 	db           *sql.DB
 	logger       common.Logger
-	help         sessionEditorHelpModel
 }
 
 func NewSessionEditorModel(db *sql.DB, logger common.Logger) SessionEditorModel {
@@ -37,7 +36,6 @@ func NewSessionEditorModel(db *sql.DB, logger common.Logger) SessionEditorModel 
 		inputs: make([]textinput.Model, 2),
 		db:     db,
 		logger: logger,
-		help:   newSessionEditorHelpModel(),
 		mode:   creating,
 	}
 	var t textinput.Model
@@ -84,10 +82,6 @@ func (m SessionEditorModel) Update(msg tea.Msg) (SessionEditorModel, tea.Cmd) {
 		return m, nil
 	case tea.KeyMsg:
 		switch msg.String() {
-		case "?":
-			var cmd tea.Cmd
-			m.help, cmd = m.help.Update(msg)
-			return m, cmd
 		case "esc":
 			return NewSessionEditorModel(m.db, m.logger), common.Browse
 		case "ctrl+c":
@@ -185,6 +179,5 @@ func (m SessionEditorModel) View() string {
 	if m.error != nil {
 		fmt.Fprintf(&b, "\nError: %v", m.error)
 	}
-	fmt.Fprintf(&b, "%s", m.help.View())
 	return b.String()
 }

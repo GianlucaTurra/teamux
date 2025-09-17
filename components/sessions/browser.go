@@ -25,7 +25,6 @@ type (
 		State        common.State
 		db           *sql.DB
 		logger       common.Logger
-		help         sessionBrowserHelpModel
 	}
 )
 
@@ -39,7 +38,6 @@ func NewSessionBrowserModel(db *sql.DB, logger common.Logger) SessionBrowserMode
 	l.SetShowStatusBar(false)
 	l.SetShowHelp(false)
 	l.Styles.PaginationStyle = common.PaginationStyle
-	l.Styles.HelpStyle = common.HelpStyle
 	openSessions := data.CountTmuxSessions()
 	return SessionBrowserModel{
 		list:         l,
@@ -48,7 +46,6 @@ func NewSessionBrowserModel(db *sql.DB, logger common.Logger) SessionBrowserMode
 		State:        common.Browsing,
 		logger:       logger,
 		db:           db,
-		help:         newSessionBrowserHelpModel(),
 	}
 }
 
@@ -87,7 +84,6 @@ func (m SessionBrowserModel) View() string {
 		lipgloss.Top,
 		m.list.View(),
 		fmt.Sprintf("Open sessions: %s", m.openSessions),
-		m.help.View(),
 	)
 }
 
@@ -161,12 +157,11 @@ func (m SessionBrowserModel) Update(msg tea.Msg) (SessionBrowserModel, tea.Cmd) 
 			return m, common.NewWindow
 		case "j", "k", "up", "down":
 			cmds = append(cmds, common.UpDown)
+		case "?":
+			return m, func() tea.Msg { return common.ShowFullHelpMsg{Component: common.SessionBrowser} }
 		}
 	}
 	m.list, cmd = m.list.Update(msg)
-	cmds = append(cmds, cmd)
-	newHelp, cmd := m.help.Update(msg)
-	m.help = newHelp
 	cmds = append(cmds, cmd)
 	return m, tea.Batch(cmds...)
 }
