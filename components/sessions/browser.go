@@ -135,7 +135,10 @@ func (m SessionBrowserModel) Update(msg tea.Msg) (SessionBrowserModel, tea.Cmd) 
 			if i, ok := m.list.SelectedItem().(item); ok {
 				m.selected = i.title
 			}
-			return m, func() tea.Msg { return common.EditS(m.sessions[m.selected]) }
+			return m, tea.Batch(
+				func() tea.Msg { return common.ShowFullHelpMsg{Component: common.SessionEditor} },
+				func() tea.Msg { return common.EditS(m.sessions[m.selected]) },
+			)
 		case "s":
 			if i, ok := m.list.SelectedItem().(item); ok {
 				m.selected = i.title

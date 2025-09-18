@@ -24,3 +24,4 @@ func Quit() tea.Msg                { return QuitMsg{} }
 func NextTab() tea.Msg             { return NextTabMsg{} }
 func PreviousTab() tea.Msg         { return PreviousTabMsg{} }
 func UpDown() tea.Msg              { return UpDownMsg{} }
+func ClearHelp() tea.Msg           { return ClearHelpMsg{} }

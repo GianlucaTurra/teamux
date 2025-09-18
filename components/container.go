@@ -81,14 +81,14 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		} else {
 			m.focusedTab += 1
 		}
-		return m, nil
+		return m, common.ClearHelp
 	case common.PreviousTabMsg:
 		if m.focusedTab == 0 {
 			m.focusedTab = len(m.tabs) - 1
 		} else {
 			m.focusedTab -= 1
 		}
-		return m, nil
+		return m, common.ClearHelp
 	case common.NewSFocus:
 		m.sessionDetail = sessions.NewSessionTreeModel(m.db, m.logger, &msg.Session)
 		return m, nil

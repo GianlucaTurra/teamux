@@ -58,6 +58,18 @@ func NewSessionEditorHelpModel() SessionEditorHelpModel {
 	}
 }
 
+func (m SessionEditorHelpModel) ViewHelp() string {
+	return m.Help.View(m.keys)
+}
+
+func (m *SessionEditorHelpModel) ToggleHelp() {
+	m.Help.ShowAll = !m.Help.ShowAll
+}
+
+func (m *SessionEditorHelpModel) HideHelp() {
+	m.Help.ShowAll = false
+}
+
 func (m SessionEditorHelpModel) Update(msg tea.Msg) (SessionEditorHelpModel, tea.Cmd) {
 	return m, nil
 }

@@ -40,11 +40,14 @@
 
 ## Errors
 
-- [ ] display a simple message to the user to notify errors
+- [x] display a simple message to the user to notify errors
 
 ## Help
 
-- [ ] Help text should have his own separate component
+- [x] Help text should have his own separate component
+- [x] When changing tab the help text should change too
+- [x] After changing to windows you have to press `?` again to see the help text
+- [x] In the editor the help text should be shown by default
 
 ## Bugs
 
@@ -54,5 +57,5 @@
 - [x] Sessions are loading with the wrong order (should be based on id asc)
 - [x] Editing a session creates a new session and does not update the existing one
 - [x] Up and Down keys do not trigger the `UpDownMsg`
-- [ ] Extending the help text pushes the detail to the right
+- [x] Extending the help text pushes the detail to the right
 - [x] Editor don't cycle properly at the end or start

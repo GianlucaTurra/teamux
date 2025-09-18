@@ -80,6 +80,14 @@ func (m SessionBrowserHelpModel) ViewHelp() string {
 	return m.Help.View(keys)
 }
 
+func (m *SessionBrowserHelpModel) ToggleHelp() {
+	m.Help.ShowAll = !m.Help.ShowAll
+}
+
+func (m *SessionBrowserHelpModel) HideHelp() {
+	m.Help.ShowAll = false
+}
+
 func (m SessionBrowserHelpModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, nil
 }

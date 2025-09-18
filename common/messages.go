@@ -31,4 +31,5 @@ type (
 		Severity Severity
 	}
 	ShowFullHelpMsg struct{ Component ComponentWithHelp }
+	ClearHelpMsg    struct{}
 )

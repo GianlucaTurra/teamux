@@ -56,29 +56,17 @@ func (m HelpModel) Init() tea.Cmd {
 
 func (m HelpModel) Update(msg tea.Msg) (HelpModel, tea.Cmd) {
 	switch msg := msg.(type) {
+	case common.ClearHelpMsg:
+		m.sessionBrowserHelp.HideHelp()
+		m.sessionEditorHelp.HideHelp()
+		m.windowBrowserHelp.HideHelp()
 	case common.ShowFullHelpMsg:
 		m.displayedHelp = msg.Component
-		return m, nil
-	case tea.KeyMsg:
-		switch {
-		case key.Matches(msg, m.basicKeys.help):
-			switch m.displayedHelp {
-			case common.SessionBrowser:
-				newSessionBrowserHelp := m.sessionBrowserHelp
-				newSessionBrowserHelp.Help.ShowAll = !newSessionBrowserHelp.Help.ShowAll
-				m.sessionBrowserHelp = newSessionBrowserHelp
-			// case common.SessionEditor:
-			// 	newSessionEditorHelp := m.sessionEditorHelp
-			// 	newSessionEditorHelp.Help.ShowAll = !newSessionEditorHelp.Help.ShowAll
-			// 	m.sessionEditorHelp = newSessionEditorHelp
-			case common.WindowBrowser:
-				newWindowBrowserHelp := m.windowBrowserHelp
-				newWindowBrowserHelp.Help.ShowAll = !newWindowBrowserHelp.Help.ShowAll
-				m.windowBrowserHelp = newWindowBrowserHelp
-			}
-			return m, nil
-		default:
-			return m, nil
+		switch m.displayedHelp {
+		case common.SessionBrowser:
+			m.sessionBrowserHelp.ToggleHelp()
+		case common.WindowBrowser:
+			m.windowBrowserHelp.ToggleHelp()
 		}
 	}
 	return m, nil
@@ -89,6 +77,8 @@ func (m HelpModel) View() string {
 	switch m.displayedHelp {
 	case common.SessionBrowser:
 		fullHelp = m.sessionBrowserHelp.ViewHelp()
+	case common.SessionEditor:
+		fullHelp = m.sessionEditorHelp.ViewHelp()
 	case common.WindowBrowser:
 		fullHelp = m.windowBrowserHelp.ViewHelp()
 	}

@@ -64,6 +64,14 @@ func (m WindowBrowserHelpModel) ViewHelp() string {
 	return m.Help.View(m.keys)
 }
 
+func (m *WindowBrowserHelpModel) ToggleHelp() {
+	m.Help.ShowAll = !m.Help.ShowAll
+}
+
+func (m *WindowBrowserHelpModel) HideHelp() {
+	m.Help.ShowAll = false
+}
+
 func (m WindowBrowserHelpModel) Update(msg tea.Msg) (WindowBrowserHelpModel, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
