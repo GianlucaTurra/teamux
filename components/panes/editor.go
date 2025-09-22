@@ -25,7 +25,6 @@ type PaneEditorModel struct {
 	cursorMode   cursor.Mode
 	mode         int
 	pane         *data.Pane
-	error        error
 	db           *sql.DB
 	logger       common.Logger
 }
@@ -74,9 +73,6 @@ func (m PaneEditorModel) Init() tea.Cmd {
 
 func (m PaneEditorModel) Update(msg tea.Msg) (PaneEditorModel, tea.Cmd) {
 	switch msg := msg.(type) {
-	case common.InputErrMsg:
-		m.error = msg.Err
-		return m, nil
 	case common.EditPMsg:
 		m.mode = editing
 		m.pane = &msg.Pane
@@ -157,10 +153,6 @@ func (m PaneEditorModel) View() string {
 		}
 	}
 	fmt.Fprintf(&b, "\n\n")
-	if m.error != nil {
-		fmt.Fprintf(&b, "\nError: %v", m.error)
-	}
-	// fmt.Fprintf(&b, "%s", m.help.View())
 	return b.String()
 }
 
@@ -177,7 +169,6 @@ func (m *PaneEditorModel) createPane() tea.Cmd {
 	ratio, err := strconv.Atoi(m.inputs[3].Value())
 	if err != nil {
 		m.logger.Errorlogger.Printf("Error converting ratio to int: %v", err)
-		m.error = err
 	}
 	switch strings.ToLower(m.inputs[2].Value()) {
 	case "h":
@@ -195,15 +186,13 @@ func (m *PaneEditorModel) createPane() tea.Cmd {
 			m.db,
 		)
 	default:
-		m.error = fmt.Errorf("invalid direction: %s", m.inputs[2].Value())
-		return func() tea.Msg { return common.InputErrMsg{Err: m.error} }
+		err := fmt.Errorf("invalid direction: %s", m.inputs[2].Value())
+		return func() tea.Msg { return common.OutputMsg{Err: err, Severity: common.Error} }
 	}
 	if err := pane.Save(); err != nil {
-		m.error = err
 		m.logger.Errorlogger.Printf("Error saving pane: %v", err)
-		return func() tea.Msg { return common.InputErrMsg{Err: err} }
+		return func() tea.Msg { return common.OutputMsg{Err: err, Severity: common.Error} }
 	}
-	m.error = nil
 	return common.PaneCreated
 }
 
@@ -214,23 +203,21 @@ func (m *PaneEditorModel) editPane() tea.Cmd {
 	case "v":
 		m.pane.SetVertical()
 	default:
-		m.error = fmt.Errorf("invalid direction: %s", m.inputs[2].Value())
-		return func() tea.Msg { return common.InputErrMsg{Err: m.error} }
+		err := fmt.Errorf("invalid direction: %s", m.inputs[2].Value())
+		return func() tea.Msg { return common.OutputMsg{Err: err, Severity: common.Error} }
 	}
 	ratio, err := strconv.Atoi(m.inputs[3].Value())
 	if err != nil {
 		m.logger.Errorlogger.Printf("Error converting ratio to int: %v", err)
-		return func() tea.Msg { return common.InputErrMsg{Err: err} }
+		return func() tea.Msg { return common.OutputMsg{Err: err, Severity: common.Error} }
 	}
 	m.pane.Name = m.inputs[0].Value()
 	m.pane.WorkingDirectory = m.inputs[1].Value()
 	m.pane.SplitRatio = ratio
 	if err := m.pane.Save(); err != nil {
 		m.logger.Errorlogger.Printf("Error saving pane: %v", err)
-		m.error = err
-		return func() tea.Msg { return common.InputErrMsg{Err: err} }
+		return func() tea.Msg { return common.OutputMsg{Err: err, Severity: common.Error} }
 	}
-	m.error = nil
 	// TODO: kinda confusing
 	return common.PaneCreated
 }

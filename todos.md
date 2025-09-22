@@ -31,8 +31,12 @@
 
 ## Window Management
 
-- [ ] Enable editing
-- [ ] Enable deleting
+- [x] Enable editing
+- [x] Enable deleting
+
+## Pane Management
+
+- [x] Enable basic crud operations
 
 ## DB
 
@@ -58,4 +62,9 @@
 - [x] Editing a session creates a new session and does not update the existing one
 - [x] Up and Down keys do not trigger the `UpDownMsg`
 - [x] Extending the help text pushes the detail to the right
+
+## Refactoring
+
 - [x] Editor don't cycle properly at the end or start
+
+- [ ] Use interfaces and changing elements in containers

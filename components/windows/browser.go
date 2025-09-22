@@ -92,7 +92,6 @@ func (m WindowBrowserModel) Update(msg tea.Msg) (WindowBrowserModel, tea.Cmd) {
 			m.selected = i.title
 		}
 		return m, func() tea.Msg { return common.NewWFocus{Window: m.data[m.selected]} }
-	// global keybindings
 	case tea.KeyMsg:
 		if m.state == common.Deleting {
 			switch msg.String() {

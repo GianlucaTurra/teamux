@@ -7,14 +7,16 @@ import (
 )
 
 type windowBrowserKeyMap struct {
-	Up    key.Binding
-	Down  key.Binding
-	Left  key.Binding
-	Right key.Binding
-	Open  key.Binding
-	Help  key.Binding
-	Quit  key.Binding
-	New   key.Binding
+	Up     key.Binding
+	Down   key.Binding
+	Left   key.Binding
+	Right  key.Binding
+	Open   key.Binding
+	Help   key.Binding
+	Quit   key.Binding
+	New    key.Binding
+	Edit   key.Binding
+	Delete key.Binding
 }
 
 func (k windowBrowserKeyMap) ShortHelp() []key.Binding {
@@ -23,8 +25,8 @@ func (k windowBrowserKeyMap) ShortHelp() []key.Binding {
 
 func (k windowBrowserKeyMap) FullHelp() [][]key.Binding {
 	return [][]key.Binding{
-		{k.Up, k.Down},
-		{k.New, k.Open},
+		{k.Up, k.Down, k.Open},
+		{k.New, k.Edit, k.Delete},
 	}
 }
 
@@ -44,6 +46,14 @@ var windowBrowserKeys = windowBrowserKeyMap{
 	New: key.NewBinding(
 		key.WithKeys("new", "n"),
 		key.WithHelp("n", "create new window"),
+	),
+	Edit: key.NewBinding(
+		key.WithKeys("edit", "e"),
+		key.WithHelp("e", "edit session"),
+	),
+	Delete: key.NewBinding(
+		key.WithKeys("delete", "d"),
+		key.WithHelp("d", "delete session"),
 	),
 }
 
