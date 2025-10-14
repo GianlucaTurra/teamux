@@ -65,7 +65,7 @@ func (m SessionEditorModel) Init() tea.Cmd {
 	return textinput.Blink
 }
 
-func (m SessionEditorModel) Update(msg tea.Msg) (SessionEditorModel, tea.Cmd) {
+func (m SessionEditorModel) Update(msg tea.Msg) (common.TeamuxModel, tea.Cmd) {
 	switch msg := msg.(type) {
 	case common.InputErrMsg:
 		m.error = msg.Err
@@ -180,4 +180,12 @@ func (m SessionEditorModel) View() string {
 		fmt.Fprintf(&b, "\nError: %v", m.error)
 	}
 	return b.String()
+}
+
+func (m SessionEditorModel) GetDB() *sql.DB {
+	return m.db
+}
+
+func (m SessionEditorModel) GetLogger() common.Logger {
+	return m.logger
 }

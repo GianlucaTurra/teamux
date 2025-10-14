@@ -30,7 +30,7 @@ func (m WindowContainerModel) Init() tea.Cmd {
 	return tea.Batch(m.windowBrowser.Init())
 }
 
-func (m WindowContainerModel) Update(msg tea.Msg) (WindowContainerModel, tea.Cmd) {
+func (m WindowContainerModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case common.NewWindowMsg:
 		m.focusedModel = windowEditor

@@ -30,7 +30,7 @@ func (m PaneContainerModel) Init() tea.Cmd {
 	return tea.Batch(m.paneBrowser.Init())
 }
 
-func (m PaneContainerModel) Update(msg tea.Msg) (PaneContainerModel, tea.Cmd) {
+func (m PaneContainerModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case common.NewPaneMsg:
 		m.focusedModel = paneEditor

@@ -76,7 +76,7 @@ func renderTreeItem(name string, pwd string, level int, isLast bool) string {
 	)
 }
 
-func (m SessionDetailModel) Update(msg tea.Msg) (SessionDetailModel, tea.Cmd) {
+func (m SessionDetailModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 

@@ -87,7 +87,7 @@ func (m SessionBrowserModel) View() string {
 	)
 }
 
-func (m SessionBrowserModel) Update(msg tea.Msg) (SessionBrowserModel, tea.Cmd) {
+func (m SessionBrowserModel) Update(msg tea.Msg) (common.TeamuxModel, tea.Cmd) {
 	var cmds []tea.Cmd
 	var cmd tea.Cmd
 	switch msg := msg.(type) {
@@ -244,4 +244,12 @@ func (m *SessionBrowserModel) refreshItems() {
 		newList = append(newList, i)
 	}
 	m.list.SetItems(newList)
+}
+
+func (m SessionBrowserModel) GetDB() *sql.DB {
+	return m.db
+}
+
+func (m SessionBrowserModel) GetLogger() common.Logger {
+	return m.logger
 }
