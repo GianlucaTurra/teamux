@@ -29,7 +29,7 @@ type WindowEditorModel struct {
 	logger       common.Logger
 }
 
-func NewWindowEditorModel(db *sql.DB, logger common.Logger) WindowEditorModel {
+func NewWindowEditorModel(db *sql.DB, logger common.Logger) common.TeamuxModel {
 	m := WindowEditorModel{
 		inputs: make([]textinput.Model, 2),
 		db:     db,
@@ -63,7 +63,7 @@ func (m WindowEditorModel) Init() tea.Cmd {
 	return textinput.Blink
 }
 
-func (m WindowEditorModel) Update(msg tea.Msg) (WindowEditorModel, tea.Cmd) {
+func (m WindowEditorModel) Update(msg tea.Msg) (common.TeamuxModel, tea.Cmd) {
 	switch msg := msg.(type) {
 	case common.InputErrMsg:
 		m.error = msg.Err
@@ -179,4 +179,12 @@ func (m *WindowEditorModel) editWindow() tea.Cmd {
 	m.error = nil
 	// TODO: this is a little confusing
 	return common.WindowCreated
+}
+
+func (m WindowEditorModel) GetDB() *sql.DB {
+	return m.db
+}
+
+func (m WindowEditorModel) GetLogger() common.Logger {
+	return m.logger
 }

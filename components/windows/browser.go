@@ -30,7 +30,7 @@ type (
 
 func (s windowItem) FilterValue() string { return "" }
 
-func NewWindowBrowserModel(db *sql.DB, logger common.Logger) WindowBrowserModel {
+func NewWindowBrowserModel(db *sql.DB, logger common.Logger) common.TeamuxModel {
 	data, layouts := loadWindowData(db, logger)
 	l := list.New(layouts, WindowDelegate{}, 100, 10)
 	l.SetShowTitle(false)
@@ -75,7 +75,7 @@ func (m WindowBrowserModel) View() string {
 	)
 }
 
-func (m WindowBrowserModel) Update(msg tea.Msg) (WindowBrowserModel, tea.Cmd) {
+func (m WindowBrowserModel) Update(msg tea.Msg) (common.TeamuxModel, tea.Cmd) {
 	var cmds []tea.Cmd
 	switch msg := msg.(type) {
 	case common.OpenMsg:
@@ -155,7 +155,6 @@ func (m WindowBrowserModel) Init() tea.Cmd {
 	return nil
 }
 
-// openSelected Opens the selected window.
 func (m WindowBrowserModel) openSelected() (WindowBrowserModel, tea.Cmd) {
 	w := m.data[m.selected]
 	if err := w.Open(); err != nil {
@@ -165,7 +164,6 @@ func (m WindowBrowserModel) openSelected() (WindowBrowserModel, tea.Cmd) {
 	return m, func() tea.Msg { return nil }
 }
 
-// deleteSelected delete the window from the db
 func (m WindowBrowserModel) deleteSelected() (WindowBrowserModel, tea.Cmd) {
 	w := m.data[m.selected]
 	if err := w.Delete(); err != nil {
@@ -182,4 +180,12 @@ func (m WindowBrowserModel) killSelected() (WindowBrowserModel, tea.Cmd) {
 		return m, func() tea.Msg { return common.OutputMsg{Err: err, Severity: common.Error} }
 	}
 	return m, func() tea.Msg { return common.ReloadMsg{} }
+}
+
+func (m WindowBrowserModel) GetDB() *sql.DB {
+	return m.db
+}
+
+func (m WindowBrowserModel) GetLogger() common.Logger {
+	return m.logger
 }
