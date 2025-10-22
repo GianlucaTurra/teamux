@@ -131,14 +131,12 @@ func (m Model) View() string {
 		}
 		tabHeader.WriteString(separator)
 	}
-	mainView := m.mainModel.View()
-	detailView := m.detailModel.View()
 	left := lipgloss.JoinVertical(
 		lipgloss.Left,
 		common.TitleStyle.PaddingLeft(2).Render(tabHeader.String()),
-		mainView,
+		m.mainModel.View(),
 	)
-	right := lipgloss.NewStyle().Render(detailView)
+	right := lipgloss.NewStyle().Render(m.detailModel.View())
 	return lipgloss.JoinVertical(
 		lipgloss.Left,
 		lipgloss.JoinHorizontal(lipgloss.Top, left, right),
