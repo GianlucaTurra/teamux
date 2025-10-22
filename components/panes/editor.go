@@ -8,7 +8,6 @@ import (
 
 	"github.com/GianlucaTurra/teamux/common"
 	"github.com/GianlucaTurra/teamux/components/data"
-	"github.com/charmbracelet/bubbles/cursor"
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
 )
@@ -22,14 +21,13 @@ const (
 type PaneEditorModel struct {
 	focusedIndex int
 	inputs       []textinput.Model
-	cursorMode   cursor.Mode
 	mode         int
 	pane         *data.Pane
 	db           *sql.DB
 	logger       common.Logger
 }
 
-func NewPaneEditorModel(db *sql.DB, logger common.Logger) PaneEditorModel {
+func NewPaneEditorModel(db *sql.DB, logger common.Logger) common.TeamuxModel {
 	m := PaneEditorModel{
 		inputs: make([]textinput.Model, 4),
 		db:     db,
@@ -71,7 +69,7 @@ func (m PaneEditorModel) Init() tea.Cmd {
 	return textinput.Blink
 }
 
-func (m PaneEditorModel) Update(msg tea.Msg) (PaneEditorModel, tea.Cmd) {
+func (m PaneEditorModel) Update(msg tea.Msg) (common.TeamuxModel, tea.Cmd) {
 	switch msg := msg.(type) {
 	case common.EditPMsg:
 		m.mode = editing
@@ -220,4 +218,12 @@ func (m *PaneEditorModel) editPane() tea.Cmd {
 	}
 	// TODO: kinda confusing
 	return common.PaneCreated
+}
+
+func (m PaneEditorModel) GetDB() *sql.DB {
+	return m.db
+}
+
+func (m PaneEditorModel) GetLogger() common.Logger {
+	return m.logger
 }

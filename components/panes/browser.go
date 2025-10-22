@@ -46,7 +46,7 @@ func loadPaneData(db *sql.DB, logger common.Logger) (map[string]data.Pane, []lis
 	return paneData, layouts
 }
 
-func NewPaneBrowserModel(db *sql.DB, logger common.Logger) PaneBrowserModel {
+func NewPaneBrowserModel(db *sql.DB, logger common.Logger) common.TeamuxModel {
 	data, layouts := loadPaneData(db, logger)
 	l := list.New(layouts, paneDelegate{}, 100, 10)
 	l.SetShowTitle(false)
@@ -67,7 +67,7 @@ func (m PaneBrowserModel) Init() tea.Cmd {
 	return nil
 }
 
-func (m PaneBrowserModel) Update(msg tea.Msg) (PaneBrowserModel, tea.Cmd) {
+func (m PaneBrowserModel) Update(msg tea.Msg) (common.TeamuxModel, tea.Cmd) {
 	var cmd tea.Cmd
 	switch msg := msg.(type) {
 	case common.ReloadMsg:
@@ -149,4 +149,12 @@ func (m PaneBrowserModel) deleteSelected() (PaneBrowserModel, tea.Cmd) {
 		return m, nil
 	}
 	return m, func() tea.Msg { return common.ReloadMsg{} }
+}
+
+func (m PaneBrowserModel) GetDB() *sql.DB {
+	return m.db
+}
+
+func (m PaneBrowserModel) GetLogger() common.Logger {
+	return m.logger
 }

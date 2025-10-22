@@ -8,67 +8,33 @@ import (
 )
 
 type PaneContainerModel struct {
-	paneBrowser  PaneBrowserModel
-	paneEditor   PaneEditorModel
-	focusedModel int
+	model common.TeamuxModel
 }
-
-const (
-	paneBrowser = iota
-	paneEditor
-)
 
 func NewPaneContainerModel(db *sql.DB, logger common.Logger) PaneContainerModel {
 	return PaneContainerModel{
-		paneBrowser:  NewPaneBrowserModel(db, logger),
-		paneEditor:   NewPaneEditorModel(db, logger),
-		focusedModel: 0,
+		model: NewPaneBrowserModel(db, logger),
 	}
 }
 
 func (m PaneContainerModel) Init() tea.Cmd {
-	return tea.Batch(m.paneBrowser.Init())
+	return tea.Batch(m.model.Init())
 }
 
 func (m PaneContainerModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
-	switch msg := msg.(type) {
-	case common.NewPaneMsg:
-		m.focusedModel = paneEditor
+	switch msg.(type) {
+	case common.NewPaneMsg, common.EditPMsg:
+		m.model = NewPaneEditorModel(m.model.GetDB(), m.model.GetLogger())
 		return m, nil
-	case common.PaneCreatedMsg:
-		m.focusedModel = paneBrowser
+	case common.PaneCreatedMsg, common.BrowseMsg:
+		m.model = NewPaneBrowserModel(m.model.GetDB(), m.model.GetLogger())
 		return m, common.Reaload
-	case common.BrowseMsg:
-		m.focusedModel = paneBrowser
-		return m, nil
-	case common.EditPMsg:
-		m.focusedModel = paneEditor
-	case tea.KeyMsg:
-		if msg.String() == "n" && m.focusedModel == paneBrowser && m.paneBrowser.state != common.Deleting {
-			return m, common.NewPane
-		}
 	}
-	var cmds []tea.Cmd
-	switch m.focusedModel {
-	case paneEditor:
-		newEditor, cmd := m.paneEditor.Update(msg)
-		m.paneEditor = newEditor
-		cmds = append(cmds, cmd)
-	case paneBrowser:
-		newBrowser, cmd := m.paneBrowser.Update(msg)
-		m.paneBrowser = newBrowser
-		cmds = append(cmds, cmd)
-	}
-	return m, tea.Batch(cmds...)
+	newModel, cmd := m.model.Update(msg)
+	m.model = newModel
+	return m, cmd
 }
 
 func (m PaneContainerModel) View() string {
-	switch m.focusedModel {
-	case paneBrowser:
-		return m.paneBrowser.View()
-	case paneEditor:
-		return m.paneEditor.View()
-	default:
-		return ""
-	}
+	return m.model.View()
 }
