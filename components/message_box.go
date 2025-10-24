@@ -11,7 +11,7 @@ type MessageBoxModel struct {
 	severity common.Severity
 }
 
-func NewMessageBoxModel() MessageBoxModel {
+func NewMessageBoxModel() tea.Model {
 	return MessageBoxModel{"", common.Info}
 }
 
@@ -19,7 +19,7 @@ func (m MessageBoxModel) Init() tea.Cmd {
 	return nil
 }
 
-func (m MessageBoxModel) Update(msg tea.Msg) (MessageBoxModel, tea.Cmd) {
+func (m MessageBoxModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case common.OutputMsg:
 		m.message = msg.Err.Error()

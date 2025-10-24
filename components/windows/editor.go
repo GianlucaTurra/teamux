@@ -145,7 +145,6 @@ func (m WindowEditorModel) View() string {
 	if m.error != nil {
 		fmt.Fprintf(&b, "\nError: %v", m.error)
 	}
-	// fmt.Fprintf(&b, "%s", m.help.View())
 	return b.String()
 }
 

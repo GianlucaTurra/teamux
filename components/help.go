@@ -31,22 +31,16 @@ var basicHelpKeys = basicHelpKeymap{
 }
 
 type HelpModel struct {
-	basicKeys          basicHelpKeymap
-	help               help.Model
-	displayedHelp      common.ComponentWithHelp
-	sessionBrowserHelp sessions.SessionBrowserHelpModel
-	sessionEditorHelp  sessions.SessionEditorHelpModel
-	windowBrowserHelp  windows.WindowBrowserHelpModel
+	basicKeys basicHelpKeymap
+	help      help.Model
+	model     common.HelpModel
 }
 
 func NewHelpModel() HelpModel {
 	return HelpModel{
-		basicKeys:          basicHelpKeys,
-		help:               help.New(),
-		displayedHelp:      common.SessionBrowser,
-		sessionBrowserHelp: sessions.NewSessionBrowserHelpModel(),
-		sessionEditorHelp:  sessions.NewSessionEditorHelpModel(),
-		windowBrowserHelp:  windows.NewWindowBrowserHelpModel(),
+		basicKeys: basicHelpKeys,
+		help:      help.New(),
+		model:     sessions.NewSessionBrowserHelpModel(),
 	}
 }
 
@@ -57,34 +51,24 @@ func (m HelpModel) Init() tea.Cmd {
 func (m HelpModel) Update(msg tea.Msg) (HelpModel, tea.Cmd) {
 	switch msg := msg.(type) {
 	case common.ClearHelpMsg:
-		m.sessionBrowserHelp.HideHelp()
-		m.sessionEditorHelp.HideHelp()
-		m.windowBrowserHelp.HideHelp()
-	case common.ShowFullHelpMsg:
-		m.displayedHelp = msg.Component
-		switch m.displayedHelp {
-		case common.SessionBrowser:
-			m.sessionBrowserHelp.ToggleHelp()
-		case common.WindowBrowser:
-			m.windowBrowserHelp.ToggleHelp()
+		switch msg.Tab {
+		case common.SessionsContainer:
+			m.model = sessions.NewSessionBrowserHelpModel()
+		case common.WindwowBrowser:
+			m.model = windows.NewWindowBrowserHelpModel()
+		case common.PaneContainer:
 		}
+		m.model.HideHelp()
+	case common.ShowFullHelpMsg:
+		m.model.ToggleHelp()
 	}
 	return m, nil
 }
 
 func (m HelpModel) View() string {
-	var fullHelp string
-	switch m.displayedHelp {
-	case common.SessionBrowser:
-		fullHelp = m.sessionBrowserHelp.ViewHelp()
-	case common.SessionEditor:
-		fullHelp = m.sessionEditorHelp.ViewHelp()
-	case common.WindowBrowser:
-		fullHelp = m.windowBrowserHelp.ViewHelp()
-	}
 	return lipgloss.JoinVertical(
 		lipgloss.Left,
 		m.help.View(m.basicKeys),
-		fullHelp,
+		m.model.View(),
 	)
 }

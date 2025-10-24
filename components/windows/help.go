@@ -1,6 +1,7 @@
 package windows
 
 import (
+	"github.com/GianlucaTurra/teamux/common"
 	"github.com/charmbracelet/bubbles/help"
 	"github.com/charmbracelet/bubbles/key"
 	tea "github.com/charmbracelet/bubbletea"
@@ -63,8 +64,8 @@ type WindowBrowserHelpModel struct {
 	quitting bool
 }
 
-func NewWindowBrowserHelpModel() WindowBrowserHelpModel {
-	return WindowBrowserHelpModel{
+func NewWindowBrowserHelpModel() common.HelpModel {
+	return &WindowBrowserHelpModel{
 		keys: windowBrowserKeys,
 		Help: help.New(),
 	}
@@ -82,7 +83,7 @@ func (m *WindowBrowserHelpModel) HideHelp() {
 	m.Help.ShowAll = false
 }
 
-func (m WindowBrowserHelpModel) Update(msg tea.Msg) (WindowBrowserHelpModel, tea.Cmd) {
+func (m WindowBrowserHelpModel) Update(msg tea.Msg) (common.HelpModel, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch {
@@ -92,7 +93,7 @@ func (m WindowBrowserHelpModel) Update(msg tea.Msg) (WindowBrowserHelpModel, tea
 			m.quitting = true
 		}
 	}
-	return m, nil
+	return &m, nil
 }
 
 func (m WindowBrowserHelpModel) View() string {

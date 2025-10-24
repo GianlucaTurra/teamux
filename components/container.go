@@ -18,7 +18,7 @@ type Model struct {
 	tabs        []string
 	mainModel   tea.Model
 	detailModel tea.Model
-	messageBox  MessageBoxModel
+	messageBox  tea.Model
 	helpModel   HelpModel
 	focusedTab  int
 	newPrefix   bool
@@ -31,12 +31,6 @@ const (
 	SESSIONS = "Sessions"
 	WINDOWS  = "Windows"
 	PANES    = "Panes"
-)
-
-const (
-	sessionsContainer = iota
-	windwowBrowser
-	paneContainer
 )
 
 func InitialModel(db *sql.DB, logger common.Logger) Model {
@@ -69,14 +63,14 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		} else {
 			m.focusedTab += 1
 		}
-		return m, common.ClearHelp
+		return m, func() tea.Msg { return common.ClearHelp(common.FocusedTab(m.focusedTab)) }
 	case common.PreviousTabMsg:
 		if m.focusedTab == 0 {
 			m.focusedTab = len(m.tabs) - 1
 		} else {
 			m.focusedTab -= 1
 		}
-		return m, common.ClearHelp
+		return m, func() tea.Msg { return common.ClearHelp(common.FocusedTab(m.focusedTab)) }
 	case common.NewSFocus:
 		m.detailModel = sessions.NewSessionTreeModel(m.db, m.logger, &msg.Session)
 		return m, nil
@@ -95,13 +89,13 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, nil
 	case common.ClearHelpMsg:
 		switch m.focusedTab {
-		case sessionsContainer:
+		case common.SessionsContainer:
 			m.mainModel = sessions.NewSessionContainerModel(m.db, m.logger)
 			m.detailModel = sessions.NewSessionTreeModel(m.db, m.logger, nil)
-		case windwowBrowser:
+		case common.WindwowBrowser:
 			m.mainModel = windows.NewWindowContainerModel(m.db, m.logger)
 			m.detailModel = windows.NewWindowDetailModel(m.db, m.logger, nil)
-		case paneContainer:
+		case common.PaneContainer:
 			m.mainModel = panes.NewPaneContainerModel(m.db, m.logger)
 			// TODO: add missing detail model
 			// m.detailModel = panes.NewPaneDetailModel(m.db, m.logger, nil

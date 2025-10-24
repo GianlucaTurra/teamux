@@ -1,6 +1,7 @@
 package sessions
 
 import (
+	"github.com/GianlucaTurra/teamux/common"
 	"github.com/charmbracelet/bubbles/help"
 	"github.com/charmbracelet/bubbles/key"
 	tea "github.com/charmbracelet/bubbletea"
@@ -69,8 +70,8 @@ type SessionBrowserHelpModel struct {
 	quitting bool
 }
 
-func NewSessionBrowserHelpModel() SessionBrowserHelpModel {
-	return SessionBrowserHelpModel{
+func NewSessionBrowserHelpModel() common.HelpModel {
+	return &SessionBrowserHelpModel{
 		keys: keys,
 		Help: help.New(),
 	}
@@ -88,8 +89,8 @@ func (m *SessionBrowserHelpModel) HideHelp() {
 	m.Help.ShowAll = false
 }
 
-func (m SessionBrowserHelpModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
-	return m, nil
+func (m SessionBrowserHelpModel) Update(msg tea.Msg) (common.HelpModel, tea.Cmd) {
+	return &m, nil
 }
 
 func (m SessionBrowserHelpModel) View() string {

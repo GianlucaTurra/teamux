@@ -26,3 +26,11 @@ const (
 	SessionBrowser
 	SessionEditor
 )
+
+type FocusedTab int
+
+const (
+	SessionsContainer = iota
+	WindwowBrowser
+	PaneContainer
+)
