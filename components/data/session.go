@@ -8,14 +8,20 @@ import (
 	"os/exec"
 
 	_ "github.com/mattn/go-sqlite3"
+	"gorm.io/gorm"
 )
 
 type Session struct {
-	db               *sql.DB
-	ID               int
+	gorm.Model
 	Name             string
-	WorkingDirectory string
-	Windows          []Window
+	WorkingDirectory *string
+	Windows          []Window `gorm:"many2many:session_windows;"`
+}
+
+func ReadAllSessions(db *gorm.DB) ([]Session, error) {
+	var sessions []Session
+	err := db.Model(&Session{}).Preload("Windows").Find(&sessions).Error
+	return sessions, err
 }
 
 func NewSession(name string, workingDirectory string, db *sql.DB) Session {
@@ -43,23 +49,23 @@ func (s Session) Save() error {
 
 // ReadAllSessions from the database. If a session is missing the working
 // directory it is set to the user's home directory.
-func ReadAllSessions(db *sql.DB) ([]Session, error) {
-	rows, err := db.Query(selectAllSessions)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var sessions []Session
-	for rows.Next() {
-		var s Session
-		if err := rows.Scan(&s.ID, &s.Name); err != nil {
-			return nil, err
-		}
-		s.db = db
-		sessions = append(sessions, s)
-	}
-	return sessions, nil
-}
+// func ReadAllSessions(db *sql.DB) ([]Session, error) {
+// 	rows, err := db.Query(selectAllSessions)
+// 	if err != nil {
+// 		return nil, err
+// 	}
+// 	defer rows.Close()
+// 	var sessions []Session
+// 	for rows.Next() {
+// 		var s Session
+// 		if err := rows.Scan(&s.ID, &s.Name); err != nil {
+// 			return nil, err
+// 		}
+// 		s.db = db
+// 		sessions = append(sessions, s)
+// 	}
+// 	return sessions, nil
+// }
 
 func ReadSessionByID(db *sql.DB, id int) (*Session, error) {
 	row := db.QueryRow(selectSessionByID, id)
