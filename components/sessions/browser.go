@@ -9,6 +9,7 @@ import (
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"gorm.io/gorm"
 )
 
 type (
@@ -23,15 +24,15 @@ type (
 		openSessions string
 		sessions     map[string]data.Session
 		State        common.State
-		db           *sql.DB
+		connector    data.Connector
 		logger       common.Logger
 	}
 )
 
 func (s item) FilterValue() string { return "" }
 
-func NewSessionBrowserModel(db *sql.DB, logger common.Logger) SessionBrowserModel {
-	sessions, layouts := loadData(db, logger)
+func NewSessionBrowserModel(connector data.Connector, logger common.Logger) SessionBrowserModel {
+	sessions, layouts := loadData(connector.DB, logger)
 	l := list.New(layouts, sessionDelegate{}, 100, 10)
 	l.SetFilteringEnabled(false)
 	l.SetShowTitle(false)
@@ -45,22 +46,23 @@ func NewSessionBrowserModel(db *sql.DB, logger common.Logger) SessionBrowserMode
 		sessions:     sessions,
 		State:        common.Browsing,
 		logger:       logger,
-		db:           db,
+		connector:    connector,
 	}
 }
 
-func loadData(db *sql.DB, logger common.Logger) (map[string]data.Session, []list.Item) {
+func loadData(db *gorm.DB, logger common.Logger) (map[string]data.Session, []list.Item) {
 	layouts := []list.Item{}
 	sessions, err := data.ReadAllSessions(db)
 	if err != nil {
 		logger.Fatallogger.Fatalf("Failed to read sessions: %v", err)
 	}
-	for i := range sessions {
+	// TODO: should the pwd be checked?
+	/* for i := range sessions {
 		s := &sessions[i]
 		if err := s.GetPWD(); err != nil {
 			logger.Errorlogger.Printf("Error reading session %s working directory.\n%v", s.Name, err)
 		}
-	}
+	} */
 	data := make(map[string]data.Session)
 	for _, s := range sessions {
 		layouts = append(layouts, item{title: s.Name, open: s.IsOpen()})
@@ -103,7 +105,7 @@ func (m SessionBrowserModel) Update(msg tea.Msg) (common.TeamuxModel, tea.Cmd) {
 	case common.KillMsg:
 		return m.killSelected()
 	case common.ReloadMsg:
-		return NewSessionBrowserModel(m.db, m.logger), nil
+		return NewSessionBrowserModel(m.connector, m.logger), nil
 	case common.UpDownMsg:
 		i, ok := m.list.SelectedItem().(item)
 		if ok {
@@ -210,7 +212,7 @@ func (m SessionBrowserModel) openSelected() (SessionBrowserModel, tea.Cmd) {
 func (m SessionBrowserModel) deleteSelected() (SessionBrowserModel, tea.Cmd) {
 	m.killSelected()
 	s := m.sessions[m.selected]
-	if err := s.Delete(); err != nil {
+	if _, err := s.Delete(m.connector); err != nil {
 		m.logger.Errorlogger.Printf("Error deleting session %s: %v", m.selected, err)
 		return m, func() tea.Msg { return common.OutputMsg{Err: err, Severity: common.Error} }
 	}
@@ -247,7 +249,8 @@ func (m *SessionBrowserModel) refreshItems() {
 }
 
 func (m SessionBrowserModel) GetDB() *sql.DB {
-	return m.db
+	// TODO: like this until the orm is working
+	return nil
 }
 
 func (m SessionBrowserModel) GetLogger() common.Logger {

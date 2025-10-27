@@ -1,17 +1,16 @@
 package data
 
 import (
-	"database/sql"
 	"fmt"
 	"os/exec"
 	"strconv"
 
 	_ "github.com/mattn/go-sqlite3"
+	"gorm.io/gorm"
 )
 
 type Pane struct {
-	db               *sql.DB
-	ID               int
+	gorm.Model
 	Name             string
 	WorkingDirectory string
 	splitDirection   int
@@ -23,75 +22,65 @@ const (
 	horizontal
 )
 
-func NewVerticalPane(
+func ReadAllPanes(db *gorm.DB) ([]Pane, error) {
+	var panes []Pane
+	err := db.Model(&Pane{}).Find(panes).Error
+	return panes, err
+}
+
+func CreateVerticalPane(
 	name string,
 	workingDirectory string,
 	splitRatio int,
-	db *sql.DB,
-) Pane {
-	return newPane(name, workingDirectory, vertical, splitRatio, db)
+	connector Connector,
+) (int64, error) {
+	return createPane(name, workingDirectory, vertical, splitRatio, connector)
 }
 
-func NewHorizontalPane(
+func CreateHorizontalPane(
 	name string,
 	workingDirectory string,
 	splitRatio int,
-	db *sql.DB,
-) Pane {
-	return newPane(name, workingDirectory, horizontal, splitRatio, db)
+	connector Connector,
+) (int64, error) {
+	return createPane(name, workingDirectory, horizontal, splitRatio, connector)
 }
 
-func newPane(
+func createPane(
 	name string,
 	workingDirectory string,
 	splitDirection int,
 	splitRatio int,
-	db *sql.DB,
-) Pane {
-	return Pane{
-		db:               db,
-		ID:               0,
+	connector Connector,
+) (int64, error) {
+	pane := Pane{
 		Name:             name,
 		WorkingDirectory: workingDirectory,
 		splitDirection:   splitDirection,
 		SplitRatio:       splitRatio,
 	}
+	result := gorm.WithResult()
+	err := gorm.G[Pane](connector.DB, result).Create(connector.Ctx, &pane)
+	return result.RowsAffected, err
 }
 
 func (p Pane) IsVertical() bool { return p.splitDirection == vertical }
 
 func (p Pane) IsHorizontal() bool { return p.splitDirection == horizontal }
 
-func (p Pane) Save() error {
-	var query string
-	if p.ID == 0 {
-		query = insertPane
-	} else {
-		query = updatePane
-	}
-	if _, err := p.db.Exec(
-		query,
-		p.Name,
-		p.WorkingDirectory,
-		p.splitDirection,
-		p.SplitRatio,
-		p.ID,
-	); err != nil {
-		return err
-	}
-	return nil
+func (p Pane) Save(connector Connector) (int, error) {
+	return gorm.G[Pane](connector.DB).Updates(connector.Ctx, p)
 }
 
-func (p Pane) Delete() error {
-	if _, err := p.db.Exec(deletePaneByID, p.ID); err != nil {
-		return err
-	}
-	return nil
+func (p Pane) Delete(connector Connector) (int, error) {
+	return gorm.G[Pane](connector.DB).Where("id = ?", p.ID).Delete(connector.Ctx)
 }
 
 func (p *Pane) SetHorizontal() { p.splitDirection = horizontal }
 
 func (p *Pane) SetVertical() { p.splitDirection = vertical }
+
+// TODO: move to a proper package
 
 func (p Pane) Open(target *string) error {
 	var tmuxCommand string
@@ -116,48 +105,4 @@ func (p Pane) Open(target *string) error {
 	}
 	cmd := exec.Command("sh", "-c", tmuxCommand)
 	return cmd.Run()
-}
-
-func GetAllPanes(db *sql.DB) ([]Pane, error) {
-	rows, err := db.Query(selectAllPanes)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var panes []Pane
-	for rows.Next() {
-		var p Pane
-		if err := rows.Scan(
-			&p.ID,
-			&p.Name,
-			&p.WorkingDirectory,
-			&p.splitDirection,
-			&p.SplitRatio,
-		); err != nil {
-			return nil, err
-		}
-		p.db = db
-		// TODO: handle this error
-		p.WorkingDirectory, _ = GetPWDorPlaceholder(p.WorkingDirectory)
-		panes = append(panes, p)
-	}
-	return panes, nil
-}
-
-func GetPaneByID(db *sql.DB, id int) (*Pane, error) {
-	row := db.QueryRow(selectPaneByID, id)
-	var p Pane
-	if err := row.Scan(
-		&p.ID,
-		&p.Name,
-		&p.WorkingDirectory,
-		&p.splitDirection,
-		&p.SplitRatio,
-	); err != nil {
-		return nil, err
-	}
-	p.db = db
-	// TODO: handle this error
-	p.WorkingDirectory, _ = GetPWDorPlaceholder(p.WorkingDirectory)
-	return &p, nil
 }

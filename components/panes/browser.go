@@ -11,16 +11,17 @@ import (
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"gorm.io/gorm"
 )
 
 type (
 	PaneBrowserModel struct {
-		list     list.Model
-		data     map[string]data.Pane
-		selected string
-		state    common.State
-		db       *sql.DB
-		logger   common.Logger
+		list      list.Model
+		data      map[string]data.Pane
+		selected  string
+		state     common.State
+		connector data.Connector
+		logger    common.Logger
 	}
 	paneItem struct {
 		title string
@@ -31,10 +32,10 @@ func (pi paneItem) FilterValue() string {
 	return ""
 }
 
-func loadPaneData(db *sql.DB, logger common.Logger) (map[string]data.Pane, []list.Item) {
+func loadPaneData(db *gorm.DB, logger common.Logger) (map[string]data.Pane, []list.Item) {
 	layouts := []list.Item{}
 	paneData := make(map[string]data.Pane)
-	panes, err := data.GetAllPanes(db)
+	panes, err := data.ReadAllPanes(db)
 	if err != nil {
 		logger.Fatallogger.Fatalf("Failed to read panes: %v", err)
 		return paneData, layouts
@@ -46,8 +47,8 @@ func loadPaneData(db *sql.DB, logger common.Logger) (map[string]data.Pane, []lis
 	return paneData, layouts
 }
 
-func NewPaneBrowserModel(db *sql.DB, logger common.Logger) common.TeamuxModel {
-	data, layouts := loadPaneData(db, logger)
+func NewPaneBrowserModel(connector data.Connector, logger common.Logger) common.TeamuxModel {
+	data, layouts := loadPaneData(connector.DB, logger)
 	l := list.New(layouts, paneDelegate{}, 100, 10)
 	l.SetShowTitle(false)
 	l.SetFilteringEnabled(false)
@@ -55,11 +56,11 @@ func NewPaneBrowserModel(db *sql.DB, logger common.Logger) common.TeamuxModel {
 	l.SetShowHelp(false)
 	l.Styles.PaginationStyle = common.PaginationStyle
 	return PaneBrowserModel{
-		list:   l,
-		data:   data,
-		state:  common.Browsing,
-		logger: logger,
-		db:     db,
+		list:      l,
+		data:      data,
+		state:     common.Browsing,
+		logger:    logger,
+		connector: connector,
 	}
 }
 
@@ -71,7 +72,7 @@ func (m PaneBrowserModel) Update(msg tea.Msg) (common.TeamuxModel, tea.Cmd) {
 	var cmd tea.Cmd
 	switch msg := msg.(type) {
 	case common.ReloadMsg:
-		return NewPaneBrowserModel(m.db, m.logger), nil
+		return NewPaneBrowserModel(m.connector, m.logger), nil
 	case common.DeleteMsg:
 		return m.deleteSelected()
 	case common.OpenMsg:
@@ -143,7 +144,7 @@ func (m PaneBrowserModel) openSelected() (PaneBrowserModel, tea.Cmd) {
 
 func (m PaneBrowserModel) deleteSelected() (PaneBrowserModel, tea.Cmd) {
 	p := m.data[m.selected]
-	if err := p.Delete(); err != nil {
+	if _, err := p.Delete(m.connector); err != nil {
 		m.logger.Errorlogger.Printf("Failed to delete pane %s: %v", m.selected, err)
 		// TODO: actually do something
 		return m, nil
@@ -152,7 +153,7 @@ func (m PaneBrowserModel) deleteSelected() (PaneBrowserModel, tea.Cmd) {
 }
 
 func (m PaneBrowserModel) GetDB() *sql.DB {
-	return m.db
+	return nil
 }
 
 func (m PaneBrowserModel) GetLogger() common.Logger {

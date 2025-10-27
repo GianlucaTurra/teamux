@@ -1,19 +1,20 @@
 package windows
 
 import (
-	"database/sql"
-
 	"github.com/GianlucaTurra/teamux/common"
+	"github.com/GianlucaTurra/teamux/components/data"
 	tea "github.com/charmbracelet/bubbletea"
 )
 
 type WindowContainerModel struct {
-	model common.TeamuxModel
+	model     common.TeamuxModel
+	connector data.Connector
 }
 
-func NewWindowContainerModel(db *sql.DB, logger common.Logger) WindowContainerModel {
+func NewWindowContainerModel(connector data.Connector, logger common.Logger) WindowContainerModel {
 	return WindowContainerModel{
-		model: NewWindowBrowserModel(db, logger),
+		model:     NewWindowBrowserModel(connector, logger),
+		connector: connector,
 	}
 }
 
@@ -24,13 +25,13 @@ func (m WindowContainerModel) Init() tea.Cmd {
 func (m WindowContainerModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg.(type) {
 	case common.NewWindowMsg, common.EditWMsg:
-		m.model = NewWindowEditorModel(m.model.GetDB(), m.model.GetLogger())
+		m.model = NewWindowEditorModel(m.connector, m.model.GetLogger())
 		return m, nil
 	case common.WindowCreatedMsg:
-		m.model = NewWindowBrowserModel(m.model.GetDB(), m.model.GetLogger())
+		m.model = NewWindowBrowserModel(m.connector, m.model.GetLogger())
 		return m, common.Reaload
 	case common.BrowseMsg:
-		m.model = NewWindowBrowserModel(m.model.GetDB(), m.model.GetLogger())
+		m.model = NewWindowBrowserModel(m.connector, m.model.GetLogger())
 		return m, nil
 	}
 	newModel, cmd := m.model.Update(msg)

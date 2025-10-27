@@ -1,36 +1,39 @@
 package sessions
 
 import (
-	"database/sql"
 	"fmt"
 
 	"github.com/GianlucaTurra/teamux/common"
 	"github.com/GianlucaTurra/teamux/components/data"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"gorm.io/gorm"
 )
 
 type SessionDetailModel struct {
-	session data.Session
-	db      *sql.DB
-	logger  common.Logger
+	session   data.Session
+	connector data.Connector
+	logger    common.Logger
 }
 
-func NewSessionTreeModel(db *sql.DB, logger common.Logger, session *data.Session) SessionDetailModel {
+func NewSessionTreeModel(connector data.Connector, logger common.Logger, session *data.Session) SessionDetailModel {
 	if session == nil {
-		firstSession, err := data.GetFirstSession(db)
+		gorm.G[data.Session](connector.DB).First(connector.Ctx)
+		firstSession, err := gorm.G[data.Session](connector.DB).First(connector.Ctx)
 		if err != nil {
 			logger.Errorlogger.Printf("Error loading first session, falling back to default one.\n %v", err)
 		}
-		if err := firstSession.GetPWD(); err != nil {
-			logger.Errorlogger.Printf("Error loading working directory for first session, falling back to blank directory.\n %v", err)
-		}
+		// TODO: Check if the pwd exists?
+		// if err := firstSession.GetPWD(); err != nil {
+		// 	logger.Errorlogger.Printf("Error loading working directory for first session, falling back to blank directory.\n %v", err)
+		// }
 		session = &firstSession
 	}
-	if err := session.GetAllWindows(); err != nil {
-		logger.Errorlogger.Printf("Error loading windows for session %s\n%v", session.Name, err)
-	}
-	return SessionDetailModel{*session, db, logger}
+	// TODO: should not be needed but better test it
+	// if err := session.GetAllWindows(); err != nil {
+	// 	logger.Errorlogger.Printf("Error loading windows for session %s\n%v", session.Name, err)
+	// }
+	return SessionDetailModel{*session, connector, logger}
 }
 
 func (m SessionDetailModel) View() string {
@@ -40,10 +43,11 @@ func (m SessionDetailModel) View() string {
 	items = append(items, renderTreeItem(m.session.Name, m.session.WorkingDirectory, 0, false))
 	for i, w := range m.session.Windows {
 		items = append(items, renderTreeItem(w.Name, w.WorkingDirectory, 1, i == len(m.session.Windows)-1))
-		if err := w.GetAllPanes(); err != nil {
-			m.logger.Errorlogger.Printf("Error loading panes for window %s\n%v", w.Name, err)
-			continue
-		}
+		// TODO: should not be needed but needs tests
+		// if err := w.GetAllPanes(); err != nil {
+		// 	m.logger.Errorlogger.Printf("Error loading panes for window %s\n%v", w.Name, err)
+		// 	continue
+		// }
 		for j, p := range w.Panes {
 			items = append(items, renderTreeItem(p.Name, p.WorkingDirectory, 2, j == len(w.Panes)-1))
 		}
@@ -65,7 +69,6 @@ func renderTreeItem(name string, pwd string, level int, isLast bool) string {
 	case 1:
 		prefix = treeSymbol + " "
 	case 2:
-		// prefix = "│   " + treeSymbol + " "
 		prefix = "   " + treeSymbol + " "
 	}
 	nameCol := fmt.Sprintf("%-*s", 16, prefix+name)

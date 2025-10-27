@@ -27,16 +27,16 @@ type SessionEditorModel struct {
 	mode         int
 	session      *data.Session
 	error        error
-	db           *sql.DB
+	connector    data.Connector
 	logger       common.Logger
 }
 
-func NewSessionEditorModel(db *sql.DB, logger common.Logger) SessionEditorModel {
+func NewSessionEditorModel(connector data.Connector, logger common.Logger) SessionEditorModel {
 	m := SessionEditorModel{
-		inputs: make([]textinput.Model, 2),
-		db:     db,
-		logger: logger,
-		mode:   creating,
+		inputs:    make([]textinput.Model, 2),
+		connector: connector,
+		logger:    logger,
+		mode:      creating,
 	}
 	var t textinput.Model
 	for i := range m.inputs {
@@ -83,7 +83,7 @@ func (m SessionEditorModel) Update(msg tea.Msg) (common.TeamuxModel, tea.Cmd) {
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "esc":
-			return NewSessionEditorModel(m.db, m.logger), common.Browse
+			return NewSessionEditorModel(m.connector, m.logger), common.Browse
 		case "ctrl+c":
 			m.mode = quitting
 			return m, common.Quit
@@ -141,8 +141,8 @@ func (m *SessionEditorModel) updateInputs(msg tea.Msg) tea.Cmd {
 }
 
 func (m *SessionEditorModel) createSession() tea.Cmd {
-	session := data.NewSession(m.inputs[0].Value(), m.inputs[1].Value(), m.db)
-	if err := session.Save(); err != nil {
+	_, err := data.CreateSession(m.inputs[0].Value(), m.inputs[1].Value(), m.connector)
+	if err != nil {
 		m.error = err
 		m.logger.Errorlogger.Printf("Error saving session: %v", err)
 		return func() tea.Msg { return common.InputErrMsg{Err: err} }
@@ -154,7 +154,8 @@ func (m *SessionEditorModel) createSession() tea.Cmd {
 func (m *SessionEditorModel) editSession() tea.Cmd {
 	m.session.Name = m.inputs[0].Value()
 	m.session.WorkingDirectory = m.inputs[1].Value()
-	if err := m.session.Save(); err != nil {
+	_, err := m.session.Save(m.connector)
+	if err != nil {
 		m.error = err
 		m.logger.Errorlogger.Printf("Error saving session: %v", err)
 		return func() tea.Msg { return common.InputErrMsg{Err: err} }
@@ -183,7 +184,8 @@ func (m SessionEditorModel) View() string {
 }
 
 func (m SessionEditorModel) GetDB() *sql.DB {
-	return m.db
+	// TODO: clean
+	return nil
 }
 
 func (m SessionEditorModel) GetLogger() common.Logger {

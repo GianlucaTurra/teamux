@@ -1,15 +1,18 @@
 package main
 
 import (
-	"database/sql"
+	"context"
 	"fmt"
 	"log"
 	"os"
 
 	"github.com/GianlucaTurra/teamux/common"
 	"github.com/GianlucaTurra/teamux/components"
+	"github.com/GianlucaTurra/teamux/components/data"
 	tea "github.com/charmbracelet/bubbletea"
 	_ "github.com/mattn/go-sqlite3"
+	"gorm.io/driver/sqlite"
+	"gorm.io/gorm"
 )
 
 func main() {
@@ -25,12 +28,16 @@ func main() {
 		Errorlogger:   log.New(logfile, "ERROR: ", log.Ldate|log.Ltime|log.Lshortfile),
 		Fatallogger:   log.New(logfile, "FATAL: ", log.Ldate|log.Ltime|log.Lshortfile),
 	}
-	db, err := sql.Open("sqlite3", "db.sqlite3")
+	db, err := gorm.Open(sqlite.Open("teamux.db"), &gorm.Config{})
 	if err != nil {
 		log.Fatal(err)
 	}
-	defer db.Close()
-	p := tea.NewProgram(components.InitialModel(db, logger))
+	db.AutoMigrate(
+		&data.Session{},
+		&data.Window{},
+		&data.Pane{},
+	)
+	p := tea.NewProgram(components.InitialModel(data.Connector{DB: db, Ctx: context.Background()}, logger))
 	if _, err := p.Run(); err != nil {
 		fmt.Printf("ERROR: %v", err)
 		os.Exit(1)

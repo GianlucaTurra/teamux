@@ -3,10 +3,10 @@
 package components
 
 import (
-	"database/sql"
 	"strings"
 
 	"github.com/GianlucaTurra/teamux/common"
+	"github.com/GianlucaTurra/teamux/components/data"
 	"github.com/GianlucaTurra/teamux/components/panes"
 	"github.com/GianlucaTurra/teamux/components/sessions"
 	"github.com/GianlucaTurra/teamux/components/windows"
@@ -23,7 +23,7 @@ type Model struct {
 	focusedTab  int
 	newPrefix   bool
 	quitting    bool
-	db          *sql.DB
+	connector   data.Connector
 	logger      common.Logger
 }
 
@@ -33,17 +33,17 @@ const (
 	PANES    = "Panes"
 )
 
-func InitialModel(db *sql.DB, logger common.Logger) Model {
+func InitialModel(connector data.Connector, logger common.Logger) Model {
 	return Model{
 		tabs:        []string{SESSIONS, WINDOWS, PANES},
-		mainModel:   sessions.NewSessionContainerModel(db, logger),
-		detailModel: sessions.NewSessionTreeModel(db, logger, nil),
+		mainModel:   sessions.NewSessionContainerModel(connector, logger),
+		detailModel: sessions.NewSessionTreeModel(connector, logger, nil),
 		messageBox:  NewMessageBoxModel(),
 		helpModel:   NewHelpModel(),
 		focusedTab:  0,
 		newPrefix:   false,
 		quitting:    false,
-		db:          db,
+		connector:   connector,
 		logger:      logger,
 	}
 }
@@ -72,10 +72,10 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 		return m, func() tea.Msg { return common.ClearHelp(common.FocusedTab(m.focusedTab)) }
 	case common.NewSFocus:
-		m.detailModel = sessions.NewSessionTreeModel(m.db, m.logger, &msg.Session)
+		m.detailModel = sessions.NewSessionTreeModel(m.connector, m.logger, &msg.Session)
 		return m, nil
 	case common.NewWFocus:
-		m.detailModel = windows.NewWindowDetailModel(m.db, m.logger, &msg.Window)
+		m.detailModel = windows.NewWindowDetailModel(m.connector, m.logger, &msg.Window)
 		return m, nil
 	case tea.KeyMsg:
 		if msg.String() == "]" {
@@ -90,13 +90,13 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case common.ClearHelpMsg:
 		switch m.focusedTab {
 		case common.SessionsContainer:
-			m.mainModel = sessions.NewSessionContainerModel(m.db, m.logger)
-			m.detailModel = sessions.NewSessionTreeModel(m.db, m.logger, nil)
+			m.mainModel = sessions.NewSessionContainerModel(m.connector, m.logger)
+			m.detailModel = sessions.NewSessionTreeModel(m.connector, m.logger, nil)
 		case common.WindwowBrowser:
-			m.mainModel = windows.NewWindowContainerModel(m.db, m.logger)
-			m.detailModel = windows.NewWindowDetailModel(m.db, m.logger, nil)
+			m.mainModel = windows.NewWindowContainerModel(m.connector, m.logger)
+			m.detailModel = windows.NewWindowDetailModel(m.connector, m.logger, nil)
 		case common.PaneContainer:
-			m.mainModel = panes.NewPaneContainerModel(m.db, m.logger)
+			m.mainModel = panes.NewPaneContainerModel(m.connector, m.logger)
 			// TODO: add missing detail model
 			// m.detailModel = panes.NewPaneDetailModel(m.db, m.logger, nil
 		}

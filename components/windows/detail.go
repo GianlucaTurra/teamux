@@ -1,33 +1,34 @@
 package windows
 
 import (
-	"database/sql"
 	"fmt"
 
 	"github.com/GianlucaTurra/teamux/common"
 	"github.com/GianlucaTurra/teamux/components/data"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"gorm.io/gorm"
 )
 
 type WindowDetailModel struct {
-	window data.Window
-	db     *sql.DB
-	logger common.Logger
+	window    data.Window
+	connector data.Connector
+	logger    common.Logger
 }
 
-func NewWindowDetailModel(db *sql.DB, logger common.Logger, window *data.Window) WindowDetailModel {
+func NewWindowDetailModel(connector data.Connector, logger common.Logger, window *data.Window) WindowDetailModel {
 	if window == nil {
-		firstWindow, err := data.GetFirstWindow(db)
+		firstWindow, err := gorm.G[data.Window](connector.DB).First(connector.Ctx)
 		if err != nil {
 			logger.Errorlogger.Printf("Error loading first window, falling back to default one.\n %v", err)
 		}
 		window = &firstWindow
 	}
-	if err := window.GetAllPanes(); err != nil {
-		logger.Errorlogger.Printf("Error loading panes for first window.\n %v", err)
-	}
-	return WindowDetailModel{*window, db, logger}
+	// TODO: should not be needed but needs tests
+	// if err := window.GetAllPanes(); err != nil {
+	// 	logger.Errorlogger.Printf("Error loading panes for first window.\n %v", err)
+	// }
+	return WindowDetailModel{*window, connector, logger}
 }
 
 func (m WindowDetailModel) View() string {

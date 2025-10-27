@@ -3,19 +3,20 @@
 package sessions
 
 import (
-	"database/sql"
-
 	"github.com/GianlucaTurra/teamux/common"
+	"github.com/GianlucaTurra/teamux/components/data"
 	tea "github.com/charmbracelet/bubbletea"
 )
 
 type SessionContainerModel struct {
 	focusedModel common.TeamuxModel
+	connector    data.Connector
+	logger       common.Logger
 }
 
-func NewSessionContainerModel(db *sql.DB, logger common.Logger) SessionContainerModel {
+func NewSessionContainerModel(connector data.Connector, logger common.Logger) SessionContainerModel {
 	return SessionContainerModel{
-		focusedModel: NewSessionBrowserModel(db, logger),
+		focusedModel: NewSessionBrowserModel(connector, logger),
 	}
 }
 
@@ -26,16 +27,17 @@ func (m SessionContainerModel) Init() tea.Cmd {
 func (m SessionContainerModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg.(type) {
 	case common.NewSessionMsg:
-		m.focusedModel = NewSessionEditorModel(m.focusedModel.GetDB(), m.focusedModel.GetLogger())
+		m.focusedModel = NewSessionEditorModel(m.connector, m.logger)
 		return m, nil
 	case common.SessionCreatedMsg:
-		m.focusedModel = NewSessionBrowserModel(m.focusedModel.GetDB(), m.focusedModel.GetLogger())
+		m.focusedModel = NewSessionBrowserModel(m.connector, m.logger)
 		return m, common.Reaload
 	case common.BrowseMsg:
-		m.focusedModel = NewSessionBrowserModel(m.focusedModel.GetDB(), m.focusedModel.GetLogger())
+		m.focusedModel = NewSessionBrowserModel(m.connector, m.logger)
 		return m, nil
 	case common.EditSMsg:
-		m.focusedModel = NewSessionEditorModel(m.focusedModel.GetDB(), m.focusedModel.GetLogger())
+		// FIXME: shouldn't the message pass down the session to the editor? AKA: no return?
+		m.focusedModel = NewSessionEditorModel(m.connector, m.logger)
 		return m, nil
 		// TODO: handle new session shortcut
 		// case tea.KeyMsg:

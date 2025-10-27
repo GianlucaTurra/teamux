@@ -25,16 +25,16 @@ type WindowEditorModel struct {
 	mode         int
 	window       *data.Window
 	error        error
-	db           *sql.DB
+	connector    data.Connector
 	logger       common.Logger
 }
 
-func NewWindowEditorModel(db *sql.DB, logger common.Logger) common.TeamuxModel {
+func NewWindowEditorModel(connector data.Connector, logger common.Logger) common.TeamuxModel {
 	m := WindowEditorModel{
-		inputs: make([]textinput.Model, 2),
-		db:     db,
-		logger: logger,
-		mode:   creating,
+		inputs:    make([]textinput.Model, 2),
+		connector: connector,
+		logger:    logger,
+		mode:      creating,
 	}
 	var t textinput.Model
 	for i := range m.inputs {
@@ -81,7 +81,7 @@ func (m WindowEditorModel) Update(msg tea.Msg) (common.TeamuxModel, tea.Cmd) {
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "esc":
-			return NewWindowEditorModel(m.db, m.logger), common.Browse
+			return NewWindowEditorModel(m.connector, m.logger), common.Browse
 		case "ctrl+c":
 			m.mode = quitting
 			return m, common.Quit
@@ -157,8 +157,9 @@ func (m *WindowEditorModel) updateInputs(msg tea.Msg) tea.Cmd {
 }
 
 func (m *WindowEditorModel) createWindow() tea.Cmd {
-	window := data.NewWindow(m.inputs[0].Value(), m.inputs[1].Value(), m.db)
-	if err := window.Save(); err != nil {
+	// TODO: should I check the number too?
+	_, err := data.CreateWindow(m.inputs[0].Value(), m.inputs[1].Value(), m.connector)
+	if err != nil {
 		m.error = err
 		m.logger.Errorlogger.Printf("Error saving window: %v", err)
 		return func() tea.Msg { return common.InputErrMsg{Err: err} }
@@ -170,7 +171,7 @@ func (m *WindowEditorModel) createWindow() tea.Cmd {
 func (m *WindowEditorModel) editWindow() tea.Cmd {
 	m.window.Name = m.inputs[0].Value()
 	m.window.WorkingDirectory = m.inputs[1].Value()
-	if err := m.window.Save(); err != nil {
+	if _, err := m.window.Save(m.connector); err != nil {
 		m.error = err
 		m.logger.Errorlogger.Printf("Error saving window: %v", err)
 		return func() tea.Msg { return common.InputErrMsg{Err: err} }
@@ -181,7 +182,7 @@ func (m *WindowEditorModel) editWindow() tea.Cmd {
 }
 
 func (m WindowEditorModel) GetDB() *sql.DB {
-	return m.db
+	return nil
 }
 
 func (m WindowEditorModel) GetLogger() common.Logger {

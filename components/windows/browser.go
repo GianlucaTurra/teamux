@@ -19,19 +19,19 @@ type (
 		desc  string
 	}
 	WindowBrowserModel struct {
-		list     list.Model
-		selected string
-		state    common.State
-		data     map[string]data.Window
-		db       *sql.DB
-		logger   common.Logger
+		list      list.Model
+		selected  string
+		state     common.State
+		data      map[string]data.Window
+		connector data.Connector
+		logger    common.Logger
 	}
 )
 
 func (s windowItem) FilterValue() string { return "" }
 
-func NewWindowBrowserModel(db *sql.DB, logger common.Logger) common.TeamuxModel {
-	data, layouts := loadWindowData(db, logger)
+func NewWindowBrowserModel(connector data.Connector, logger common.Logger) common.TeamuxModel {
+	data, layouts := loadWindowData(connector, logger)
 	l := list.New(layouts, WindowDelegate{}, 100, 10)
 	l.SetShowTitle(false)
 	l.SetFilteringEnabled(false)
@@ -39,18 +39,18 @@ func NewWindowBrowserModel(db *sql.DB, logger common.Logger) common.TeamuxModel 
 	l.SetShowHelp(false)
 	l.Styles.PaginationStyle = common.PaginationStyle
 	return WindowBrowserModel{
-		list:   l,
-		data:   data,
-		state:  common.Browsing,
-		logger: logger,
-		db:     db,
+		list:      l,
+		data:      data,
+		state:     common.Browsing,
+		logger:    logger,
+		connector: connector,
 	}
 }
 
-func loadWindowData(db *sql.DB, logger common.Logger) (map[string]data.Window, []list.Item) {
+func loadWindowData(connector data.Connector, logger common.Logger) (map[string]data.Window, []list.Item) {
 	layouts := []list.Item{}
 	windowData := make(map[string]data.Window)
-	windows, err := data.ReadAllWindows(db)
+	windows, err := data.ReadAllWindows(connector.DB)
 	if err != nil {
 		logger.Fatallogger.Fatalf("Failed to read windows: %v", err)
 		return windowData, layouts
@@ -85,7 +85,7 @@ func (m WindowBrowserModel) Update(msg tea.Msg) (common.TeamuxModel, tea.Cmd) {
 	case common.KillMsg:
 		return m.killSelected()
 	case common.ReloadMsg:
-		return NewWindowBrowserModel(m.db, m.logger), nil
+		return NewWindowBrowserModel(m.connector, m.logger), nil
 	case common.UpDownMsg:
 		i, ok := m.list.SelectedItem().(windowItem)
 		if ok {
@@ -166,7 +166,7 @@ func (m WindowBrowserModel) openSelected() (WindowBrowserModel, tea.Cmd) {
 
 func (m WindowBrowserModel) deleteSelected() (WindowBrowserModel, tea.Cmd) {
 	w := m.data[m.selected]
-	if err := w.Delete(); err != nil {
+	if _, err := w.Delete(m.connector); err != nil {
 		m.logger.Errorlogger.Printf("Error deleting window %s: %v", m.selected, err)
 		return m, func() tea.Msg { return common.OutputMsg{Err: err, Severity: common.Error} }
 	}
@@ -183,7 +183,7 @@ func (m WindowBrowserModel) killSelected() (WindowBrowserModel, tea.Cmd) {
 }
 
 func (m WindowBrowserModel) GetDB() *sql.DB {
-	return m.db
+	return nil
 }
 
 func (m WindowBrowserModel) GetLogger() common.Logger {
