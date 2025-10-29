@@ -14,7 +14,7 @@ func NewPane() tea.Msg               { return NewPaneMsg{} }
 func Kill() tea.Msg                  { return KillMsg{} }
 func SessionCreated() tea.Msg        { return SessionCreatedMsg{} }
 func WindowCreated() tea.Msg         { return WindowCreatedMsg{} }
-func PaneCreated() tea.Msg           { return PaneCreatedMsg{} }
+func PaneEdited() tea.Msg            { return PanesEditedMsg{} }
 func Reaload() tea.Msg               { return ReloadMsg{} }
 func Browse() tea.Msg                { return BrowseMsg{} }
 func EditS(s data.Session) tea.Msg   { return EditSMsg{s} }

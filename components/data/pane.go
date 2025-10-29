@@ -1,10 +1,7 @@
 package data
 
 import (
-	"fmt"
-	"os/exec"
-	"strconv"
-
+	"github.com/GianlucaTurra/teamux/tmux"
 	"gorm.io/gorm"
 )
 
@@ -14,6 +11,7 @@ type Pane struct {
 	WorkingDirectory string
 	splitDirection   int
 	SplitRatio       int
+	Target           string
 }
 
 const (
@@ -32,8 +30,9 @@ func CreateVerticalPane(
 	workingDirectory string,
 	splitRatio int,
 	connector Connector,
+	target string,
 ) (int64, error) {
-	return createPane(name, workingDirectory, vertical, splitRatio, connector)
+	return createPane(name, workingDirectory, vertical, splitRatio, connector, target)
 }
 
 func CreateHorizontalPane(
@@ -41,8 +40,9 @@ func CreateHorizontalPane(
 	workingDirectory string,
 	splitRatio int,
 	connector Connector,
+	target string,
 ) (int64, error) {
-	return createPane(name, workingDirectory, horizontal, splitRatio, connector)
+	return createPane(name, workingDirectory, horizontal, splitRatio, connector, target)
 }
 
 func createPane(
@@ -51,21 +51,19 @@ func createPane(
 	splitDirection int,
 	splitRatio int,
 	connector Connector,
+	target string,
 ) (int64, error) {
 	pane := Pane{
 		Name:             name,
 		WorkingDirectory: workingDirectory,
 		splitDirection:   splitDirection,
 		SplitRatio:       splitRatio,
+		Target:           target,
 	}
 	result := gorm.WithResult()
 	err := gorm.G[Pane](connector.DB, result).Create(connector.Ctx, &pane)
 	return result.RowsAffected, err
 }
-
-func (p Pane) IsVertical() bool { return p.splitDirection == vertical }
-
-func (p Pane) IsHorizontal() bool { return p.splitDirection == horizontal }
 
 func (p Pane) Save(connector Connector) (int, error) {
 	return gorm.G[Pane](connector.DB).Updates(connector.Ctx, p)
@@ -75,33 +73,16 @@ func (p Pane) Delete(connector Connector) (int, error) {
 	return gorm.G[Pane](connector.DB).Where("id = ?", p.ID).Delete(connector.Ctx)
 }
 
+func (p Pane) IsVertical() bool { return p.splitDirection == vertical }
+
+func (p Pane) IsHorizontal() bool { return p.splitDirection == horizontal }
+
 func (p *Pane) SetHorizontal() { p.splitDirection = horizontal }
 
 func (p *Pane) SetVertical() { p.splitDirection = vertical }
 
-// TODO: move to a proper package
+// TODO: remove these methods
 
-func (p Pane) Open(target *string) error {
-	var tmuxCommand string
-	if target != nil {
-		tmuxCommand = fmt.Sprintf(
-			"tmux split-window -t \"%s\" -l %s -c \"%s\"",
-			*target,
-			strconv.Itoa(p.SplitRatio)+"%",
-			p.WorkingDirectory,
-		)
-	} else {
-		tmuxCommand = fmt.Sprintf(
-			"tmux split-window -l %s -c \"%s\"",
-			strconv.Itoa(p.SplitRatio)+"%",
-			p.WorkingDirectory,
-		)
-	}
-	if p.IsHorizontal() {
-		tmuxCommand += " -h"
-	} else {
-		tmuxCommand += " -v"
-	}
-	cmd := exec.Command("sh", "-c", tmuxCommand)
-	return cmd.Run()
+func (p Pane) Open() error {
+	return tmux.CreatePane(p.Target, p.SplitRatio, p.WorkingDirectory, p.IsHorizontal())
 }

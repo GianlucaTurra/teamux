@@ -1,9 +1,7 @@
 package data
 
 import (
-	"fmt"
-	"os/exec"
-
+	"github.com/GianlucaTurra/teamux/tmux"
 	"gorm.io/gorm"
 )
 
@@ -35,30 +33,16 @@ func ReadAllWindows(db *gorm.DB) ([]Window, error) {
 	return windows, err
 }
 
-// TODO: move these methods to a proper package
+// TODO: remove these methods
+
 func (w Window) Open() error {
-	cmd := exec.Command(
-		"sh",
-		"-c",
-		fmt.Sprintf("tmux neww -d -n \"%s\" -c %s", w.Name, w.WorkingDirectory),
-	)
-	return cmd.Run()
+	return tmux.CreateWindow(w.Name, w.WorkingDirectory)
 }
 
 func (w Window) Kill() error {
-	cmd := exec.Command(
-		"sh",
-		"-c",
-		fmt.Sprintf("tmux kill-window -t \"%s\"", w.Name),
-	)
-	return cmd.Run()
+	return tmux.KillWindow(w.Name)
 }
 
 func (w Window) OpenWithTarget(target string) error {
-	cmd := exec.Command(
-		"sh",
-		"-c",
-		fmt.Sprintf("tmux neww -t %s -d -n \"%s\" -c %s", target, w.Name, w.WorkingDirectory),
-	)
-	return cmd.Run()
+	return tmux.CreateWindowWithTarget(w.Name, w.WorkingDirectory, target)
 }

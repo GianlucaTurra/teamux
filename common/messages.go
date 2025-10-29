@@ -15,7 +15,7 @@ type (
 	ReloadMsg           struct{}
 	SessionCreatedMsg   struct{}
 	WindowCreatedMsg    struct{}
-	PaneCreatedMsg      struct{}
+	PanesEditedMsg      struct{}
 	BrowseMsg           struct{}
 	EditSMsg            struct{ Session data.Session }
 	EditWMsg            struct{ Window data.Window }

@@ -29,7 +29,7 @@ type PaneEditorModel struct {
 
 func NewPaneEditorModel(connector data.Connector, logger common.Logger) common.TeamuxModel {
 	m := PaneEditorModel{
-		inputs:    make([]textinput.Model, 4),
+		inputs:    make([]textinput.Model, 5),
 		connector: connector,
 		logger:    logger,
 		mode:      creating,
@@ -59,6 +59,10 @@ func NewPaneEditorModel(connector data.Connector, logger common.Logger) common.T
 			t.Prompt = "Ratio: "
 			t.PromptStyle = common.BlurredStyle
 			t.CharLimit = 3
+		case 4:
+			t.Prompt = "Target: "
+			t.PromptStyle = common.BlurredStyle
+			t.CharLimit = 50
 		}
 		m.inputs[i] = t
 	}
@@ -174,6 +178,7 @@ func (m *PaneEditorModel) createPane() tea.Cmd {
 			m.inputs[1].Value(),
 			ratio,
 			m.connector,
+			m.inputs[4].Value(),
 		)
 	case "v":
 		_, err = data.CreateVerticalPane(
@@ -181,6 +186,7 @@ func (m *PaneEditorModel) createPane() tea.Cmd {
 			m.inputs[1].Value(),
 			ratio,
 			m.connector,
+			m.inputs[4].Value(),
 		)
 	default:
 		err := fmt.Errorf("invalid direction: %s", m.inputs[2].Value())
@@ -190,10 +196,12 @@ func (m *PaneEditorModel) createPane() tea.Cmd {
 		m.logger.Errorlogger.Printf("Error saving pane: %v", err)
 		return func() tea.Msg { return common.OutputMsg{Err: err, Severity: common.Error} }
 	}
-	return common.PaneCreated
+	return common.PaneEdited
 }
 
 func (m *PaneEditorModel) editPane() tea.Cmd {
+	m.pane.Name = m.inputs[0].Value()
+	m.pane.WorkingDirectory = m.inputs[1].Value()
 	switch strings.ToLower(m.inputs[2].Value()) {
 	case "h":
 		m.pane.SetHorizontal()
@@ -208,15 +216,13 @@ func (m *PaneEditorModel) editPane() tea.Cmd {
 		m.logger.Errorlogger.Printf("Error converting ratio to int: %v", err)
 		return func() tea.Msg { return common.OutputMsg{Err: err, Severity: common.Error} }
 	}
-	m.pane.Name = m.inputs[0].Value()
-	m.pane.WorkingDirectory = m.inputs[1].Value()
 	m.pane.SplitRatio = ratio
+	m.pane.Target = m.inputs[4].Value()
 	if _, err := m.pane.Save(m.connector); err != nil {
 		m.logger.Errorlogger.Printf("Error saving pane: %v", err)
 		return func() tea.Msg { return common.OutputMsg{Err: err, Severity: common.Error} }
 	}
-	// TODO: kinda confusing
-	return common.PaneCreated
+	return common.PaneEdited
 }
 
 func (m PaneEditorModel) GetDB() *sql.DB {

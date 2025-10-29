@@ -135,7 +135,7 @@ func (m PaneBrowserModel) View() string {
 
 func (m PaneBrowserModel) openSelected() (PaneBrowserModel, tea.Cmd) {
 	p := m.data[m.selected]
-	if err := p.Open(nil); err != nil {
+	if err := p.Open(); err != nil {
 		m.logger.Errorlogger.Printf("Failed to open pane %s: %v", m.selected, err)
 		return m, nil
 	}
@@ -146,8 +146,7 @@ func (m PaneBrowserModel) deleteSelected() (PaneBrowserModel, tea.Cmd) {
 	p := m.data[m.selected]
 	if _, err := p.Delete(m.connector); err != nil {
 		m.logger.Errorlogger.Printf("Failed to delete pane %s: %v", m.selected, err)
-		// TODO: actually do something
-		return m, nil
+		return m, func() tea.Msg { return common.OutputMsg{Err: err, Severity: common.Error} }
 	}
 	return m, func() tea.Msg { return common.ReloadMsg{} }
 }
