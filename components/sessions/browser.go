@@ -89,7 +89,7 @@ func (m SessionBrowserModel) View() string {
 	)
 }
 
-func (m SessionBrowserModel) Update(msg tea.Msg) (common.TeamuxModel, tea.Cmd) {
+func (m SessionBrowserModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmds []tea.Cmd
 	var cmd tea.Cmd
 	switch msg := msg.(type) {

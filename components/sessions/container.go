@@ -9,7 +9,7 @@ import (
 )
 
 type SessionContainerModel struct {
-	focusedModel common.TeamuxModel
+	focusedModel tea.Model
 	connector    data.Connector
 	logger       common.Logger
 }

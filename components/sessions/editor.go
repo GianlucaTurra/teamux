@@ -65,7 +65,7 @@ func (m SessionEditorModel) Init() tea.Cmd {
 	return textinput.Blink
 }
 
-func (m SessionEditorModel) Update(msg tea.Msg) (common.TeamuxModel, tea.Cmd) {
+func (m SessionEditorModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case common.InputErrMsg:
 		m.error = msg.Err

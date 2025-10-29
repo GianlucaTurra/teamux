@@ -30,7 +30,7 @@ type (
 
 func (s windowItem) FilterValue() string { return "" }
 
-func NewWindowBrowserModel(connector data.Connector, logger common.Logger) common.TeamuxModel {
+func NewWindowBrowserModel(connector data.Connector, logger common.Logger) WindowBrowserModel {
 	data, layouts := loadWindowData(connector, logger)
 	l := list.New(layouts, WindowDelegate{}, 100, 10)
 	l.SetShowTitle(false)
@@ -75,7 +75,7 @@ func (m WindowBrowserModel) View() string {
 	)
 }
 
-func (m WindowBrowserModel) Update(msg tea.Msg) (common.TeamuxModel, tea.Cmd) {
+func (m WindowBrowserModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmds []tea.Cmd
 	switch msg := msg.(type) {
 	case common.OpenMsg:

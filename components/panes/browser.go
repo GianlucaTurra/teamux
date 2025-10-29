@@ -47,7 +47,7 @@ func loadPaneData(db *gorm.DB, logger common.Logger) (map[string]data.Pane, []li
 	return paneData, layouts
 }
 
-func NewPaneBrowserModel(connector data.Connector, logger common.Logger) common.TeamuxModel {
+func NewPaneBrowserModel(connector data.Connector, logger common.Logger) PaneBrowserModel {
 	data, layouts := loadPaneData(connector.DB, logger)
 	l := list.New(layouts, paneDelegate{}, 100, 10)
 	l.SetShowTitle(false)
@@ -68,7 +68,7 @@ func (m PaneBrowserModel) Init() tea.Cmd {
 	return nil
 }
 
-func (m PaneBrowserModel) Update(msg tea.Msg) (common.TeamuxModel, tea.Cmd) {
+func (m PaneBrowserModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd
 	switch msg := msg.(type) {
 	case common.ReloadMsg:

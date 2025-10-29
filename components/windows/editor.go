@@ -29,7 +29,7 @@ type WindowEditorModel struct {
 	logger       common.Logger
 }
 
-func NewWindowEditorModel(connector data.Connector, logger common.Logger) common.TeamuxModel {
+func NewWindowEditorModel(connector data.Connector, logger common.Logger) WindowEditorModel {
 	m := WindowEditorModel{
 		inputs:    make([]textinput.Model, 2),
 		connector: connector,
@@ -63,7 +63,7 @@ func (m WindowEditorModel) Init() tea.Cmd {
 	return textinput.Blink
 }
 
-func (m WindowEditorModel) Update(msg tea.Msg) (common.TeamuxModel, tea.Cmd) {
+func (m WindowEditorModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case common.InputErrMsg:
 		m.error = msg.Err

@@ -7,14 +7,16 @@ import (
 )
 
 type WindowContainerModel struct {
-	model     common.TeamuxModel
+	model     tea.Model
 	connector data.Connector
+	logger    common.Logger
 }
 
 func NewWindowContainerModel(connector data.Connector, logger common.Logger) WindowContainerModel {
 	return WindowContainerModel{
 		model:     NewWindowBrowserModel(connector, logger),
 		connector: connector,
+		logger:    logger,
 	}
 }
 
@@ -25,13 +27,13 @@ func (m WindowContainerModel) Init() tea.Cmd {
 func (m WindowContainerModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg.(type) {
 	case common.NewWindowMsg, common.EditWMsg:
-		m.model = NewWindowEditorModel(m.connector, m.model.GetLogger())
+		m.model = NewWindowEditorModel(m.connector, m.logger)
 		return m, nil
 	case common.WindowCreatedMsg:
-		m.model = NewWindowBrowserModel(m.connector, m.model.GetLogger())
+		m.model = NewWindowBrowserModel(m.connector, m.logger)
 		return m, common.Reaload
 	case common.BrowseMsg:
-		m.model = NewWindowBrowserModel(m.connector, m.model.GetLogger())
+		m.model = NewWindowBrowserModel(m.connector, m.logger)
 		return m, nil
 	}
 	newModel, cmd := m.model.Update(msg)

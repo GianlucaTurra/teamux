@@ -27,7 +27,7 @@ type PaneEditorModel struct {
 	logger       common.Logger
 }
 
-func NewPaneEditorModel(connector data.Connector, logger common.Logger) common.TeamuxModel {
+func NewPaneEditorModel(connector data.Connector, logger common.Logger) PaneEditorModel {
 	m := PaneEditorModel{
 		inputs:    make([]textinput.Model, 4),
 		connector: connector,
@@ -69,7 +69,7 @@ func (m PaneEditorModel) Init() tea.Cmd {
 	return textinput.Blink
 }
 
-func (m PaneEditorModel) Update(msg tea.Msg) (common.TeamuxModel, tea.Cmd) {
+func (m PaneEditorModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case common.EditPMsg:
 		m.mode = editing
