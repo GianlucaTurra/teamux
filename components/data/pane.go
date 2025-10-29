@@ -5,7 +5,6 @@ import (
 	"os/exec"
 	"strconv"
 
-	_ "github.com/mattn/go-sqlite3"
 	"gorm.io/gorm"
 )
 
