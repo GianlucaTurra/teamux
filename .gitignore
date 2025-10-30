@@ -1,3 +1,4 @@
 *.sqlite3
+*.db
 main
 test.db

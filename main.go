@@ -13,31 +13,34 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
+	"gorm.io/gorm/logger"
 )
 
 func main() {
 	file := "/tmp/teamux.log"
-	logfile, err := os.OpenFile(file, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0644)
+	logfile, err := os.OpenFile(file, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0o644)
 	if err != nil {
 		log.Fatalln("Unable to setup syslog:", err.Error())
 	}
 	defer logfile.Close()
-	logger := common.Logger{
+	teamuxLogger := common.Logger{
 		Infologger:    log.New(logfile, "INFO: ", log.Ldate|log.Ltime|log.Lshortfile),
 		Warninglogger: log.New(logfile, "WARNING: ", log.Ldate|log.Ltime|log.Lshortfile),
 		Errorlogger:   log.New(logfile, "ERROR: ", log.Ldate|log.Ltime|log.Lshortfile),
 		Fatallogger:   log.New(logfile, "FATAL: ", log.Ldate|log.Ltime|log.Lshortfile),
 	}
-	db, err := gorm.Open(sqlite.Open("teamux.db"), &gorm.Config{})
+	db, err := gorm.Open(sqlite.Open("teamux.db"), &gorm.Config{Logger: logger.Default.LogMode(logger.Silent)})
 	if err != nil {
 		log.Fatal(err)
 	}
-	db.AutoMigrate(
+	if err := db.AutoMigrate(
 		&data.Session{},
 		&data.Window{},
 		&data.Pane{},
-	)
-	p := tea.NewProgram(components.InitialModel(data.Connector{DB: db, Ctx: context.Background()}, logger))
+	); err != nil {
+		teamuxLogger.Errorlogger.Printf("Error migrating tables: %v", err)
+	}
+	p := tea.NewProgram(components.InitialModel(data.Connector{DB: db, Ctx: context.Background()}, teamuxLogger))
 	if _, err := p.Run(); err != nil {
 		fmt.Printf("ERROR: %v", err)
 		os.Exit(1)
