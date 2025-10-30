@@ -17,6 +17,8 @@ type SessionContainerModel struct {
 func NewSessionContainerModel(connector data.Connector, logger common.Logger) SessionContainerModel {
 	return SessionContainerModel{
 		focusedModel: NewSessionBrowserModel(connector, logger),
+		connector:    connector,
+		logger:       logger,
 	}
 }
 
@@ -25,9 +27,9 @@ func (m SessionContainerModel) Init() tea.Cmd {
 }
 
 func (m SessionContainerModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
-	switch msg.(type) {
+	switch msg := msg.(type) {
 	case common.NewSessionMsg:
-		m.focusedModel = NewSessionEditorModel(m.connector, m.logger)
+		m.focusedModel = NewSessionEditorModel(m.connector, m.logger, nil)
 		return m, nil
 	case common.SessionCreatedMsg:
 		m.focusedModel = NewSessionBrowserModel(m.connector, m.logger)
@@ -37,7 +39,7 @@ func (m SessionContainerModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, nil
 	case common.EditSMsg:
 		// FIXME: shouldn't the message pass down the session to the editor? AKA: no return?
-		m.focusedModel = NewSessionEditorModel(m.connector, m.logger)
+		m.focusedModel = NewSessionEditorModel(m.connector, m.logger, &msg.Session)
 		return m, nil
 		// TODO: handle new session shortcut
 		// case tea.KeyMsg:

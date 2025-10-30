@@ -28,12 +28,13 @@ type WindowEditorModel struct {
 	logger       common.Logger
 }
 
-func NewWindowEditorModel(connector data.Connector, logger common.Logger) WindowEditorModel {
+func NewWindowEditorModel(connector data.Connector, logger common.Logger, window *data.Window) common.TeamuxModel {
 	m := WindowEditorModel{
 		inputs:    make([]textinput.Model, 2),
 		connector: connector,
 		logger:    logger,
 		mode:      creating,
+		window:    window,
 	}
 	var t textinput.Model
 	for i := range m.inputs {
@@ -55,6 +56,11 @@ func NewWindowEditorModel(connector data.Connector, logger common.Logger) Window
 		}
 		m.inputs[i] = t
 	}
+	if window != nil {
+		m.mode = editing
+		m.inputs[0].SetValue(window.Name)
+		m.inputs[1].SetValue(window.WorkingDirectory)
+	}
 	return m
 }
 
@@ -67,20 +73,10 @@ func (m WindowEditorModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case common.InputErrMsg:
 		m.error = msg.Err
 		return m, nil
-	case common.EditWMsg:
-		m.mode = editing
-		m.window = &msg.Window
-		m.inputs[0].SetValue(msg.Window.Name)
-		if msg.Window.WorkingDirectory == "$HOME" {
-			m.inputs[1].SetValue("")
-		} else {
-			m.inputs[1].SetValue(msg.Window.WorkingDirectory)
-		}
-		return m, nil
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "esc":
-			return NewWindowEditorModel(m.connector, m.logger), common.Browse
+			return NewWindowEditorModel(m.connector, m.logger, nil), common.Browse
 		case "ctrl+c":
 			m.mode = quitting
 			return m, common.Quit

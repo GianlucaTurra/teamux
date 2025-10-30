@@ -25,10 +25,12 @@ func (m PaneContainerModel) Init() tea.Cmd {
 }
 
 func (m PaneContainerModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
-	switch msg.(type) {
-	case common.NewPaneMsg, common.EditPMsg:
-		m.model = NewPaneEditorModel(m.connector, m.logger)
+	switch msg := msg.(type) {
+	case common.NewPaneMsg:
+		m.model = NewPaneEditorModel(m.connector, m.model.GetLogger(), nil)
 		return m, nil
+	case common.EditPMsg:
+		m.model = NewPaneEditorModel(m.connector, m.logger, &msg.Pane)
 	case common.PaneCreatedMsg, common.BrowseMsg:
 		m.model = NewPaneBrowserModel(m.connector, m.logger)
 		return m, common.Reaload

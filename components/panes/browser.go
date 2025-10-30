@@ -115,7 +115,8 @@ func (m PaneBrowserModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 	}
 	m.list, cmd = m.list.Update(msg)
-	m.selected = m.list.SelectedItem().(paneItem).title
+	// FIXME: probably a bug here
+	// m.selected = m.list.SelectedItem().(paneItem).title
 	return m, cmd
 }
 

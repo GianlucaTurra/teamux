@@ -18,7 +18,6 @@ type SessionDetailModel struct {
 
 func NewSessionTreeModel(connector data.Connector, logger common.Logger, session *data.Session) SessionDetailModel {
 	if session == nil {
-		gorm.G[data.Session](connector.DB).First(connector.Ctx)
 		firstSession, err := gorm.G[data.Session](connector.DB).First(connector.Ctx)
 		if err != nil {
 			logger.Errorlogger.Printf("Error loading first session, falling back to default one.\n %v", err)

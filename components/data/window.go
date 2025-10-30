@@ -31,11 +31,12 @@ func (w Window) Delete(connector Connector) (int, error) {
 
 func ReadAllWindows(db *gorm.DB) ([]Window, error) {
 	var windows []Window
-	err := db.Model(&Window{}).Preload("Panes").Find(windows).Error
+	err := db.Model(&Window{}).Preload("Panes").Find(&windows).Error
 	return windows, err
 }
 
 // TODO: move these methods to a proper package
+
 func (w Window) Open() error {
 	cmd := exec.Command(
 		"sh",
