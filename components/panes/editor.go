@@ -26,7 +26,7 @@ type PaneEditorModel struct {
 	logger       common.Logger
 }
 
-func NewPaneEditorModel(connector data.Connector, logger common.Logger, pane *data.Pane) common.TeamuxModel {
+func NewPaneEditorModel(connector data.Connector, logger common.Logger, pane *data.Pane) PaneEditorModel {
 	m := PaneEditorModel{
 		inputs:    make([]textinput.Model, 4),
 		connector: connector,

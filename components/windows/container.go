@@ -27,10 +27,10 @@ func (m WindowContainerModel) Init() tea.Cmd {
 func (m WindowContainerModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case common.NewWindowMsg:
-		m.model = NewWindowEditorModel(m.connector, m.model.GetLogger(), nil)
+		m.model = NewWindowEditorModel(m.connector, m.logger, nil)
 		return m, nil
 	case common.EditWMsg:
-		m.model = NewWindowEditorModel(m.connector, m.model.GetLogger(), &msg.Window)
+		m.model = NewWindowEditorModel(m.connector, m.logger, &msg.Window)
 	case common.WindowCreatedMsg:
 		m.model = NewWindowBrowserModel(m.connector, m.logger)
 		return m, common.Reaload

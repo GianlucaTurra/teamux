@@ -28,7 +28,7 @@ type WindowEditorModel struct {
 	logger       common.Logger
 }
 
-func NewWindowEditorModel(connector data.Connector, logger common.Logger, window *data.Window) common.TeamuxModel {
+func NewWindowEditorModel(connector data.Connector, logger common.Logger, window *data.Window) WindowEditorModel {
 	m := WindowEditorModel{
 		inputs:    make([]textinput.Model, 2),
 		connector: connector,

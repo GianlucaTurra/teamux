@@ -27,7 +27,7 @@ func (m PaneContainerModel) Init() tea.Cmd {
 func (m PaneContainerModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case common.NewPaneMsg:
-		m.model = NewPaneEditorModel(m.connector, m.model.GetLogger(), nil)
+		m.model = NewPaneEditorModel(m.connector, m.logger, nil)
 		return m, nil
 	case common.EditPMsg:
 		m.model = NewPaneEditorModel(m.connector, m.logger, &msg.Pane)
