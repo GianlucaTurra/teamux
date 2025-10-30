@@ -1,7 +1,6 @@
 package panes
 
 import (
-	"database/sql"
 	"fmt"
 	"strconv"
 	"strings"
@@ -217,12 +216,4 @@ func (m *PaneEditorModel) editPane() tea.Cmd {
 	}
 	// TODO: kinda confusing
 	return common.PaneCreated
-}
-
-func (m PaneEditorModel) GetDB() *sql.DB {
-	return nil
-}
-
-func (m PaneEditorModel) GetLogger() common.Logger {
-	return m.logger
 }

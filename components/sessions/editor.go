@@ -1,7 +1,6 @@
 package sessions
 
 import (
-	"database/sql"
 	"fmt"
 	"strings"
 
@@ -181,13 +180,4 @@ func (m SessionEditorModel) View() string {
 		fmt.Fprintf(&b, "\nError: %v", m.error)
 	}
 	return b.String()
-}
-
-func (m SessionEditorModel) GetDB() *sql.DB {
-	// TODO: clean
-	return nil
-}
-
-func (m SessionEditorModel) GetLogger() common.Logger {
-	return m.logger
 }

@@ -3,7 +3,6 @@
 package windows
 
 import (
-	"database/sql"
 	"fmt"
 
 	"github.com/GianlucaTurra/teamux/common"
@@ -180,12 +179,4 @@ func (m WindowBrowserModel) killSelected() (WindowBrowserModel, tea.Cmd) {
 		return m, func() tea.Msg { return common.OutputMsg{Err: err, Severity: common.Error} }
 	}
 	return m, func() tea.Msg { return common.ReloadMsg{} }
-}
-
-func (m WindowBrowserModel) GetDB() *sql.DB {
-	return nil
-}
-
-func (m WindowBrowserModel) GetLogger() common.Logger {
-	return m.logger
 }

@@ -1,7 +1,6 @@
 package windows
 
 import (
-	"database/sql"
 	"fmt"
 	"strings"
 
@@ -179,12 +178,4 @@ func (m *WindowEditorModel) editWindow() tea.Cmd {
 	m.error = nil
 	// TODO: this is a little confusing
 	return common.WindowCreated
-}
-
-func (m WindowEditorModel) GetDB() *sql.DB {
-	return nil
-}
-
-func (m WindowEditorModel) GetLogger() common.Logger {
-	return m.logger
 }

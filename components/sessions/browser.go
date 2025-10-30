@@ -1,7 +1,6 @@
 package sessions
 
 import (
-	"database/sql"
 	"fmt"
 
 	"github.com/GianlucaTurra/teamux/common"
@@ -246,13 +245,4 @@ func (m *SessionBrowserModel) refreshItems() {
 		newList = append(newList, i)
 	}
 	m.list.SetItems(newList)
-}
-
-func (m SessionBrowserModel) GetDB() *sql.DB {
-	// TODO: like this until the orm is working
-	return nil
-}
-
-func (m SessionBrowserModel) GetLogger() common.Logger {
-	return m.logger
 }

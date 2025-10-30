@@ -3,7 +3,6 @@
 package panes
 
 import (
-	"database/sql"
 	"fmt"
 
 	"github.com/GianlucaTurra/teamux/common"
@@ -150,12 +149,4 @@ func (m PaneBrowserModel) deleteSelected() (PaneBrowserModel, tea.Cmd) {
 		return m, nil
 	}
 	return m, func() tea.Msg { return common.ReloadMsg{} }
-}
-
-func (m PaneBrowserModel) GetDB() *sql.DB {
-	return nil
-}
-
-func (m PaneBrowserModel) GetLogger() common.Logger {
-	return m.logger
 }
