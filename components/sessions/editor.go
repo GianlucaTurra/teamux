@@ -31,12 +31,13 @@ type SessionEditorModel struct {
 	logger       common.Logger
 }
 
-func NewSessionEditorModel(connector data.Connector, logger common.Logger) SessionEditorModel {
+func NewSessionEditorModel(connector data.Connector, logger common.Logger, session *data.Session) SessionEditorModel {
 	m := SessionEditorModel{
 		inputs:    make([]textinput.Model, 2),
 		connector: connector,
 		logger:    logger,
 		mode:      creating,
+		session:   session,
 	}
 	var t textinput.Model
 	for i := range m.inputs {
@@ -57,6 +58,11 @@ func NewSessionEditorModel(connector data.Connector, logger common.Logger) Sessi
 			t.CharLimit = 100
 		}
 		m.inputs[i] = t
+		if session != nil {
+			m.inputs[0].SetValue(session.Name)
+			m.inputs[1].SetValue(session.WorkingDirectory)
+			m.mode = editing
+		}
 	}
 	return m
 }
@@ -70,20 +76,10 @@ func (m SessionEditorModel) Update(msg tea.Msg) (common.TeamuxModel, tea.Cmd) {
 	case common.InputErrMsg:
 		m.error = msg.Err
 		return m, nil
-	case common.EditSMsg:
-		m.mode = editing
-		m.session = &msg.Session
-		m.inputs[0].SetValue(msg.Session.Name)
-		if msg.Session.WorkingDirectory == "$HOME" {
-			m.inputs[1].SetValue("")
-		} else {
-			m.inputs[1].SetValue(msg.Session.WorkingDirectory)
-		}
-		return m, nil
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "esc":
-			return NewSessionEditorModel(m.connector, m.logger), common.Browse
+			return NewSessionEditorModel(m.connector, m.logger, nil), common.Browse
 		case "ctrl+c":
 			m.mode = quitting
 			return m, common.Quit

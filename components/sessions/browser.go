@@ -159,7 +159,7 @@ func (m SessionBrowserModel) Update(msg tea.Msg) (common.TeamuxModel, tea.Cmd) {
 			}
 			return m, common.Kill
 		case "n":
-			return m, common.NewWindow
+			return m, common.NewSession
 		case "j", "k", "up", "down":
 			cmds = append(cmds, common.UpDown)
 		case "?":
