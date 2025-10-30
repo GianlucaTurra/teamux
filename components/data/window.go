@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"os/exec"
 
-	_ "github.com/mattn/go-sqlite3"
 	"gorm.io/gorm"
 )
 

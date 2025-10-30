@@ -6,7 +6,6 @@ import (
 	"log"
 
 	"github.com/GianlucaTurra/teamux/components/data"
-	_ "github.com/mattn/go-sqlite3"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 )
