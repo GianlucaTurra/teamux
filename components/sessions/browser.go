@@ -1,7 +1,6 @@
 package sessions
 
 import (
-	"database/sql"
 	"fmt"
 
 	"github.com/GianlucaTurra/teamux/common"
@@ -89,7 +88,7 @@ func (m SessionBrowserModel) View() string {
 	)
 }
 
-func (m SessionBrowserModel) Update(msg tea.Msg) (common.TeamuxModel, tea.Cmd) {
+func (m SessionBrowserModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmds []tea.Cmd
 	var cmd tea.Cmd
 	switch msg := msg.(type) {
@@ -159,7 +158,7 @@ func (m SessionBrowserModel) Update(msg tea.Msg) (common.TeamuxModel, tea.Cmd) {
 			}
 			return m, common.Kill
 		case "n":
-			return m, common.NewWindow
+			return m, common.NewSession
 		case "j", "k", "up", "down":
 			cmds = append(cmds, common.UpDown)
 		case "?":
@@ -246,13 +245,4 @@ func (m *SessionBrowserModel) refreshItems() {
 		newList = append(newList, i)
 	}
 	m.list.SetItems(newList)
-}
-
-func (m SessionBrowserModel) GetDB() *sql.DB {
-	// TODO: like this until the orm is working
-	return nil
-}
-
-func (m SessionBrowserModel) GetLogger() common.Logger {
-	return m.logger
 }

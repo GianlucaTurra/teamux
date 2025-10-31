@@ -3,7 +3,6 @@
 package windows
 
 import (
-	"database/sql"
 	"fmt"
 
 	"github.com/GianlucaTurra/teamux/common"
@@ -30,7 +29,7 @@ type (
 
 func (s windowItem) FilterValue() string { return "" }
 
-func NewWindowBrowserModel(connector data.Connector, logger common.Logger) common.TeamuxModel {
+func NewWindowBrowserModel(connector data.Connector, logger common.Logger) WindowBrowserModel {
 	data, layouts := loadWindowData(connector, logger)
 	l := list.New(layouts, WindowDelegate{}, 100, 10)
 	l.SetShowTitle(false)
@@ -75,7 +74,7 @@ func (m WindowBrowserModel) View() string {
 	)
 }
 
-func (m WindowBrowserModel) Update(msg tea.Msg) (common.TeamuxModel, tea.Cmd) {
+func (m WindowBrowserModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmds []tea.Cmd
 	switch msg := msg.(type) {
 	case common.OpenMsg:
@@ -180,12 +179,4 @@ func (m WindowBrowserModel) killSelected() (WindowBrowserModel, tea.Cmd) {
 		return m, func() tea.Msg { return common.OutputMsg{Err: err, Severity: common.Error} }
 	}
 	return m, func() tea.Msg { return common.ReloadMsg{} }
-}
-
-func (m WindowBrowserModel) GetDB() *sql.DB {
-	return nil
-}
-
-func (m WindowBrowserModel) GetLogger() common.Logger {
-	return m.logger
 }

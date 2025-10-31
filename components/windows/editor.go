@@ -1,7 +1,6 @@
 package windows
 
 import (
-	"database/sql"
 	"fmt"
 	"strings"
 
@@ -29,12 +28,13 @@ type WindowEditorModel struct {
 	logger       common.Logger
 }
 
-func NewWindowEditorModel(connector data.Connector, logger common.Logger) common.TeamuxModel {
+func NewWindowEditorModel(connector data.Connector, logger common.Logger, window *data.Window) WindowEditorModel {
 	m := WindowEditorModel{
 		inputs:    make([]textinput.Model, 2),
 		connector: connector,
 		logger:    logger,
 		mode:      creating,
+		window:    window,
 	}
 	var t textinput.Model
 	for i := range m.inputs {
@@ -56,6 +56,11 @@ func NewWindowEditorModel(connector data.Connector, logger common.Logger) common
 		}
 		m.inputs[i] = t
 	}
+	if window != nil {
+		m.mode = editing
+		m.inputs[0].SetValue(window.Name)
+		m.inputs[1].SetValue(window.WorkingDirectory)
+	}
 	return m
 }
 
@@ -63,25 +68,15 @@ func (m WindowEditorModel) Init() tea.Cmd {
 	return textinput.Blink
 }
 
-func (m WindowEditorModel) Update(msg tea.Msg) (common.TeamuxModel, tea.Cmd) {
+func (m WindowEditorModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case common.InputErrMsg:
 		m.error = msg.Err
 		return m, nil
-	case common.EditWMsg:
-		m.mode = editing
-		m.window = &msg.Window
-		m.inputs[0].SetValue(msg.Window.Name)
-		if msg.Window.WorkingDirectory == "$HOME" {
-			m.inputs[1].SetValue("")
-		} else {
-			m.inputs[1].SetValue(msg.Window.WorkingDirectory)
-		}
-		return m, nil
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "esc":
-			return NewWindowEditorModel(m.connector, m.logger), common.Browse
+			return NewWindowEditorModel(m.connector, m.logger, nil), common.Browse
 		case "ctrl+c":
 			m.mode = quitting
 			return m, common.Quit
@@ -179,12 +174,4 @@ func (m *WindowEditorModel) editWindow() tea.Cmd {
 	m.error = nil
 	// TODO: this is a little confusing
 	return common.WindowCreated
-}
-
-func (m WindowEditorModel) GetDB() *sql.DB {
-	return nil
-}
-
-func (m WindowEditorModel) GetLogger() common.Logger {
-	return m.logger
 }

@@ -3,7 +3,6 @@
 package panes
 
 import (
-	"database/sql"
 	"fmt"
 
 	"github.com/GianlucaTurra/teamux/common"
@@ -47,7 +46,7 @@ func loadPaneData(db *gorm.DB, logger common.Logger) (map[string]data.Pane, []li
 	return paneData, layouts
 }
 
-func NewPaneBrowserModel(connector data.Connector, logger common.Logger) common.TeamuxModel {
+func NewPaneBrowserModel(connector data.Connector, logger common.Logger) PaneBrowserModel {
 	data, layouts := loadPaneData(connector.DB, logger)
 	l := list.New(layouts, paneDelegate{}, 100, 10)
 	l.SetShowTitle(false)
@@ -68,7 +67,7 @@ func (m PaneBrowserModel) Init() tea.Cmd {
 	return nil
 }
 
-func (m PaneBrowserModel) Update(msg tea.Msg) (common.TeamuxModel, tea.Cmd) {
+func (m PaneBrowserModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd
 	switch msg := msg.(type) {
 	case common.ReloadMsg:
@@ -116,7 +115,8 @@ func (m PaneBrowserModel) Update(msg tea.Msg) (common.TeamuxModel, tea.Cmd) {
 		}
 	}
 	m.list, cmd = m.list.Update(msg)
-	m.selected = m.list.SelectedItem().(paneItem).title
+	// FIXME: probably a bug here
+	// m.selected = m.list.SelectedItem().(paneItem).title
 	return m, cmd
 }
 
@@ -149,12 +149,4 @@ func (m PaneBrowserModel) deleteSelected() (PaneBrowserModel, tea.Cmd) {
 		return m, func() tea.Msg { return common.OutputMsg{Err: err, Severity: common.Error} }
 	}
 	return m, func() tea.Msg { return common.ReloadMsg{} }
-}
-
-func (m PaneBrowserModel) GetDB() *sql.DB {
-	return nil
-}
-
-func (m PaneBrowserModel) GetLogger() common.Logger {
-	return m.logger
 }

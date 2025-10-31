@@ -21,7 +21,7 @@ const (
 
 func ReadAllPanes(db *gorm.DB) ([]Pane, error) {
 	var panes []Pane
-	err := db.Model(&Pane{}).Find(panes).Error
+	err := db.Model(&Pane{}).Find(&panes).Error
 	return panes, err
 }
 

@@ -1,7 +1,6 @@
 package panes
 
 import (
-	"database/sql"
 	"fmt"
 	"strconv"
 	"strings"
@@ -27,7 +26,7 @@ type PaneEditorModel struct {
 	logger       common.Logger
 }
 
-func NewPaneEditorModel(connector data.Connector, logger common.Logger) common.TeamuxModel {
+func NewPaneEditorModel(connector data.Connector, logger common.Logger, pane *data.Pane) PaneEditorModel {
 	m := PaneEditorModel{
 		inputs:    make([]textinput.Model, 5),
 		connector: connector,
@@ -52,7 +51,7 @@ func NewPaneEditorModel(connector data.Connector, logger common.Logger) common.T
 			t.PromptStyle = common.BlurredStyle
 			t.CharLimit = 100
 		case 2:
-			t.Prompt = "Direction: "
+			t.Prompt = "Direction (v/h): "
 			t.PromptStyle = common.BlurredStyle
 			t.CharLimit = 1
 		case 3:
@@ -66,6 +65,17 @@ func NewPaneEditorModel(connector data.Connector, logger common.Logger) common.T
 		}
 		m.inputs[i] = t
 	}
+	if pane != nil {
+		m.mode = editing
+		m.inputs[0].SetValue(pane.Name)
+		m.inputs[1].SetValue(pane.WorkingDirectory)
+		if pane.IsHorizontal() {
+			m.inputs[2].SetValue("h")
+		} else {
+			m.inputs[2].SetValue("v")
+		}
+		m.inputs[3].SetValue(strconv.Itoa(pane.SplitRatio))
+	}
 	return m
 }
 
@@ -73,28 +83,12 @@ func (m PaneEditorModel) Init() tea.Cmd {
 	return textinput.Blink
 }
 
-func (m PaneEditorModel) Update(msg tea.Msg) (common.TeamuxModel, tea.Cmd) {
+func (m PaneEditorModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
-	case common.EditPMsg:
-		m.mode = editing
-		m.pane = &msg.Pane
-		m.inputs[0].SetValue(msg.Pane.Name)
-		if msg.Pane.WorkingDirectory == "$HOME" {
-			m.inputs[1].SetValue("")
-		} else {
-			m.inputs[1].SetValue(msg.Pane.WorkingDirectory)
-		}
-		if msg.Pane.IsHorizontal() {
-			m.inputs[2].SetValue("h")
-		} else {
-			m.inputs[2].SetValue("v")
-		}
-		m.inputs[3].SetValue(strconv.Itoa(msg.Pane.SplitRatio))
-		return m, nil
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "esc":
-			return NewPaneEditorModel(m.connector, m.logger), common.Browse
+			return NewPaneEditorModel(m.connector, m.logger, nil), common.Browse
 		case "ctrl+c":
 			m.mode = quitting
 			return m, common.Quit
@@ -223,12 +217,4 @@ func (m *PaneEditorModel) editPane() tea.Cmd {
 		return func() tea.Msg { return common.OutputMsg{Err: err, Severity: common.Error} }
 	}
 	return common.PaneEdited
-}
-
-func (m PaneEditorModel) GetDB() *sql.DB {
-	return nil
-}
-
-func (m PaneEditorModel) GetLogger() common.Logger {
-	return m.logger
 }
