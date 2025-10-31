@@ -30,6 +30,8 @@ type (
 		Err      error
 		Severity Severity
 	}
-	ShowFullHelpMsg struct{ Component ComponentWithHelp }
-	ClearHelpMsg    struct{ Tab FocusedTab }
+	ShowFullHelpMsg  struct{ Component ComponentWithHelp }
+	ClearHelpMsg     struct{ Tab FocusedTab }
+	AssociateWindows struct{ Session data.Session }
+	LoadDataMsg          struct{}
 )

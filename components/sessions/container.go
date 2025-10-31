@@ -46,6 +46,9 @@ func (m SessionContainerModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		// 	if msg.String() == "n" && m.focusedModel == sessionBrowser && m.sessionBrowser.State != common.Deleting {
 		// 		return m, common.NewSession
 		// 	}
+	case common.AssociateWindows:
+		m.focusedModel = NewSessionWindowsAssociationModel(m.connector, m.logger, msg.Session)
+		return m, common.LoadData
 	}
 	var cmds []tea.Cmd
 	newModel, cmd := m.focusedModel.Update(msg)

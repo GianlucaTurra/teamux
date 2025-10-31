@@ -25,3 +25,4 @@ func NextTab() tea.Msg               { return NextTabMsg{} }
 func PreviousTab() tea.Msg           { return PreviousTabMsg{} }
 func UpDown() tea.Msg                { return UpDownMsg{} }
 func ClearHelp(t FocusedTab) tea.Msg { return ClearHelpMsg{t} }
+func LoadData() tea.Msg              { return LoadDataMsg{} }
