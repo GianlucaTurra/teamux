@@ -56,6 +56,8 @@ func (m SessionWindowsAssociationModel) Update(msg tea.Msg) (tea.Model, tea.Cmd)
 	switch msg := msg.(type) {
 	case common.LoadDataMsg:
 		return m, m.loadWindowsList()
+	case common.UpdateDetailMsg:
+		return m, func() tea.Msg { return common.NewSFocus{Session: m.session} }
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "enter", " ":
@@ -123,5 +125,5 @@ func (m *SessionWindowsAssociationModel) selectWindow() tea.Cmd {
 	itemIndex := m.model.GlobalIndex()
 	w.selected = !w.selected
 	m.model.SetItem(itemIndex, w)
-	return nil
+	return common.UpdateDetail
 }

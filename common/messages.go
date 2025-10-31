@@ -33,5 +33,6 @@ type (
 	ShowFullHelpMsg  struct{ Component ComponentWithHelp }
 	ClearHelpMsg     struct{ Tab FocusedTab }
 	AssociateWindows struct{ Session data.Session }
-	LoadDataMsg          struct{}
+	LoadDataMsg      struct{}
+	UpdateDetailMsg  struct{}
 )
