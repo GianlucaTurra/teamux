@@ -8,6 +8,7 @@ import (
 )
 
 func NewSession(name string, workingDirectory string) error {
+	// FIXME: if the workingDirectory does not exists why is it not failing?
 	var newSessionCmd string
 	if strings.TrimSpace(workingDirectory) == "" {
 		newSessionCmd = fmt.Sprintf("tmux new-session -d -s \"%s\"", name)
@@ -20,7 +21,7 @@ func NewSession(name string, workingDirectory string) error {
 
 func HasSession(name string) bool {
 	cmd := exec.Command("sh", "-c", fmt.Sprintf("tmux has-session -t \"%s\"", name))
-	// TODO: needs testing
+	// TODO: should return the error instead?
 	if err := cmd.Run(); err != nil {
 		return false
 	}
@@ -35,4 +36,14 @@ func KillSession(name string) error {
 func SwitchToSession(name string) error {
 	cmd := exec.Command("sh", "-c", fmt.Sprintf("tmux switch -t \"%s\"", name))
 	return cmd.Run()
+}
+
+// GetCurrentTmuxSessionName name of the session in which the app is launched
+// should have no reason to fail unless tmux server is not running but that is
+// checked at the top level
+// TODO: display this in the browser
+func GetCurrentTmuxSessionName() string {
+	cmd := exec.Command("sh", "-c", "tmux display-message -p \"#S\"")
+	out, _ := cmd.Output()
+	return strings.TrimSpace(string(out))
 }
