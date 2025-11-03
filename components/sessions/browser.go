@@ -1,6 +1,7 @@
 package sessions
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/GianlucaTurra/teamux/common"
@@ -191,12 +192,12 @@ func (m SessionBrowserModel) switchToSelected() (SessionBrowserModel, tea.Cmd) {
 	return m, func() tea.Msg { return common.TmuxSessionsChanged{} }
 }
 
-// openSelected Opens the selected session. If it is already open nothing is
+// openSelected() Opens the selected session. If it is already open nothing is
 // done.
 func (m SessionBrowserModel) openSelected() (SessionBrowserModel, tea.Cmd) {
 	if s := m.sessions[m.selected]; s.IsOpen() {
-		// TODO: does it make sense to return nil?
-		return m, func() tea.Msg { return nil }
+		err := errors.New("session already open")
+		return m, func() tea.Msg { return common.OutputMsg{Err: err, Severity: common.Warning} }
 	}
 	s := m.sessions[m.selected]
 	if err := s.Open(); err != nil {

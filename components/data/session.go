@@ -38,11 +38,11 @@ func (s Session) Delete(connector Connector) (int, error) {
 // TODO: remove these methods and call tmux directly
 
 func (s Session) Open() error {
-	return tmux.CreateSession(s.Name, s.WorkingDirectory)
+	return tmux.NewSession(s.Name, s.WorkingDirectory)
 }
 
 func (s Session) IsOpen() bool {
-	return tmux.IsSessionOpen(s.Name)
+	return tmux.HasSession(s.Name)
 }
 
 func (s Session) Close() error {
