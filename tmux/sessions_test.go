@@ -33,6 +33,7 @@ func TestNewSession(t *testing.T) {
 			wantErr:          false,
 		},
 		{
+			// FIXME: this session does not close after the test
 			testName:         "Non-existing workingDirectory",
 			name:             "Non-existing",
 			workingDirectory: "/i/do/not/exist",
@@ -111,18 +112,17 @@ func TestKillSession(t *testing.T) {
 			wantErr:  true,
 		},
 	}
-	if err := tmux.NewSession("Test", ""); err != nil {
-		t.Errorf("Error opening test session: %v", err)
-	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			if !tt.wantErr {
+				if err := tmux.NewSession(tt.name, ""); err != nil {
+					t.Errorf("Error opening test session: %v", err)
+				}
+			}
 			gotErr := tmux.KillSession(tt.name)
 			if gotErr != nil {
 				if !tt.wantErr {
 					t.Errorf("KillSession() failed: %v", gotErr)
-				}
-				if err := tmux.KillSession("Test"); err != nil {
-					t.Errorf("Error killing the test session in non-existing case: %v", err)
 				}
 				return
 			}

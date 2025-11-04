@@ -8,20 +8,12 @@ import (
 )
 
 func NewSession(name string, workingDirectory string) error {
-	// FIXME: if the workingDirectory does not exists why is it not failing?
-	var newSessionCmd string
-	if strings.TrimSpace(workingDirectory) == "" {
-		newSessionCmd = fmt.Sprintf("tmux new-session -d -s \"%s\"", name)
-	} else {
-		newSessionCmd = fmt.Sprintf("tmux new-session -d -s \"%s\" -c %s", name, workingDirectory)
-	}
-	cmd := exec.Command("sh", "-c", newSessionCmd)
-	return cmd.Run()
+	baseCmd := fmt.Sprintf("tmux new-session -d -s \"%s\"", name)
+	return commandWithWorkDir(workingDirectory, baseCmd)
 }
 
 func HasSession(name string) bool {
 	cmd := exec.Command("sh", "-c", fmt.Sprintf("tmux has-session -t \"%s\"", name))
-	// TODO: should return the error instead?
 	if err := cmd.Run(); err != nil {
 		return false
 	}
@@ -29,13 +21,11 @@ func HasSession(name string) bool {
 }
 
 func KillSession(name string) error {
-	cmd := exec.Command("sh", "-c", fmt.Sprintf("tmux kill-session -t \"%s\"", name))
-	return cmd.Run()
+	return executeCommand(fmt.Sprintf("tmux kill-session -t \"%s\"", name))
 }
 
 func SwitchToSession(name string) error {
-	cmd := exec.Command("sh", "-c", fmt.Sprintf("tmux switch -t \"%s\"", name))
-	return cmd.Run()
+	return executeCommand(fmt.Sprintf("tmux switch -t \"%s\"", name))
 }
 
 // GetCurrentTmuxSessionName name of the session in which the app is launched
