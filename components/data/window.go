@@ -36,7 +36,7 @@ func ReadAllWindows(db *gorm.DB) ([]Window, error) {
 // TODO: remove these methods
 
 func (w Window) Open() error {
-	return tmux.CreateWindow(w.Name, w.WorkingDirectory)
+	return tmux.NewWindow(w.Name, w.WorkingDirectory)
 }
 
 func (w Window) Kill() error {
@@ -44,5 +44,5 @@ func (w Window) Kill() error {
 }
 
 func (w Window) OpenWithTarget(target string) error {
-	return tmux.CreateWindowWithTarget(w.Name, w.WorkingDirectory, target)
+	return tmux.NewWindowWithTarget(w.Name, w.WorkingDirectory, target)
 }
