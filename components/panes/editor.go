@@ -190,7 +190,7 @@ func (m *PaneEditorModel) createPane() tea.Cmd {
 		m.logger.Errorlogger.Printf("Error saving pane: %v", err)
 		return func() tea.Msg { return common.OutputMsg{Err: err, Severity: common.Error} }
 	}
-	return common.PaneEdited
+	return func() tea.Msg { return common.PanesEditedMsg{} }
 }
 
 func (m *PaneEditorModel) editPane() tea.Cmd {
@@ -216,5 +216,5 @@ func (m *PaneEditorModel) editPane() tea.Cmd {
 		m.logger.Errorlogger.Printf("Error saving pane: %v", err)
 		return func() tea.Msg { return common.OutputMsg{Err: err, Severity: common.Error} }
 	}
-	return common.PaneEdited
+	return func() tea.Msg { return common.PanesEditedMsg{} }
 }

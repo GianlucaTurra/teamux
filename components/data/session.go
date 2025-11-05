@@ -35,10 +35,18 @@ func (s Session) Delete(connector Connector) (int, error) {
 	return gorm.G[Session](connector.DB).Where("id = ?", s.ID).Delete(connector.Ctx)
 }
 
-// TODO: remove these methods and call tmux directly
-
 func (s Session) Open() error {
-	return tmux.NewSession(s.Name, s.WorkingDirectory)
+	if err := tmux.NewSession(s.Name, s.WorkingDirectory); err != nil {
+		return err
+	}
+	// TODO: is it better to stop the process at the first error or to load
+	// everything that's ok and report the error?
+	for _, window := range s.Windows {
+		if err := window.OpenWithTarget(s.Name); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func (s Session) IsOpen() bool {

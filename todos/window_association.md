@@ -10,5 +10,7 @@ UI.
 - [ ] Allow the creation of a window from the "association mode"
 ## FIXMEs
 - [ ] At the first load of the app the full session detail is not displayed
+- [ ] Performing the cascade opening a "default" empty window is created
+
 
 
