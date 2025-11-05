@@ -32,4 +32,5 @@ type (
 	}
 	ShowFullHelpMsg struct{ Component ComponentWithHelp }
 	ClearHelpMsg    struct{ Tab FocusedTab }
+	PaneCreatedMsg  struct{}
 )
