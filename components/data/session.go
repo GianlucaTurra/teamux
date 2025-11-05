@@ -3,9 +3,7 @@
 package data
 
 import (
-	"fmt"
-	"os/exec"
-
+	"github.com/GianlucaTurra/teamux/tmux"
 	"gorm.io/gorm"
 )
 
@@ -37,29 +35,20 @@ func (s Session) Delete(connector Connector) (int, error) {
 	return gorm.G[Session](connector.DB).Where("id = ?", s.ID).Delete(connector.Ctx)
 }
 
-// TODO: the following methods should be in a proper package
+// TODO: remove these methods and call tmux directly
 
-// Open translates the session object to a tmux command to open a new session.
 func (s Session) Open() error {
-	newSessionCmd := fmt.Sprintf("tmux new-session -d -s \"%s\" -c %s", s.Name, s.WorkingDirectory)
-	cmd := exec.Command("sh", "-c", newSessionCmd)
-	return cmd.Run()
+	return tmux.NewSession(s.Name, s.WorkingDirectory)
 }
 
 func (s Session) IsOpen() bool {
-	cmd := exec.Command("sh", "-c", fmt.Sprintf("tmux has-session -t \"%s\"", s.Name))
-	if err := cmd.Run(); err != nil {
-		return false
-	}
-	return true
+	return tmux.HasSession(s.Name)
 }
 
 func (s Session) Close() error {
-	cmd := exec.Command("sh", "-c", fmt.Sprintf("tmux kill-session -t \"%s\"", s.Name))
-	return cmd.Run()
+	return tmux.KillSession(s.Name)
 }
 
 func (s Session) Switch() error {
-	cmd := exec.Command("sh", "-c", fmt.Sprintf("tmux switch -t \"%s\"", s.Name))
-	return cmd.Run()
+	return tmux.SwitchToSession(s.Name)
 }

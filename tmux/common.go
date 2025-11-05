@@ -1,0 +1,72 @@
+package tmux
+
+import (
+	"errors"
+	"fmt"
+	"os"
+	"os/exec"
+	"path/filepath"
+	"strings"
+)
+
+type NoSuchDirectoryError struct {
+	msg string
+}
+
+func (e NoSuchDirectoryError) Error() string {
+	return e.msg
+}
+
+// executeCommand Runs the given command and returns the stdErr or the err if
+// one is returned from the command execution
+func executeCommand(command string) error {
+	cmd := exec.Command("sh", "-c", command)
+	if output, err := cmd.CombinedOutput(); err != nil {
+		if strings.TrimSpace(string(output)) == "" {
+			return err
+		} else {
+			return errors.New(string(output))
+		}
+	} else {
+		return nil
+	}
+}
+
+func checkDirectory(directory string) error {
+	if strings.TrimSpace(directory) == "" {
+		return nil
+	}
+	var path string
+	if strings.TrimSpace(directory) == "~" {
+		return nil
+	}
+	if strings.HasPrefix(directory, "~/") {
+		home, err := os.UserHomeDir()
+		if err != nil {
+			return err
+		}
+		path = filepath.Join(home, directory[2:])
+	}
+	if strings.HasPrefix(directory, "$HOME") {
+		path = os.ExpandEnv(directory)
+	}
+	if _, err := os.Stat(path); os.IsNotExist(err) {
+		return err
+	}
+	return nil
+}
+
+func commandWithWorkDir(workingDirectory string, cmd string) error {
+	var nsdErr error
+	if err := checkDirectory(workingDirectory); err != nil {
+		nsdErr = NoSuchDirectoryError{"working directory doesn't exist"}
+	}
+	if strings.TrimSpace(workingDirectory) != "" {
+		cmd += fmt.Sprintf(" -c %s", workingDirectory)
+	}
+	if err := executeCommand(cmd); err != nil {
+		return err
+	} else {
+		return nsdErr
+	}
+}

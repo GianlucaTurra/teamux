@@ -204,7 +204,7 @@ func (m SessionBrowserModel) switchToSelected() (SessionBrowserModel, tea.Cmd) {
 	return m, func() tea.Msg { return common.TmuxSessionsChanged{} }
 }
 
-// openSelected Opens the selected session. If it is already open nothing is
+// openSelected() Opens the selected session. If it is already open nothing is
 // done.
 func (m SessionBrowserModel) openSelected() (SessionBrowserModel, tea.Cmd) {
 	if s := m.sessions[m.selected]; s.IsOpen() {
