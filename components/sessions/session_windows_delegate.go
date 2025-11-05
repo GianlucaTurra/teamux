@@ -23,12 +23,12 @@ func (d sessionWindowsDelegate) Render(w io.Writer, m list.Model, index int, lis
 	str := fmt.Sprintf("%d. %s", index+1, i.title)
 	fn := common.ItemStyle.Render
 	if i.selected {
-		fn = func(s ...string) string { return common.OpenStyle.Render("* " + strings.Join(s, " ")) }
+		fn = func(s ...string) string { return common.OpenStyle.Render(" ✓" + strings.Join(s, " ")) }
 	}
 	if index == m.Index() {
 		if i.selected {
 			fn = func(s ...string) string {
-				return common.SelectedOpenStyle.Render(">*" + strings.Join(s, " "))
+				return common.SelectedOpenStyle.Render(">✓" + strings.Join(s, " "))
 			}
 		} else {
 			fn = func(s ...string) string {

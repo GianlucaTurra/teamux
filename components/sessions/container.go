@@ -5,6 +5,7 @@ package sessions
 import (
 	"github.com/GianlucaTurra/teamux/common"
 	"github.com/GianlucaTurra/teamux/components/data"
+	"github.com/GianlucaTurra/teamux/components/windows"
 	tea "github.com/charmbracelet/bubbletea"
 )
 
@@ -49,6 +50,12 @@ func (m SessionContainerModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case common.AssociateWindows:
 		m.focusedModel = NewSessionWindowsAssociationModel(m.connector, m.logger, msg.Session)
 		return m, common.LoadData
+	case common.CreateWindowMsg:
+		m.focusedModel = windows.NewWindowEditorModel(m.connector, m.logger, nil)
+		return m, nil
+	case common.EditWindowMsg:
+		m.focusedModel = windows.NewWindowEditorModel(m.connector, m.logger, &msg.Window)
+		return m, nil
 	}
 	var cmds []tea.Cmd
 	newModel, cmd := m.focusedModel.Update(msg)

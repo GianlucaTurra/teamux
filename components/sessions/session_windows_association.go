@@ -60,6 +60,16 @@ func (m SessionWindowsAssociationModel) Update(msg tea.Msg) (tea.Model, tea.Cmd)
 		return m, func() tea.Msg { return common.NewSFocus{Session: m.session} }
 	case tea.KeyMsg:
 		switch msg.String() {
+		case "n":
+			// FIXME: this kinda works but will return to the session browser
+			// and not to the this model from the window editor
+			return m, func() tea.Msg { return common.CreateWindowMsg{} }
+		case "e":
+			// TODO: refactor to a method for a clearer switch
+			// FIXME: this kinda works but will return to the session browser
+			// and not to the this model from the window editor
+			w := m.model.SelectedItem().(availableWindows)
+			return m, func() tea.Msg { return common.EditWindowMsg{Window: w.window} }
 		case "enter", " ":
 			return m, m.selectWindow()
 		case "esc":

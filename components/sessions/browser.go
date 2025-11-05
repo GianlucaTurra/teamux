@@ -1,6 +1,7 @@
 package sessions
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/GianlucaTurra/teamux/common"
@@ -106,6 +107,7 @@ func (m SessionBrowserModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case common.ReloadMsg:
 		return NewSessionBrowserModel(m.connector, m.logger), nil
 	case common.UpDownMsg:
+		// TODO: refactor into a proper method for a clearer switch
 		i, ok := m.list.SelectedItem().(item)
 		if ok {
 			m.selected = i.title
@@ -127,12 +129,14 @@ func (m SessionBrowserModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.State = common.Quitting
 			return m, common.Quit
 		case "enter", " ":
+			// TODO: refactor into a proper method for a clearer switch
 			i, ok := m.list.SelectedItem().(item)
 			if ok {
 				m.selected = i.title
 			}
 			return m, func() tea.Msg { return common.OpenMsg{} }
 		case "e":
+			// TODO: refactor into a proper method for a clearer switch
 			if i, ok := m.list.SelectedItem().(item); ok {
 				m.selected = i.title
 			}
@@ -141,11 +145,13 @@ func (m SessionBrowserModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				func() tea.Msg { return common.EditS(m.sessions[m.selected]) },
 			)
 		case "s":
+			// TODO: refactor into a proper method for a clearer switch
 			if i, ok := m.list.SelectedItem().(item); ok {
 				m.selected = i.title
 			}
 			return m, common.Switch
 		case "d":
+			// TODO: refactor into a proper method for a clearer switch
 			i, ok := m.list.SelectedItem().(item)
 			if ok {
 				m.selected = i.title
@@ -153,11 +159,13 @@ func (m SessionBrowserModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.State = common.Deleting
 			return m, nil
 		case "K":
+			// TODO: refactor into a proper method for a clearer switch
 			if i, ok := m.list.SelectedItem().(item); ok {
 				m.selected = i.title
 			}
 			return m, common.Kill
 		case "w":
+			// TODO: refactor into a proper method for a clearer switch
 			if i, ok := m.list.SelectedItem().(item); ok {
 				session := m.sessions[i.title]
 				return m, func() tea.Msg { return common.AssociateWindows{Session: session} }
@@ -200,8 +208,10 @@ func (m SessionBrowserModel) switchToSelected() (SessionBrowserModel, tea.Cmd) {
 // done.
 func (m SessionBrowserModel) openSelected() (SessionBrowserModel, tea.Cmd) {
 	if s := m.sessions[m.selected]; s.IsOpen() {
-		// TODO: does it make sense to return nil?
-		return m, func() tea.Msg { return nil }
+		msg := fmt.Sprintf("session %s already open", s.Name)
+		return m, func() tea.Msg {
+			return common.OutputMsg{Err: errors.New(msg), Severity: common.Info}
+		}
 	}
 	s := m.sessions[m.selected]
 	if err := s.Open(); err != nil {

@@ -16,8 +16,8 @@
 - [x] handle key bindings in the vim way
 - [x] allow to return to browser without creating a new session
 - [x] clear input after pressing enter or returning to browser
-- [ ] allow to show related windows
-- [ ] allow to manage related windows
+- [x] allow to show related windows
+- [x] allow to manage related windows
 
 ## General
 
@@ -66,5 +66,4 @@
 ## Refactoring
 
 - [x] Editor don't cycle properly at the end or start
-
-- [ ] Use interfaces and changing elements in containers
+- [x] Use interfaces and changing elements in containers

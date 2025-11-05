@@ -35,4 +35,6 @@ type (
 	AssociateWindows struct{ Session data.Session }
 	LoadDataMsg      struct{}
 	UpdateDetailMsg  struct{}
+	CreateWindowMsg  struct{}
+	EditWindowMsg    struct{ Window data.Window }
 )
