@@ -25,3 +25,7 @@ func NewWindowWithTarget(name string, workingDirectory string, target string) er
 func KillWindow(name string) error {
 	return executeCommand(fmt.Sprintf("tmux kill-window -t \"%s\"", name))
 }
+
+func ReorderWindows(target string) error {
+	return executeCommand(fmt.Sprintf("tmux movew -r -t \"%s\"", target))
+}

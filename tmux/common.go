@@ -9,11 +9,23 @@ import (
 	"strings"
 )
 
+// TODO: move errors to a proper file/package
+
 type NoSuchDirectoryError struct {
 	msg string
 }
 
 func (e NoSuchDirectoryError) Error() string {
+	return e.msg
+}
+
+type Warning struct{ msg string }
+
+func NewWarning(msg string) error {
+	return Warning{msg}
+}
+
+func (e Warning) Error() string {
 	return e.msg
 }
 

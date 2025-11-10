@@ -3,6 +3,8 @@
 package data
 
 import (
+	"fmt"
+
 	"github.com/GianlucaTurra/teamux/tmux"
 	"gorm.io/gorm"
 )
@@ -45,6 +47,14 @@ func (s Session) Open() error {
 		if err := window.OpenWithTarget(s.Name); err != nil {
 			return err
 		}
+	}
+	// TODO: handle error type
+	if err := tmux.KillWindow(s.Name + ":0"); err != nil {
+		return tmux.NewWarning(fmt.Sprintf("unable to kill empty window of %s", s.Name))
+	}
+	// TODO: handle error type
+	if err := tmux.ReorderWindows(s.Name); err != nil {
+		return tmux.NewWarning(fmt.Sprintf("unable to reoder windows in %s", s.Name))
 	}
 	return nil
 }
