@@ -41,7 +41,7 @@ func TestNewWindow(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			gotErr := tmux.NewWindow(tt.name, tt.workingDirectory)
+			gotErr := tmux.NewWindow(tt.name, tt.workingDirectory, nil)
 			if gotErr != nil {
 				if !tt.wantErr {
 					t.Errorf("CreateWindow() failed: %v", gotErr)
@@ -101,7 +101,7 @@ func TestNewWindowWithTarget(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			gotErr := tmux.NewWindowWithTarget(tt.name, tt.workingDirectory, tt.target)
+			gotErr := tmux.NewWindow(tt.name, tt.workingDirectory, &tt.target)
 			if gotErr != nil {
 				if !tt.wantErr {
 					t.Errorf("CreateWindowWithTarget() failed: %v", gotErr)

@@ -73,14 +73,15 @@ func TestSplitWindowWithTargetWindow(t *testing.T) {
 	}
 	for _, tt := range tests {
 		if tt.currentSession {
-			if err := tmux.NewWindow("test", ""); err != nil {
+			if err := tmux.NewWindow("test", "", nil); err != nil {
 				t.Errorf("Error opening test window: %v", err)
 			}
 		} else {
 			if err := tmux.NewSession("Test", ""); err != nil {
 				t.Errorf("Error opening test session: %v", err)
 			}
-			if err := tmux.NewWindowWithTarget("test", "", "Test"); err != nil {
+			target := "Test"
+			if err := tmux.NewWindow("test", "", &target); err != nil {
 				t.Errorf("Error opening test window: %v", err)
 			}
 		}
