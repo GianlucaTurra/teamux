@@ -4,6 +4,7 @@ package data
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/GianlucaTurra/teamux/tmux"
 	"gorm.io/gorm"
@@ -37,6 +38,11 @@ func (s Session) Delete(connector Connector) (int, error) {
 	return gorm.G[Session](connector.DB).Where("id = ?", s.ID).Delete(connector.Ctx)
 }
 
+// Open creates the new session and cascades to all Windows and all their panes
+// if a window has no WorkingDirectory it is set to the WorkingDirectory of the
+// session.
+// Opening the session this way creates an empty window at first, to avoid
+// confusion it is deleted and following Windows are reordered
 func (s Session) Open() error {
 	if err := tmux.NewSession(s.Name, s.WorkingDirectory); err != nil {
 		return err
@@ -44,6 +50,9 @@ func (s Session) Open() error {
 	// TODO: is it better to stop the process at the first error or to load
 	// everything that's ok and report the error?
 	for _, window := range s.Windows {
+		if strings.TrimSpace(window.WorkingDirectory) == "" {
+			window.WorkingDirectory = s.WorkingDirectory
+		}
 		if err := window.OpenWithTarget(s.Name); err != nil {
 			return err
 		}
