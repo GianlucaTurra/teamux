@@ -6,6 +6,7 @@ import (
 
 	"github.com/GianlucaTurra/teamux/common"
 	"github.com/GianlucaTurra/teamux/components/data"
+	"github.com/GianlucaTurra/teamux/tmux"
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
@@ -193,8 +194,15 @@ func (m SessionBrowserModel) switchToSelected() (SessionBrowserModel, tea.Cmd) {
 		}
 	}
 	if err := m.sessions[m.selected].Open(); err != nil {
-		m.logger.Errorlogger.Printf("Error opening session %s: %v", m.selected, err)
-		return m, func() tea.Msg { return common.OutputMsg{Err: err, Severity: common.Error} }
+		// TODO: should be a common func to handle error types
+		switch err.(type) {
+		case tmux.Warning:
+			m.logger.Warninglogger.Printf("Error opening session %s: %v", m.selected, err)
+			return m, func() tea.Msg { return common.OutputMsg{Err: err, Severity: common.Warning} }
+		default:
+			m.logger.Errorlogger.Printf("Error opening session %s: %v", m.selected, err)
+			return m, func() tea.Msg { return common.OutputMsg{Err: err, Severity: common.Error} }
+		}
 	}
 	if err := s.Switch(); err != nil {
 		m.logger.Errorlogger.Printf("Error switching to session %s: %v", m.selected, err)
@@ -204,7 +212,7 @@ func (m SessionBrowserModel) switchToSelected() (SessionBrowserModel, tea.Cmd) {
 	return m, func() tea.Msg { return common.TmuxSessionsChanged{} }
 }
 
-// openSelected() Opens the selected session. If it is already open nothing is
+// openSelected Opens the selected session. If it is already open nothing is
 // done.
 func (m SessionBrowserModel) openSelected() (SessionBrowserModel, tea.Cmd) {
 	if s := m.sessions[m.selected]; s.IsOpen() {
@@ -215,8 +223,15 @@ func (m SessionBrowserModel) openSelected() (SessionBrowserModel, tea.Cmd) {
 	}
 	s := m.sessions[m.selected]
 	if err := s.Open(); err != nil {
-		m.logger.Errorlogger.Printf("Error opening session %s: %v", s.Name, err)
-		return m, func() tea.Msg { return common.OutputMsg{Err: err, Severity: common.Error} }
+		// TODO: should be a common func to handle error types
+		switch err.(type) {
+		case tmux.Warning:
+			m.logger.Warninglogger.Printf("Error opening session %s: %v", m.selected, err)
+			return m, func() tea.Msg { return common.OutputMsg{Err: err, Severity: common.Warning} }
+		default:
+			m.logger.Errorlogger.Printf("Error opening session %s: %v", m.selected, err)
+			return m, func() tea.Msg { return common.OutputMsg{Err: err, Severity: common.Error} }
+		}
 	}
 	m.refreshItems()
 	return m, func() tea.Msg { return common.TmuxSessionsChanged{} }
