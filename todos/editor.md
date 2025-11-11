@@ -4,9 +4,11 @@ General tasks for editor components
 
 ## Common
 
-- [ ] tab and shift-tab does not cycle properly at the first and last
-- [ ] when going back to position one from two the cursor goes away
+- [x] tab and shift-tab does not cycle properly at the first and last
+  - [ ] ~sessions~
+  - [x] windows
+  - [x] panes
 
 ## Session Editor
 
-- [ ] when setting a working directory to "" it doesn't update the value
+- [x] when setting a working directory to "" it doesn't update the value

@@ -10,9 +10,6 @@ import (
 	"github.com/GianlucaTurra/teamux/components"
 	"github.com/GianlucaTurra/teamux/components/data"
 	tea "github.com/charmbracelet/bubbletea"
-	"gorm.io/driver/sqlite"
-	"gorm.io/gorm"
-	"gorm.io/gorm/logger"
 )
 
 func main() {
@@ -28,7 +25,7 @@ func main() {
 		Errorlogger:   log.New(logfile, "ERROR: ", log.Ldate|log.Ltime|log.Lshortfile),
 		Fatallogger:   log.New(logfile, "FATAL: ", log.Ldate|log.Ltime|log.Lshortfile),
 	}
-	db, err := gorm.Open(sqlite.Open("teamux.db"), &gorm.Config{Logger: logger.Default.LogMode(logger.Silent)})
+	db, err := common.GetProdDB()
 	if err != nil {
 		log.Fatal(err)
 	}
