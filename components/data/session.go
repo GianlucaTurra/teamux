@@ -24,6 +24,9 @@ func ReadAllSessions(db *gorm.DB) ([]Session, error) {
 }
 
 func CreateSession(name string, workingDirectory string, connector Connector) (int, error) {
+	if strings.TrimSpace(workingDirectory) == "" {
+		workingDirectory = "~/"
+	}
 	session := Session{Name: name, WorkingDirectory: workingDirectory}
 	result := gorm.WithResult()
 	err := gorm.G[Session](connector.DB, result).Create(connector.Ctx, &session)
