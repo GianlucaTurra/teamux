@@ -6,7 +6,7 @@ import (
 
 	"github.com/GianlucaTurra/teamux/common"
 	"github.com/GianlucaTurra/teamux/components/data"
-	"github.com/charmbracelet/bubbles/cursor"
+	"github.com/GianlucaTurra/teamux/tmux"
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
 )
@@ -22,12 +22,12 @@ const (
 type SessionEditorModel struct {
 	focusedIndex int
 	inputs       []textinput.Model
-	cursorMode   cursor.Mode
-	mode         int
-	session      *data.Session
-	error        error
-	connector    data.Connector
-	logger       common.Logger
+	// cursorMode   cursor.Mode
+	mode      int
+	session   *data.Session
+	error     error
+	connector data.Connector
+	logger    common.Logger
 }
 
 func NewSessionEditorModel(connector data.Connector, logger common.Logger, session *data.Session) SessionEditorModel {
@@ -149,11 +149,16 @@ func (m *SessionEditorModel) createSession() tea.Cmd {
 func (m *SessionEditorModel) editSession() tea.Cmd {
 	m.session.Name = m.inputs[0].Value()
 	m.session.WorkingDirectory = m.inputs[1].Value()
-	_, err := m.session.Save(m.connector)
+	edited, err := m.session.Save(m.connector)
 	if err != nil {
 		m.error = err
 		m.logger.Errorlogger.Printf("Error saving session: %v", err)
 		return func() tea.Msg { return common.InputErrMsg{Err: err} }
+	}
+	if edited == 0 {
+		m.logger.Warninglogger.Printf("No rows updated for: %s", m.session.Name)
+		warn := tmux.NewWarning("no rows updated")
+		return func() tea.Msg { return common.OutputMsg{Err: warn, Severity: common.Warning} }
 	}
 	m.error = nil
 	// TODO: this is a little confusing
