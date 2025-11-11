@@ -81,31 +81,7 @@ func (m WindowEditorModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.mode = quitting
 			return m, common.Quit
 		case "tab", "shift+tab", "up", "down":
-			s := msg.String()
-			if s == "up" || s == "shift+tab" {
-				m.focusedIndex--
-			} else {
-				m.focusedIndex++
-			}
-			if m.focusedIndex >= len(m.inputs) {
-				m.focusedIndex = 0
-			}
-			if m.focusedIndex <= 0 {
-				m.focusedIndex = len(m.inputs)
-			}
-			cmds := make([]tea.Cmd, len(m.inputs))
-			for i := 0; i <= len(m.inputs)-1; i++ {
-				if i == m.focusedIndex {
-					cmds[i] = m.inputs[i].Focus()
-					m.inputs[i].PromptStyle = common.FocusedStyle
-					m.inputs[i].TextStyle = common.FocusedStyle
-					continue
-				}
-				m.inputs[i].Blur()
-				m.inputs[i].PromptStyle = common.BlurredStyle
-				m.inputs[i].TextStyle = common.BlurredStyle
-			}
-			return m, tea.Batch(cmds...)
+			return m.cycleInputs(msg.String())
 		case "enter":
 			var cmd tea.Cmd
 			switch m.mode {
@@ -174,4 +150,31 @@ func (m *WindowEditorModel) editWindow() tea.Cmd {
 	m.error = nil
 	// TODO: this is a little confusing
 	return common.WindowCreated
+}
+
+func (m *WindowEditorModel) cycleInputs(s string) (tea.Model, tea.Cmd) {
+	if s == "up" || s == "shift+tab" {
+		m.focusedIndex--
+	} else {
+		m.focusedIndex++
+	}
+	if m.focusedIndex == len(m.inputs) {
+		m.focusedIndex = 0
+	}
+	if m.focusedIndex == -1 {
+		m.focusedIndex = len(m.inputs) - 1
+	}
+	cmds := make([]tea.Cmd, len(m.inputs))
+	for i := 0; i <= len(m.inputs)-1; i++ {
+		if i == m.focusedIndex {
+			cmds[i] = m.inputs[i].Focus()
+			m.inputs[i].PromptStyle = common.FocusedStyle
+			m.inputs[i].TextStyle = common.FocusedStyle
+			continue
+		}
+		m.inputs[i].Blur()
+		m.inputs[i].PromptStyle = common.BlurredStyle
+		m.inputs[i].TextStyle = common.BlurredStyle
+	}
+	return m, tea.Batch(cmds...)
 }
