@@ -3,6 +3,7 @@
 package data
 
 import (
+	"errors"
 	"fmt"
 	"strings"
 
@@ -24,6 +25,10 @@ func ReadAllSessions(db *gorm.DB) ([]Session, error) {
 }
 
 func CreateSession(name string, workingDirectory string, connector Connector) (int, error) {
+	if strings.TrimSpace(name) == "" {
+		err := errors.New("session name cannot be empty")
+		return 0, err
+	}
 	if strings.TrimSpace(workingDirectory) == "" {
 		workingDirectory = "~/"
 	}
