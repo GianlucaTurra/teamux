@@ -124,6 +124,7 @@ func (m WindowBrowserModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 			m.state = common.Deleting
 			return m, nil
+		// TODO: for consistency with the tmux shortcuts use x instead
 		case "K":
 			if i, ok := m.list.SelectedItem().(windowItem); ok {
 				m.selected = i.title
@@ -135,6 +136,11 @@ func (m WindowBrowserModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.selected = i.title
 			}
 			return m, func() tea.Msg { return common.EditW(m.data[m.selected]) }
+		case "a":
+			if i, ok := m.list.SelectedItem().(windowItem); ok {
+				window := m.data[i.title]
+				return m, func() tea.Msg { return common.AssociatePanesMsg{Window: window} }
+			}
 		case "n":
 			return m, func() tea.Msg { return common.NewWindowMsg{} }
 		case "j", "k", "up", "down":

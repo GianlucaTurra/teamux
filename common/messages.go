@@ -30,12 +30,13 @@ type (
 		Err      error
 		Severity Severity
 	}
-	ShowFullHelpMsg  struct{ Component ComponentWithHelp }
-	ClearHelpMsg     struct{ Tab FocusedTab }
-	AssociateWindows struct{ Session data.Session }
-	LoadDataMsg      struct{}
-	UpdateDetailMsg  struct{}
-	CreateWindowMsg  struct{}
-	EditWindowMsg    struct{ Window data.Window }
-	PaneCreatedMsg   struct{}
+	ShowFullHelpMsg   struct{ Component ComponentWithHelp }
+	ClearHelpMsg      struct{ Tab FocusedTab }
+	AssociateWindows  struct{ Session data.Session }
+	AssociatePanesMsg struct{ Window data.Window }
+	LoadDataMsg       struct{}
+	UpdateDetailMsg   struct{}
+	CreateWindowMsg   struct{}
+	EditWindowMsg     struct{ Window data.Window }
+	PaneCreatedMsg    struct{}
 )

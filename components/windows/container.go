@@ -37,6 +37,9 @@ func (m WindowContainerModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case common.BrowseMsg:
 		m.model = NewWindowBrowserModel(m.connector, m.logger)
 		return m, nil
+	case common.AssociatePanesMsg:
+		m.model = NewWindowPanesAssociationModel(m.connector, m.logger, msg.Window)
+		return m, common.LoadData
 	}
 	newModel, cmd := m.model.Update(msg)
 	m.model = newModel
