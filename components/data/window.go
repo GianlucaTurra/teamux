@@ -1,6 +1,8 @@
 package data
 
 import (
+	"fmt"
+
 	"github.com/GianlucaTurra/teamux/tmux"
 	"gorm.io/gorm"
 )
@@ -33,10 +35,8 @@ func ReadAllWindows(db *gorm.DB) ([]Window, error) {
 	return windows, err
 }
 
-// TODO: remove these methods
-
 func (w Window) Open() error {
-	return tmux.NewWindow(w.Name, w.WorkingDirectory, nil)
+	return w.openAndCascade(nil)
 }
 
 func (w Window) Kill() error {
@@ -44,5 +44,26 @@ func (w Window) Kill() error {
 }
 
 func (w Window) OpenWithTarget(target string) error {
-	return tmux.NewWindow(w.Name, w.WorkingDirectory, &target)
+	return w.openAndCascade(&target)
+}
+
+func (w Window) openAndCascade(target *string) error {
+	var err error
+	err = tmux.NewWindow(w.Name, w.WorkingDirectory, target)
+	if err != nil {
+		return err
+	}
+	var qualifiedTarget string
+	if target == nil {
+		qualifiedTarget = w.Name
+	} else {
+		qualifiedTarget = *target + ":" + w.Name
+	}
+	for _, pane := range w.Panes {
+		err = pane.OpenWithTarget(qualifiedTarget)
+		if err != nil {
+			err = tmux.NewWarning(fmt.Sprintf("error opening child pane: %s", pane.Name))
+		}
+	}
+	return err
 }

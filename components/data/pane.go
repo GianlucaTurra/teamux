@@ -11,7 +11,8 @@ type Pane struct {
 	WorkingDirectory string
 	splitDirection   int
 	SplitRatio       int
-	Target           string
+	// TODO: handle both target window and target pane
+	Target string
 }
 
 const (
@@ -85,4 +86,8 @@ func (p *Pane) SetVertical() { p.splitDirection = vertical }
 
 func (p Pane) Open() error {
 	return tmux.SplitWindowWithTargetWindow(p.Target, p.SplitRatio, p.WorkingDirectory, p.IsHorizontal())
+}
+
+func (p Pane) OpenWithTarget(target string) error {
+	return tmux.SplitWindowWithTargetWindow(target, p.SplitRatio, p.WorkingDirectory, p.IsHorizontal())
 }
