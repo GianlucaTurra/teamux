@@ -165,7 +165,7 @@ func (m SessionBrowserModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.selected = i.title
 			}
 			return m, common.Kill
-		case "w":
+		case "a":
 			// TODO: refactor into a proper method for a clearer switch
 			if i, ok := m.list.SelectedItem().(item); ok {
 				session := m.sessions[i.title]
