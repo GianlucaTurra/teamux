@@ -65,7 +65,6 @@ func (m SessionWindowsAssociationModel) Update(msg tea.Msg) (tea.Model, tea.Cmd)
 			// and not to the this model from the window editor
 			return m, func() tea.Msg { return common.CreateWindowMsg{} }
 		case "e":
-			// TODO: refactor to a method for a clearer switch
 			// FIXME: this kinda works but will return to the session browser
 			// and not to the this model from the window editor
 			w := m.model.SelectedItem().(availableWindows)

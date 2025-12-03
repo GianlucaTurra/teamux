@@ -109,11 +109,7 @@ func (m SessionBrowserModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return NewSessionBrowserModel(m.connector, m.logger), nil
 	case common.UpDownMsg:
 		// TODO: refactor into a proper method for a clearer switch
-		i, ok := m.list.SelectedItem().(item)
-		if ok {
-			m.selected = i.title
-		}
-		return m, func() tea.Msg { return common.NewSFocus{Session: m.sessions[m.selected]} }
+		return m.selectUpDownItem()
 	case tea.KeyMsg:
 		if m.State == common.Deleting {
 			switch msg.String() {
@@ -130,47 +126,17 @@ func (m SessionBrowserModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.State = common.Quitting
 			return m, common.Quit
 		case "enter", " ":
-			// TODO: refactor into a proper method for a clearer switch
-			i, ok := m.list.SelectedItem().(item)
-			if ok {
-				m.selected = i.title
-			}
-			return m, func() tea.Msg { return common.OpenMsg{} }
+			return m.open()
 		case "e":
-			// TODO: refactor into a proper method for a clearer switch
-			if i, ok := m.list.SelectedItem().(item); ok {
-				m.selected = i.title
-			}
-			return m, tea.Batch(
-				func() tea.Msg { return common.ShowFullHelpMsg{Component: common.SessionEditor} },
-				func() tea.Msg { return common.EditS(m.sessions[m.selected]) },
-			)
+			return m.editSelected()
 		case "s":
-			// TODO: refactor into a proper method for a clearer switch
-			if i, ok := m.list.SelectedItem().(item); ok {
-				m.selected = i.title
-			}
-			return m, common.Switch
+			return m.switchToSession()
 		case "d":
-			// TODO: refactor into a proper method for a clearer switch
-			i, ok := m.list.SelectedItem().(item)
-			if ok {
-				m.selected = i.title
-			}
-			m.State = common.Deleting
-			return m, nil
-		case "K":
-			// TODO: refactor into a proper method for a clearer switch
-			if i, ok := m.list.SelectedItem().(item); ok {
-				m.selected = i.title
-			}
-			return m, common.Kill
+			return m.delete()
+		case "x":
+			return m.kill()
 		case "a":
-			// TODO: refactor into a proper method for a clearer switch
-			if i, ok := m.list.SelectedItem().(item); ok {
-				session := m.sessions[i.title]
-				return m, func() tea.Msg { return common.AssociateWindows{Session: session} }
-			}
+			return m.addWindowsToSession()
 		case "n":
 			return m, common.NewSession
 		case "j", "k", "up", "down":
@@ -182,6 +148,64 @@ func (m SessionBrowserModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	m.list, cmd = m.list.Update(msg)
 	cmds = append(cmds, cmd)
 	return m, tea.Batch(cmds...)
+}
+
+func (m SessionBrowserModel) addWindowsToSession() (tea.Model, tea.Cmd) {
+	if i, ok := m.list.SelectedItem().(item); ok {
+		session := m.sessions[i.title]
+		return m, func() tea.Msg { return common.AssociateWindows{Session: session} }
+	} else {
+		return m, nil
+	}
+}
+
+func (m SessionBrowserModel) kill() (tea.Model, tea.Cmd) {
+	if i, ok := m.list.SelectedItem().(item); ok {
+		m.selected = i.title
+	}
+	return m, common.Kill
+}
+
+func (m SessionBrowserModel) delete() (tea.Model, tea.Cmd) {
+	i, ok := m.list.SelectedItem().(item)
+	if ok {
+		m.selected = i.title
+	}
+	m.State = common.Deleting
+	return m, nil
+}
+
+func (m SessionBrowserModel) switchToSession() (tea.Model, tea.Cmd) {
+	if i, ok := m.list.SelectedItem().(item); ok {
+		m.selected = i.title
+	}
+	return m, common.Switch
+}
+
+func (m SessionBrowserModel) editSelected() (tea.Model, tea.Cmd) {
+	if i, ok := m.list.SelectedItem().(item); ok {
+		m.selected = i.title
+	}
+	return m, tea.Batch(
+		func() tea.Msg { return common.ShowFullHelpMsg{Component: common.SessionEditor} },
+		func() tea.Msg { return common.EditS(m.sessions[m.selected]) },
+	)
+}
+
+func (m SessionBrowserModel) open() (tea.Model, tea.Cmd) {
+	i, ok := m.list.SelectedItem().(item)
+	if ok {
+		m.selected = i.title
+	}
+	return m, func() tea.Msg { return common.OpenMsg{} }
+}
+
+func (m SessionBrowserModel) selectUpDownItem() (tea.Model, tea.Cmd) {
+	i, ok := m.list.SelectedItem().(item)
+	if ok {
+		m.selected = i.title
+	}
+	return m, func() tea.Msg { return common.NewSFocus{Session: m.sessions[m.selected]} }
 }
 
 // switchToSelected Switch to the selected session opening it if necessary

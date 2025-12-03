@@ -22,16 +22,8 @@ func NewSessionTreeModel(connector data.Connector, logger common.Logger, session
 		if err != nil {
 			logger.Errorlogger.Printf("Error loading first session, falling back to default one.\n %v", err)
 		}
-		// TODO: Check if the pwd exists?
-		// if err := firstSession.GetPWD(); err != nil {
-		// 	logger.Errorlogger.Printf("Error loading working directory for first session, falling back to blank directory.\n %v", err)
-		// }
 		session = &firstSession
 	}
-	// TODO: should not be needed but better test it
-	// if err := session.GetAllWindows(); err != nil {
-	// 	logger.Errorlogger.Printf("Error loading windows for session %s\n%v", session.Name, err)
-	// }
 	return SessionDetailModel{*session, connector, logger}
 }
 
@@ -42,11 +34,6 @@ func (m SessionDetailModel) View() string {
 	items = append(items, renderTreeItem(m.session.Name, m.session.WorkingDirectory, 0, false))
 	for i, w := range m.session.Windows {
 		items = append(items, renderTreeItem(w.Name, w.WorkingDirectory, 1, i == len(m.session.Windows)-1))
-		// TODO: should not be needed but needs tests
-		// if err := w.GetAllPanes(); err != nil {
-		// 	m.logger.Errorlogger.Printf("Error loading panes for window %s\n%v", w.Name, err)
-		// 	continue
-		// }
 		for j, p := range w.Panes {
 			items = append(items, renderTreeItem(p.Name, p.WorkingDirectory, 2, j == len(w.Panes)-1))
 		}
