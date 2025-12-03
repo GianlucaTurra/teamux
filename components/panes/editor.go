@@ -85,6 +85,9 @@ func (m PaneEditorModel) Init() tea.Cmd {
 
 func (m PaneEditorModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
+	case common.EditPMsg:
+		m.pane = &msg.Pane
+		return m, nil
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "esc":

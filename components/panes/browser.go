@@ -31,6 +31,7 @@ func (pi paneItem) FilterValue() string {
 	return ""
 }
 
+// loadPaneData Load the panes from db into the current model
 func loadPaneData(db *gorm.DB, logger common.Logger) (map[string]data.Pane, []list.Item) {
 	layouts := []list.Item{}
 	paneData := make(map[string]data.Pane)
@@ -78,45 +79,23 @@ func (m PaneBrowserModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m.openSelected()
 	case tea.KeyMsg:
 		if m.state == common.Deleting {
-			switch msg.String() {
-			case "y":
-				m.state = common.Browsing
-				return m, common.Delete
-			default:
-				m.state = common.Browsing
-				return m, nil
-			}
+			return m.confirmDeletion(msg)
 		}
 		switch msg.String() {
 		case "enter", " ":
-			i, ok := m.list.SelectedItem().(paneItem)
-			if ok {
-				m.selected = i.title
-			}
-			return m, func() tea.Msg { return common.OpenMsg{} }
+			return m.open()
 		case "q", "esc", "ctrl+c":
 			m.state = common.Quitting
-			return m, tea.Quit
+			return m, common.Quit
 		case "d":
-			i, ok := m.list.SelectedItem().(paneItem)
-			if ok {
-				m.selected = i.title
-			}
-			m.state = common.Deleting
-			return m, nil
+			return m.delete()
 		case "e":
-			i, ok := m.list.SelectedItem().(paneItem)
-			if ok {
-				m.selected = i.title
-			}
-			return m, func() tea.Msg { return common.EditP(m.data[m.selected]) }
+			return m.edit()
 		case "n":
 			return m, func() tea.Msg { return common.NewPaneMsg{} }
 		}
 	}
 	m.list, cmd = m.list.Update(msg)
-	// FIXME: probably a bug here
-	// m.selected = m.list.SelectedItem().(paneItem).title
 	return m, cmd
 }
 
@@ -133,20 +112,65 @@ func (m PaneBrowserModel) View() string {
 	)
 }
 
+// edit() Open the current pane into the editor
+func (m PaneBrowserModel) edit() (tea.Model, tea.Cmd) {
+	i, ok := m.list.SelectedItem().(paneItem)
+	if ok {
+		m.selected = i.title
+	}
+	return m, func() tea.Msg { return common.EditP(m.data[m.selected]) }
+}
+
+// delete Mark the current pane for deletion signaling for the confirmation
+// message to appear
+func (m PaneBrowserModel) delete() (tea.Model, tea.Cmd) {
+	i, ok := m.list.SelectedItem().(paneItem)
+	if ok {
+		m.selected = i.title
+	}
+	m.state = common.Deleting
+	return m, nil
+}
+
+// open Signals to open the selected pane into the current tmux window
+func (m PaneBrowserModel) open() (tea.Model, tea.Cmd) {
+	i, ok := m.list.SelectedItem().(paneItem)
+	if ok {
+		m.selected = i.title
+	}
+	return m, func() tea.Msg { return common.OpenMsg{} }
+}
+
+// confirmDeletion Delete from the db the pane marked for deletion
+func (m PaneBrowserModel) confirmDeletion(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
+	switch msg.String() {
+	case "y":
+		m.state = common.Browsing
+		return m, common.Delete
+	default:
+		m.state = common.Browsing
+		return m, nil
+	}
+}
+
+// openSelected Run the tmux command to open the selected pane
 func (m PaneBrowserModel) openSelected() (PaneBrowserModel, tea.Cmd) {
 	p := m.data[m.selected]
 	if err := p.Open(); err != nil {
-		m.logger.Errorlogger.Printf("Failed to open pane %s: %v", m.selected, err)
-		return m, nil
+		e := fmt.Errorf("failed to open pane %s: %v", m.selected, err)
+		m.logger.Errorlogger.Println(e.Error())
+		return m, func() tea.Msg { return common.OutputMsg{Err: e, Severity: common.Error} }
 	}
 	return m, func() tea.Msg { return common.ReloadMsg{} }
 }
 
+// deleteSelected Delete the selected pane from the db
 func (m PaneBrowserModel) deleteSelected() (PaneBrowserModel, tea.Cmd) {
 	p := m.data[m.selected]
 	if _, err := p.Delete(m.connector); err != nil {
-		m.logger.Errorlogger.Printf("Failed to delete pane %s: %v", m.selected, err)
-		return m, func() tea.Msg { return common.OutputMsg{Err: err, Severity: common.Error} }
+		e := fmt.Errorf("failed to delete pane %s: %v", m.selected, err)
+		m.logger.Errorlogger.Println(e.Error())
+		return m, func() tea.Msg { return common.OutputMsg{Err: e, Severity: common.Error} }
 	}
 	return m, func() tea.Msg { return common.ReloadMsg{} }
 }

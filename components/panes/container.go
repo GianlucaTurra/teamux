@@ -31,7 +31,7 @@ func (m PaneContainerModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, nil
 	case common.EditPMsg:
 		m.model = NewPaneEditorModel(m.connector, m.logger, &msg.Pane)
-	case common.PaneCreatedMsg, common.BrowseMsg:
+	case common.PaneCreatedMsg, common.PanesEditedMsg, common.BrowseMsg:
 		m.model = NewPaneBrowserModel(m.connector, m.logger)
 		return m, common.Reaload
 	}
