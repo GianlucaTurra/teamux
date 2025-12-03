@@ -45,6 +45,10 @@ func (m WindowDetailModel) View() string {
 	return lipgloss.JoinVertical(lipgloss.Left, items...)
 }
 
+func (m WindowDetailModel) Init() tea.Cmd { return nil }
+
+func (m WindowDetailModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) { return m, nil }
+
 func renderTreeItem(name string, pwd string, level int, isLast bool) string {
 	var treeSymbol string
 	if isLast {
@@ -66,7 +70,3 @@ func renderTreeItem(name string, pwd string, level int, isLast bool) string {
 		common.ItemStyle.Italic(true).Render(pwd),
 	)
 }
-
-func (m WindowDetailModel) Init() tea.Cmd { return nil }
-
-func (m WindowDetailModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) { return m, nil }

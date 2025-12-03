@@ -86,11 +86,7 @@ func (m WindowBrowserModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case common.ReloadMsg:
 		return NewWindowBrowserModel(m.connector, m.logger), nil
 	case common.UpDownMsg:
-		i, ok := m.list.SelectedItem().(windowItem)
-		if ok {
-			m.selected = i.title
-		}
-		return m, func() tea.Msg { return common.NewWFocus{Window: m.data[m.selected]} }
+		return m.selectUpDown()
 	case tea.KeyMsg:
 		if m.state == common.Deleting {
 			switch msg.String() {
@@ -107,40 +103,18 @@ func (m WindowBrowserModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.state = common.Quitting
 			return m, common.Quit
 		case "enter", " ":
-			i, ok := m.list.SelectedItem().(windowItem)
-			if ok {
-				m.selected = i.title
-			}
-			return m, func() tea.Msg { return common.OpenMsg{} }
+			return m.open()
 		case "s":
-			if i, ok := m.list.SelectedItem().(windowItem); ok {
-				m.selected = i.title
-			}
-			return m, common.Switch
+			return m.switchToSelected()
 		case "d":
-			i, ok := m.list.SelectedItem().(windowItem)
-			if ok {
-				m.selected = i.title
-			}
-			m.state = common.Deleting
-			return m, nil
+			return m.delete()
 		// TODO: for consistency with the tmux shortcuts use x instead
 		case "K":
-			if i, ok := m.list.SelectedItem().(windowItem); ok {
-				m.selected = i.title
-			}
-			return m, common.Kill
+			return m.kill()
 		case "e":
-			i, ok := m.list.SelectedItem().(windowItem)
-			if ok {
-				m.selected = i.title
-			}
-			return m, func() tea.Msg { return common.EditW(m.data[m.selected]) }
+			return m.editSelected()
 		case "a":
-			if i, ok := m.list.SelectedItem().(windowItem); ok {
-				window := m.data[i.title]
-				return m, func() tea.Msg { return common.AssociatePanesMsg{Window: window} }
-			}
+			return m.addPanesToSelected()
 		case "n":
 			return m, func() tea.Msg { return common.NewWindowMsg{} }
 		case "j", "k", "up", "down":
@@ -158,6 +132,61 @@ func (m WindowBrowserModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 func (m WindowBrowserModel) Init() tea.Cmd {
 	return nil
+}
+
+func (m WindowBrowserModel) addPanesToSelected() (tea.Model, tea.Cmd) {
+	if i, ok := m.list.SelectedItem().(windowItem); ok {
+		window := m.data[i.title]
+		return m, func() tea.Msg { return common.AssociatePanesMsg{Window: window} }
+	}
+	return nil, nil
+}
+
+func (m WindowBrowserModel) editSelected() (tea.Model, tea.Cmd) {
+	i, ok := m.list.SelectedItem().(windowItem)
+	if ok {
+		m.selected = i.title
+	}
+	return m, func() tea.Msg { return common.EditW(m.data[m.selected]) }
+}
+
+func (m WindowBrowserModel) kill() (tea.Model, tea.Cmd) {
+	if i, ok := m.list.SelectedItem().(windowItem); ok {
+		m.selected = i.title
+	}
+	return m, common.Kill
+}
+
+func (m WindowBrowserModel) delete() (tea.Model, tea.Cmd) {
+	i, ok := m.list.SelectedItem().(windowItem)
+	if ok {
+		m.selected = i.title
+	}
+	m.state = common.Deleting
+	return m, nil
+}
+
+func (m WindowBrowserModel) switchToSelected() (tea.Model, tea.Cmd) {
+	if i, ok := m.list.SelectedItem().(windowItem); ok {
+		m.selected = i.title
+	}
+	return m, common.Switch
+}
+
+func (m WindowBrowserModel) open() (tea.Model, tea.Cmd) {
+	i, ok := m.list.SelectedItem().(windowItem)
+	if ok {
+		m.selected = i.title
+	}
+	return m, func() tea.Msg { return common.OpenMsg{} }
+}
+
+func (m WindowBrowserModel) selectUpDown() (tea.Model, tea.Cmd) {
+	i, ok := m.list.SelectedItem().(windowItem)
+	if ok {
+		m.selected = i.title
+	}
+	return m, func() tea.Msg { return common.NewWFocus{Window: m.data[m.selected]} }
 }
 
 func (m WindowBrowserModel) openSelected() (WindowBrowserModel, tea.Cmd) {
