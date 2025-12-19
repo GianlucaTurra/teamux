@@ -186,10 +186,7 @@ func (m SessionBrowserModel) editSelected() (tea.Model, tea.Cmd) {
 	if i, ok := m.list.SelectedItem().(item); ok {
 		m.selected = i.title
 	}
-	return m, tea.Batch(
-		func() tea.Msg { return common.ShowFullHelpMsg{Component: common.SessionEditor} },
-		func() tea.Msg { return common.EditS(m.sessions[m.selected]) },
-	)
+	return m, func() tea.Msg { return common.EditS(m.sessions[m.selected]) }
 }
 
 func (m SessionBrowserModel) open() (tea.Model, tea.Cmd) {

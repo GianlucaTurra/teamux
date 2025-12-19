@@ -84,6 +84,8 @@ func (m SessionEditorModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, common.Quit
 		case "tab", "shift+tab":
 			return m.cycleInputs(msg.String())
+		case "?":
+			return m, func() tea.Msg { return common.ShowFullHelpMsg{Component: common.SessionEditor} }
 		case "enter":
 			var cmd tea.Cmd
 			switch m.mode {
