@@ -87,6 +87,8 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case common.OutputMsg:
 		m.messageBox, _ = m.messageBox.Update(msg)
 		return m, nil
+	case common.EditSMsg, common.EditWMsg, common.EditPMsg:
+		m.helpModel.SetModel(NewEditorHelpModel())
 	case common.ClearHelpMsg:
 		switch m.focusedTab {
 		case common.SessionsContainer:

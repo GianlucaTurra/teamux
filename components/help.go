@@ -2,8 +2,6 @@ package components
 
 import (
 	"github.com/GianlucaTurra/teamux/common"
-	"github.com/GianlucaTurra/teamux/components/sessions"
-	"github.com/GianlucaTurra/teamux/components/windows"
 	"github.com/charmbracelet/bubbles/help"
 	"github.com/charmbracelet/bubbles/key"
 	tea "github.com/charmbracelet/bubbletea"
@@ -40,7 +38,7 @@ func NewHelpModel() HelpModel {
 	return HelpModel{
 		basicKeys: basicHelpKeys,
 		help:      help.New(),
-		model:     sessions.NewSessionBrowserHelpModel(),
+		model:     NewBrowserHelpModel(),
 	}
 }
 
@@ -49,15 +47,9 @@ func (m HelpModel) Init() tea.Cmd {
 }
 
 func (m HelpModel) Update(msg tea.Msg) (HelpModel, tea.Cmd) {
-	switch msg := msg.(type) {
+	switch msg.(type) {
 	case common.ClearHelpMsg:
-		switch msg.Tab {
-		case common.SessionsContainer:
-			m.model = sessions.NewSessionBrowserHelpModel()
-		case common.WindwowBrowser:
-			m.model = windows.NewWindowBrowserHelpModel()
-		case common.PaneContainer:
-		}
+		m.model = NewBrowserHelpModel()
 		m.model.HideHelp()
 	case common.ShowFullHelpMsg:
 		m.model.ToggleHelp()
@@ -71,4 +63,8 @@ func (m HelpModel) View() string {
 		m.help.View(m.basicKeys),
 		m.model.View(),
 	)
+}
+
+func (m *HelpModel) SetModel(model common.HelpModel) {
+	m.model = model
 }

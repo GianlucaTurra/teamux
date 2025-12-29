@@ -1,4 +1,4 @@
-package windows
+package components
 
 import (
 	"github.com/GianlucaTurra/teamux/common"
@@ -7,7 +7,7 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 )
 
-type windowBrowserKeyMap struct {
+type browserKeyMap struct {
 	Up     key.Binding
 	Down   key.Binding
 	Left   key.Binding
@@ -20,18 +20,18 @@ type windowBrowserKeyMap struct {
 	Delete key.Binding
 }
 
-func (k windowBrowserKeyMap) ShortHelp() []key.Binding {
+func (k browserKeyMap) ShortHelp() []key.Binding {
 	return []key.Binding{}
 }
 
-func (k windowBrowserKeyMap) FullHelp() [][]key.Binding {
+func (k browserKeyMap) FullHelp() [][]key.Binding {
 	return [][]key.Binding{
 		{k.Up, k.Down, k.Open},
 		{k.New, k.Edit, k.Delete},
 	}
 }
 
-var windowBrowserKeys = windowBrowserKeyMap{
+var browserKeys = browserKeyMap{
 	Up: key.NewBinding(
 		key.WithKeys("up", "k"),
 		key.WithHelp("↑/k", "move up"),
@@ -46,44 +46,44 @@ var windowBrowserKeys = windowBrowserKeyMap{
 	),
 	New: key.NewBinding(
 		key.WithKeys("new", "n"),
-		key.WithHelp("n", "create new window"),
+		key.WithHelp("n", "create new"),
 	),
 	Edit: key.NewBinding(
 		key.WithKeys("edit", "e"),
-		key.WithHelp("e", "edit session"),
+		key.WithHelp("e", "edit"),
 	),
 	Delete: key.NewBinding(
 		key.WithKeys("delete", "d"),
-		key.WithHelp("d", "delete session"),
+		key.WithHelp("d", "delete"),
 	),
 }
 
-type WindowBrowserHelpModel struct {
-	keys     windowBrowserKeyMap
+type BrowserHelpModel struct {
+	keys     browserKeyMap
 	Help     help.Model
 	quitting bool
 }
 
-func NewWindowBrowserHelpModel() common.HelpModel {
-	return &WindowBrowserHelpModel{
-		keys: windowBrowserKeys,
+func NewBrowserHelpModel() common.HelpModel {
+	return &BrowserHelpModel{
+		keys: browserKeys,
 		Help: help.New(),
 	}
 }
 
-func (m WindowBrowserHelpModel) ViewHelp() string {
+func (m BrowserHelpModel) ViewHelp() string {
 	return m.Help.View(m.keys)
 }
 
-func (m *WindowBrowserHelpModel) ToggleHelp() {
+func (m *BrowserHelpModel) ToggleHelp() {
 	m.Help.ShowAll = !m.Help.ShowAll
 }
 
-func (m *WindowBrowserHelpModel) HideHelp() {
+func (m *BrowserHelpModel) HideHelp() {
 	m.Help.ShowAll = false
 }
 
-func (m WindowBrowserHelpModel) Update(msg tea.Msg) (common.HelpModel, tea.Cmd) {
+func (m BrowserHelpModel) Update(msg tea.Msg) (common.HelpModel, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch {
@@ -96,13 +96,13 @@ func (m WindowBrowserHelpModel) Update(msg tea.Msg) (common.HelpModel, tea.Cmd) 
 	return &m, nil
 }
 
-func (m WindowBrowserHelpModel) View() string {
+func (m BrowserHelpModel) View() string {
 	if m.quitting {
 		return ""
 	}
 	return m.Help.View(m.keys)
 }
 
-func (m WindowBrowserHelpModel) Init() tea.Cmd {
+func (m BrowserHelpModel) Init() tea.Cmd {
 	return nil
 }

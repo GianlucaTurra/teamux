@@ -1,30 +1,31 @@
-package sessions
+package components
 
 import (
+	"github.com/GianlucaTurra/teamux/common"
 	"github.com/charmbracelet/bubbles/help"
 	"github.com/charmbracelet/bubbles/key"
 	tea "github.com/charmbracelet/bubbletea"
 )
 
-type sessionEditorKeyMap struct {
+type editorKeyMap struct {
 	NextField     key.Binding
 	PreviousField key.Binding
 	Save          key.Binding
 	BackToBrowser key.Binding
 }
 
-func (k sessionEditorKeyMap) ShortHelp() []key.Binding {
+func (k editorKeyMap) ShortHelp() []key.Binding {
 	return []key.Binding{}
 }
 
-func (k sessionEditorKeyMap) FullHelp() [][]key.Binding {
+func (k editorKeyMap) FullHelp() [][]key.Binding {
 	return [][]key.Binding{
 		{k.BackToBrowser, k.Save},
 		{k.NextField, k.PreviousField},
 	}
 }
 
-var sessionEditorKeys = sessionEditorKeyMap{
+var editorKeys = editorKeyMap{
 	NextField: key.NewBinding(
 		key.WithKeys("tab"),
 		key.WithHelp("tab", "next field"),
@@ -35,7 +36,7 @@ var sessionEditorKeys = sessionEditorKeyMap{
 	),
 	Save: key.NewBinding(
 		key.WithKeys("enter"),
-		key.WithHelp("enter", "save session"),
+		key.WithHelp("enter", "save"),
 	),
 	BackToBrowser: key.NewBinding(
 		key.WithKeys("esc"),
@@ -43,44 +44,42 @@ var sessionEditorKeys = sessionEditorKeyMap{
 	),
 }
 
-type SessionEditorHelpModel struct {
-	keys     sessionEditorKeyMap
+type EditorHelpModel struct {
+	keys     editorKeyMap
 	Help     help.Model
 	quitting bool
 }
 
-func NewSessionEditorHelpModel() SessionEditorHelpModel {
-	help := help.New()
-	help.ShowAll = true
-	return SessionEditorHelpModel{
-		keys: sessionEditorKeys,
-		Help: help,
+func NewEditorHelpModel() common.HelpModel {
+	return &EditorHelpModel{
+		keys: editorKeys,
+		Help: help.New(),
 	}
 }
 
-func (m SessionEditorHelpModel) ViewHelp() string {
+func (m EditorHelpModel) ViewHelp() string {
 	return m.Help.View(m.keys)
 }
 
-func (m *SessionEditorHelpModel) ToggleHelp() {
+func (m *EditorHelpModel) ToggleHelp() {
 	m.Help.ShowAll = !m.Help.ShowAll
 }
 
-func (m *SessionEditorHelpModel) HideHelp() {
+func (m *EditorHelpModel) HideHelp() {
 	m.Help.ShowAll = false
 }
 
-func (m SessionEditorHelpModel) Update(msg tea.Msg) (SessionEditorHelpModel, tea.Cmd) {
-	return m, nil
+func (m EditorHelpModel) Update(msg tea.Msg) (common.HelpModel, tea.Cmd) {
+	return &m, nil
 }
 
-func (m SessionEditorHelpModel) View() string {
+func (m EditorHelpModel) View() string {
 	if m.quitting {
 		return ""
 	}
 	return m.Help.View(m.keys)
 }
 
-func (m SessionEditorHelpModel) Init() tea.Cmd {
+func (m EditorHelpModel) Init() tea.Cmd {
 	return nil
 }
