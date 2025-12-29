@@ -92,6 +92,8 @@ func (m PaneEditorModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		switch msg.String() {
 		case "esc":
 			return NewPaneEditorModel(m.connector, m.logger, nil), common.Browse
+		case "?":
+			return m, func() tea.Msg { return common.ShowFullHelpMsg{Component: common.PaneEditor} }
 		case "ctrl+c":
 			m.mode = quitting
 			return m, common.Quit

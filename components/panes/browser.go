@@ -93,6 +93,8 @@ func (m PaneBrowserModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m.edit()
 		case "n":
 			return m, func() tea.Msg { return common.NewPaneMsg{} }
+		case "?":
+			return m, func() tea.Msg { return common.ShowFullHelpMsg{Component: common.PaneBrowser} }
 		}
 	}
 	m.list, cmd = m.list.Update(msg)
