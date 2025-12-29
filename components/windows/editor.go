@@ -80,6 +80,8 @@ func (m WindowEditorModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "ctrl+c":
 			m.mode = quitting
 			return m, common.Quit
+		case "?":
+			return m, func() tea.Msg { return common.ShowFullHelpMsg{Component: common.WindowEditor} }
 		case "tab", "shift+tab", "up", "down":
 			return m.cycleInputs(msg.String())
 		case "enter":
