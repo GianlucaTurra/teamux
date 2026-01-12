@@ -21,9 +21,14 @@ func (m MessageBoxModel) Init() tea.Cmd {
 
 func (m MessageBoxModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
+	case common.ResetOutputMsgMsg:
+		m.message = ""
+		m.severity = common.Info
+		return m, nil
 	case common.OutputMsg:
 		m.message = msg.Err.Error()
-		return m, nil
+		m.severity = msg.Severity
+		return m, func() tea.Msg { return common.SetOutputMsgTimerMsg{} }
 	default:
 		return m, nil
 	}

@@ -7,6 +7,7 @@ import (
 
 	"github.com/GianlucaTurra/teamux/common"
 	"github.com/GianlucaTurra/teamux/components/data"
+	"github.com/GianlucaTurra/teamux/tmux"
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
@@ -193,7 +194,14 @@ func (m WindowBrowserModel) openSelected() (WindowBrowserModel, tea.Cmd) {
 	w := m.data[m.selected]
 	if err := w.Open(); err != nil {
 		m.logger.Errorlogger.Printf("Error opening window %s: %v", w.Name, err)
-		return m, func() tea.Msg { return common.OutputMsg{Err: err, Severity: common.Error} }
+		var severity common.Severity
+		switch err.(type) {
+		case tmux.Warning:
+			severity = common.Warning
+		default:
+			severity = common.Error
+		}
+		return m, func() tea.Msg { return common.OutputMsg{Err: err, Severity: severity} }
 	}
 	return m, func() tea.Msg { return nil }
 }

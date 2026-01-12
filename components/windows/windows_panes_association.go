@@ -73,7 +73,9 @@ func (m WindowPanesAssociationModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, common.Quit
 		}
 	}
-	return m, nil
+	newModel, cmd := m.model.Update(msg)
+	m.model = newModel
+	return m, cmd
 }
 
 func (m WindowPanesAssociationModel) View() string {
