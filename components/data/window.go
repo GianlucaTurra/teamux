@@ -62,7 +62,7 @@ func (w Window) openAndCascade(target *string) error {
 	for _, pane := range w.Panes {
 		err = pane.OpenWithTarget(qualifiedTarget)
 		if err != nil {
-			err = tmux.NewWarning(fmt.Sprintf("error opening child pane: %s", pane.Name))
+			err = tmux.NewWarning(fmt.Sprintf("error opening child pane %s: %v", pane.Name, err))
 		}
 	}
 	return err

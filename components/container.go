@@ -4,6 +4,7 @@ package components
 
 import (
 	"strings"
+	"time"
 
 	"github.com/GianlucaTurra/teamux/common"
 	"github.com/GianlucaTurra/teamux/components/data"
@@ -84,9 +85,11 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if msg.String() == "[" {
 			return m, common.PreviousTab
 		}
-	case common.OutputMsg:
-		m.messageBox, _ = m.messageBox.Update(msg)
-		return m, nil
+	case common.SetOutputMsgTimerMsg:
+		return m, func() tea.Msg {
+			time.Sleep(2 * time.Second)
+			return common.ResetOutputMsgMsg{}
+		}
 	case common.EditSMsg, common.EditWMsg, common.EditPMsg:
 		m.helpModel.SetModel(NewEditorHelpModel())
 	case common.ClearHelpMsg:
@@ -109,6 +112,9 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	cmds = append(cmds, cmd)
 	newHelp, cmd := m.helpModel.Update(msg)
 	m.helpModel = newHelp
+	cmds = append(cmds, cmd)
+	newMsgBox, cmd := m.messageBox.Update(msg)
+	m.messageBox = newMsgBox
 	cmds = append(cmds, cmd)
 	return m, tea.Batch(cmds...)
 }

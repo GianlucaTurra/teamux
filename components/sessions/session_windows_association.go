@@ -78,7 +78,6 @@ func (m SessionWindowsAssociationModel) Update(msg tea.Msg) (tea.Model, tea.Cmd)
 			return m, common.Quit
 		}
 	}
-	var cmd tea.Cmd
 	newModel, cmd := m.model.Update(msg)
 	m.model = newModel
 	return m, cmd
