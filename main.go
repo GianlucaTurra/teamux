@@ -14,6 +14,7 @@ import (
 
 func main() {
 	file := "/tmp/teamux.log"
+	setup()
 	logfile, err := os.OpenFile(file, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0o644)
 	if err != nil {
 		log.Fatalln("Unable to setup syslog:", err.Error())
@@ -40,5 +41,19 @@ func main() {
 	if _, err := p.Run(); err != nil {
 		fmt.Printf("ERROR: %v", err)
 		os.Exit(1)
+	}
+}
+
+func setup() {
+	userConfigDir, err := os.UserConfigDir()
+	if err != nil {
+		log.Fatalf("Error detecting user config directory: %v", err)
+	}
+	teamuxConfigDir := fmt.Sprintf("%s/%s", userConfigDir, "teamux")
+	if _, err := os.Stat(teamuxConfigDir); err == nil {
+		return
+	}
+	if err := os.Mkdir(teamuxConfigDir, 0o755); err != nil {
+		log.Fatalf("Error creating config dir: %v", err)
 	}
 }

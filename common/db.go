@@ -2,6 +2,9 @@ package common
 
 import (
 	"context"
+	"fmt"
+	"log"
+	"os"
 
 	"github.com/GianlucaTurra/teamux/components/data"
 	"gorm.io/driver/sqlite"
@@ -9,12 +12,22 @@ import (
 	"gorm.io/gorm/logger"
 )
 
+const (
+	ProdDB = "teamux/teamux.db"
+	TestDB = "file::memory:?cache=shared"
+)
+
 func GetProdDB() (*gorm.DB, error) {
-	return getDB("teamux.db")
+	userConfigDir, err := os.UserConfigDir()
+	if err != nil {
+		log.Fatalf("Error detecting user config directory: %v", err)
+	}
+	prodDBPath := fmt.Sprintf("%s/%s", userConfigDir, ProdDB)
+	return getDB(prodDBPath)
 }
 
 func GetTestDB() *data.Connector {
-	db, err := getDB("file::memory:?cache=shared")
+	db, err := getDB(TestDB)
 	if err != nil {
 		return nil
 	}
