@@ -48,7 +48,7 @@ func TestOpenSession(t *testing.T) {
 // createSampleWindows Creates 3 sample windows in the expiring db
 func createSampleWindows(connector data.Connector) error {
 	for i := range 3 {
-		if _, err := data.CreateWindow(fmt.Sprintf("Window %d", i), "", connector); err != nil {
+		if _, err := data.CreateWindow(fmt.Sprintf("Window %d", i), "", "", connector); err != nil {
 			return err
 		}
 	}

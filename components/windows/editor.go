@@ -30,7 +30,7 @@ type WindowEditorModel struct {
 
 func NewWindowEditorModel(connector data.Connector, logger common.Logger, window *data.Window) WindowEditorModel {
 	m := WindowEditorModel{
-		inputs:    make([]textinput.Model, 2),
+		inputs:    make([]textinput.Model, 3),
 		connector: connector,
 		logger:    logger,
 		mode:      creating,
@@ -53,6 +53,10 @@ func NewWindowEditorModel(connector data.Connector, logger common.Logger, window
 			t.Prompt = "WorkDir: "
 			t.PromptStyle = common.BlurredStyle
 			t.CharLimit = 100
+		case 2:
+			t.Prompt = "Shell cmd: "
+			t.PromptStyle = common.BlurredStyle
+			t.CharLimit = 100
 		}
 		m.inputs[i] = t
 	}
@@ -60,6 +64,7 @@ func NewWindowEditorModel(connector data.Connector, logger common.Logger, window
 		m.mode = editing
 		m.inputs[0].SetValue(window.Name)
 		m.inputs[1].SetValue(window.WorkingDirectory)
+		m.inputs[2].SetValue(window.ShellCmd)
 	}
 	return m
 }
@@ -104,6 +109,7 @@ func (m WindowEditorModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m WindowEditorModel) View() string {
+	// TODO: shouldn't the error be handled by the component?
 	if m.mode == quitting {
 		return ""
 	}
@@ -129,9 +135,10 @@ func (m *WindowEditorModel) updateInputs(msg tea.Msg) tea.Cmd {
 	return tea.Batch(cmds...)
 }
 
+// FIXME: should be a tea.Cmd itself
 func (m *WindowEditorModel) createWindow() tea.Cmd {
 	// TODO: should I check the number too?
-	_, err := data.CreateWindow(m.inputs[0].Value(), m.inputs[1].Value(), m.connector)
+	_, err := data.CreateWindow(m.inputs[0].Value(), m.inputs[1].Value(), m.inputs[2].Value(), m.connector)
 	if err != nil {
 		m.error = err
 		m.logger.Errorlogger.Printf("Error saving window: %v", err)
@@ -141,9 +148,11 @@ func (m *WindowEditorModel) createWindow() tea.Cmd {
 	return common.WindowCreated
 }
 
+// FIXME: should be a tea.Cmd itself
 func (m *WindowEditorModel) editWindow() tea.Cmd {
 	m.window.Name = m.inputs[0].Value()
 	m.window.WorkingDirectory = m.inputs[1].Value()
+	m.window.ShellCmd = m.inputs[2].Value()
 	if _, err := m.window.Save(m.connector); err != nil {
 		m.error = err
 		m.logger.Errorlogger.Printf("Error saving window: %v", err)

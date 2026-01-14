@@ -6,12 +6,15 @@ import (
 )
 
 // NewWindow creates a new window in the current session
-func NewWindow(name string, workingDirectory string, target *string) error {
+func NewWindow(name string, workingDirectory string, shellCmd string, target *string) error {
 	var baseCmd string
 	if target == nil || (strings.TrimSpace(*target) == "") {
 		baseCmd = fmt.Sprintf("tmux new-window -d -n \"%s\"", name)
 	} else {
 		baseCmd = fmt.Sprintf("tmux neww -t %s -d -n \"%s\"", *target, name)
+	}
+	if strings.TrimSpace(shellCmd) != "" {
+		baseCmd = fmt.Sprintf("%s %s", baseCmd, shellCmd)
 	}
 	return commandWithWorkDir(workingDirectory, baseCmd)
 }

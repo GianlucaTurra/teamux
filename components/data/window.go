@@ -11,11 +11,12 @@ type Window struct {
 	gorm.Model
 	Name             string
 	WorkingDirectory string
+	ShellCmd         string
 	Panes            []Pane `gorm:"many2many:window_panes"`
 }
 
-func CreateWindow(name string, workingDirectory string, connector Connector) (int64, error) {
-	window := Window{Name: name, WorkingDirectory: workingDirectory}
+func CreateWindow(name string, workingDirectory string, shellCmd string, connector Connector) (int64, error) {
+	window := Window{Name: name, WorkingDirectory: workingDirectory, ShellCmd: shellCmd}
 	result := gorm.WithResult()
 	err := gorm.G[Window](connector.DB, result).Create(connector.Ctx, &window)
 	return result.RowsAffected, err
@@ -49,7 +50,7 @@ func (w Window) OpenWithTarget(target string) error {
 
 func (w Window) openAndCascade(target *string) error {
 	var err error
-	err = tmux.NewWindow(w.Name, w.WorkingDirectory, target)
+	err = tmux.NewWindow(w.Name, w.WorkingDirectory, w.ShellCmd, target)
 	if err != nil {
 		return err
 	}
