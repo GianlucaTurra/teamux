@@ -20,7 +20,7 @@ type Session struct {
 
 func ReadAllSessions(db *gorm.DB) ([]Session, error) {
 	var sessions []Session
-	err := db.Model(&Session{}).Preload("Windows").Find(&sessions).Error
+	err := db.Model(&Session{}).Preload("Windows").Preload("Windows.Panes").Find(&sessions).Error
 	return sessions, err
 }
 

@@ -28,7 +28,7 @@ type PaneEditorModel struct {
 
 func NewPaneEditorModel(connector data.Connector, logger common.Logger, pane *data.Pane) PaneEditorModel {
 	m := PaneEditorModel{
-		inputs:    make([]textinput.Model, 5),
+		inputs:    make([]textinput.Model, 6),
 		connector: connector,
 		logger:    logger,
 		mode:      creating,
@@ -62,6 +62,10 @@ func NewPaneEditorModel(connector data.Connector, logger common.Logger, pane *da
 			t.Prompt = "Target: "
 			t.PromptStyle = common.BlurredStyle
 			t.CharLimit = 50
+		case 5:
+			t.Prompt = "ShellCmd: "
+			t.PromptStyle = common.BlurredStyle
+			t.CharLimit = 100
 		}
 		m.inputs[i] = t
 	}
@@ -75,6 +79,8 @@ func NewPaneEditorModel(connector data.Connector, logger common.Logger, pane *da
 			m.inputs[2].SetValue("v")
 		}
 		m.inputs[3].SetValue(strconv.Itoa(pane.SplitRatio))
+		m.inputs[4].SetValue(pane.Target)
+		m.inputs[5].SetValue(pane.ShellCmd)
 	}
 	return m
 }
@@ -141,6 +147,7 @@ func (m *PaneEditorModel) updateInputs(msg tea.Msg) tea.Cmd {
 	return tea.Batch(cmds...)
 }
 
+// FIXME: should be a tea.Cmd itself
 func (m *PaneEditorModel) createPane() tea.Cmd {
 	ratio, err := strconv.Atoi(m.inputs[3].Value())
 	if err != nil {
@@ -154,6 +161,7 @@ func (m *PaneEditorModel) createPane() tea.Cmd {
 			ratio,
 			m.connector,
 			m.inputs[4].Value(),
+			m.inputs[5].Value(),
 		)
 	case "v":
 		_, err = data.CreateVerticalPane(
@@ -162,6 +170,7 @@ func (m *PaneEditorModel) createPane() tea.Cmd {
 			ratio,
 			m.connector,
 			m.inputs[4].Value(),
+			m.inputs[5].Value(),
 		)
 	default:
 		err := fmt.Errorf("invalid direction: %s", m.inputs[2].Value())
@@ -174,6 +183,7 @@ func (m *PaneEditorModel) createPane() tea.Cmd {
 	return func() tea.Msg { return common.PanesEditedMsg{} }
 }
 
+// FIXME: should be a tea.Cmd itself
 func (m *PaneEditorModel) editPane() tea.Cmd {
 	m.pane.Name = m.inputs[0].Value()
 	m.pane.WorkingDirectory = m.inputs[1].Value()

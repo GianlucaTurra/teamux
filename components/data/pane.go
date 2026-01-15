@@ -5,14 +5,15 @@ import (
 	"gorm.io/gorm"
 )
 
+// TODO: handle both target window and target pane
 type Pane struct {
 	gorm.Model
 	Name             string
 	WorkingDirectory string
 	splitDirection   int
 	SplitRatio       int
-	// TODO: handle both target window and target pane
-	Target string
+	Target           string
+	ShellCmd         string
 }
 
 const (
@@ -32,8 +33,9 @@ func CreateVerticalPane(
 	splitRatio int,
 	connector Connector,
 	target string,
+	shellCmd string,
 ) (int64, error) {
-	return createPane(name, workingDirectory, vertical, splitRatio, connector, target)
+	return createPane(name, workingDirectory, vertical, splitRatio, connector, target, shellCmd)
 }
 
 func CreateHorizontalPane(
@@ -42,8 +44,9 @@ func CreateHorizontalPane(
 	splitRatio int,
 	connector Connector,
 	target string,
+	shellCmd string,
 ) (int64, error) {
-	return createPane(name, workingDirectory, horizontal, splitRatio, connector, target)
+	return createPane(name, workingDirectory, horizontal, splitRatio, connector, target, shellCmd)
 }
 
 func createPane(
@@ -53,6 +56,7 @@ func createPane(
 	splitRatio int,
 	connector Connector,
 	target string,
+	shellCmd string,
 ) (int64, error) {
 	pane := Pane{
 		Name:             name,
@@ -60,6 +64,7 @@ func createPane(
 		splitDirection:   splitDirection,
 		SplitRatio:       splitRatio,
 		Target:           target,
+		ShellCmd:         shellCmd,
 	}
 	result := gorm.WithResult()
 	err := gorm.G[Pane](connector.DB, result).Create(connector.Ctx, &pane)
