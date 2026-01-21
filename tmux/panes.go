@@ -15,7 +15,7 @@ func SplitWindow(splitRatio int, workingDirectory string, horizontal bool) error
 	} else {
 		baseCmd += " -v"
 	}
-	return commandWithWorkDir(workingDirectory, baseCmd)
+	return commandWithWorkDir(workingDirectory, baseCmd, "")
 }
 
 // SplitWindowWithTargetWindow creates a pane in the target window
@@ -25,6 +25,7 @@ func SplitWindowWithTargetWindow(
 	splitRatio int,
 	workingDirectory string,
 	horizontal bool,
+	shellCmd string,
 ) error {
 	if strings.TrimSpace(targetWindow) == "" {
 		return errors.New("missing target")
@@ -42,5 +43,5 @@ func SplitWindowWithTargetWindow(
 	} else {
 		baseCmd += " -v"
 	}
-	return commandWithWorkDir(workingDirectory, baseCmd)
+	return commandWithWorkDir(workingDirectory, baseCmd, shellCmd)
 }

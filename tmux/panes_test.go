@@ -86,7 +86,7 @@ func TestSplitWindowWithTargetWindow(t *testing.T) {
 			}
 		}
 		t.Run(tt.name, func(t *testing.T) {
-			gotErr := tmux.SplitWindowWithTargetWindow(tt.target, tt.splitRatio, tt.workingDirectory, tt.horizontal)
+			gotErr := tmux.SplitWindowWithTargetWindow(tt.target, tt.splitRatio, tt.workingDirectory, tt.horizontal, "")
 			if gotErr != nil {
 				if !tt.wantErr {
 					t.Errorf("SplitWindowWithTarget() failed: %v", gotErr)

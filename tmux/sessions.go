@@ -9,7 +9,7 @@ import (
 
 func NewSession(name string, workingDirectory string) error {
 	baseCmd := fmt.Sprintf("tmux new-session -d -s \"%s\"", name)
-	return commandWithWorkDir(workingDirectory, baseCmd)
+	return commandWithWorkDir(workingDirectory, baseCmd, "")
 }
 
 func HasSession(name string) bool {

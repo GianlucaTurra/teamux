@@ -90,9 +90,9 @@ func (p *Pane) SetVertical() { p.splitDirection = vertical }
 // TODO: remove these methods
 
 func (p Pane) Open() error {
-	return tmux.SplitWindowWithTargetWindow(p.Target, p.SplitRatio, p.WorkingDirectory, p.IsHorizontal())
+	return tmux.SplitWindowWithTargetWindow(p.Target, p.SplitRatio, p.WorkingDirectory, p.IsHorizontal(), p.ShellCmd)
 }
 
 func (p Pane) OpenWithTarget(target string) error {
-	return tmux.SplitWindowWithTargetWindow(target, p.SplitRatio, p.WorkingDirectory, p.IsHorizontal())
+	return tmux.SplitWindowWithTargetWindow(target, p.SplitRatio, p.WorkingDirectory, p.IsHorizontal(), p.ShellCmd)
 }

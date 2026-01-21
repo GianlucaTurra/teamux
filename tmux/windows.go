@@ -13,10 +13,7 @@ func NewWindow(name string, workingDirectory string, shellCmd string, target *st
 	} else {
 		baseCmd = fmt.Sprintf("tmux neww -t %s -d -n \"%s\"", *target, name)
 	}
-	if strings.TrimSpace(shellCmd) != "" {
-		baseCmd = fmt.Sprintf("%s %s", baseCmd, shellCmd)
-	}
-	return commandWithWorkDir(workingDirectory, baseCmd)
+	return commandWithWorkDir(workingDirectory, baseCmd, shellCmd)
 }
 
 // KillWindow kills the given window.

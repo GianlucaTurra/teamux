@@ -68,13 +68,16 @@ func checkDirectory(directory string) error {
 	return nil
 }
 
-func commandWithWorkDir(workingDirectory string, cmd string) error {
+func commandWithWorkDir(workingDirectory string, cmd string, extra string) error {
 	var nsdErr error
 	if err := checkDirectory(workingDirectory); err != nil {
 		nsdErr = NoSuchDirectoryError{"working directory doesn't exist"}
 	}
 	if strings.TrimSpace(workingDirectory) != "" {
 		cmd += fmt.Sprintf(" -c %s", workingDirectory)
+	}
+	if strings.TrimSpace(extra) != "" {
+		cmd += fmt.Sprintf(" \"%s\"", extra)
 	}
 	if err := executeCommand(cmd); err != nil {
 		return err
