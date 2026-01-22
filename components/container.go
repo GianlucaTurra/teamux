@@ -86,6 +86,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, common.PreviousTab
 		}
 	case common.SetOutputMsgTimerMsg:
+		// FIXME: doesn't actually work as expected
 		return m, func() tea.Msg {
 			time.Sleep(2 * time.Second)
 			return common.ResetOutputMsgMsg{}

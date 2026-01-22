@@ -79,11 +79,11 @@ func (m WindowBrowserModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmds []tea.Cmd
 	switch msg := msg.(type) {
 	case common.OpenMsg:
-		return m.openSelected()
+		return m, func() tea.Msg { return openSelected(m.logger, m.data[m.selected]) }
 	case common.DeleteMsg:
-		return m.deleteSelected()
+		return m, func() tea.Msg { return deleteSelected(m.logger, m.data[m.selected], m.connector) }
 	case common.KillMsg:
-		return m.killSelected()
+		return m, func() tea.Msg { return killSelected(m.logger, m.data[m.selected]) }
 	case common.ReloadMsg:
 		return NewWindowBrowserModel(m.connector, m.logger), nil
 	case common.UpDownMsg:
@@ -190,10 +190,9 @@ func (m WindowBrowserModel) selectUpDown() (tea.Model, tea.Cmd) {
 	return m, func() tea.Msg { return common.NewWFocus{Window: m.data[m.selected]} }
 }
 
-func (m WindowBrowserModel) openSelected() (WindowBrowserModel, tea.Cmd) {
-	w := m.data[m.selected]
+func openSelected(logger common.Logger, w data.Window) tea.Cmd {
 	if err := w.Open(); err != nil {
-		m.logger.Errorlogger.Printf("Error opening window %s: %v", w.Name, err)
+		logger.Errorlogger.Printf("Error opening window %s: %v", w.Name, err)
 		var severity common.Severity
 		switch err.(type) {
 		case tmux.Warning:
@@ -201,25 +200,23 @@ func (m WindowBrowserModel) openSelected() (WindowBrowserModel, tea.Cmd) {
 		default:
 			severity = common.Error
 		}
-		return m, func() tea.Msg { return common.OutputMsg{Err: err, Severity: severity} }
+		return func() tea.Msg { return common.OutputMsg{Err: err, Severity: severity} }
 	}
-	return m, func() tea.Msg { return nil }
+	return nil
 }
 
-func (m WindowBrowserModel) deleteSelected() (WindowBrowserModel, tea.Cmd) {
-	w := m.data[m.selected]
-	if _, err := w.Delete(m.connector); err != nil {
-		m.logger.Errorlogger.Printf("Error deleting window %s: %v", m.selected, err)
-		return m, func() tea.Msg { return common.OutputMsg{Err: err, Severity: common.Error} }
+func deleteSelected(logger common.Logger, w data.Window, connector data.Connector) tea.Cmd {
+	if _, err := w.Delete(connector); err != nil {
+		logger.Errorlogger.Printf("Error deleting window %s: %v", w.Name, err)
+		return func() tea.Msg { return common.OutputMsg{Err: err, Severity: common.Error} }
 	}
-	return m, func() tea.Msg { return common.ReloadMsg{} }
+	return func() tea.Msg { return common.ReloadMsg{} }
 }
 
-func (m WindowBrowserModel) killSelected() (WindowBrowserModel, tea.Cmd) {
-	w := m.data[m.selected]
+func killSelected(logger common.Logger, w data.Window) tea.Cmd {
 	if err := w.Kill(); err != nil {
-		m.logger.Errorlogger.Printf("Error killing window %s: %v", m.selected, err)
-		return m, func() tea.Msg { return common.OutputMsg{Err: err, Severity: common.Error} }
+		logger.Errorlogger.Printf("Error killing window %s: %v", w.Name, err)
+		return func() tea.Msg { return common.OutputMsg{Err: err, Severity: common.Error} }
 	}
-	return m, func() tea.Msg { return common.ReloadMsg{} }
+	return func() tea.Msg { return common.ReloadMsg{} }
 }

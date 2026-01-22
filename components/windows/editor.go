@@ -135,7 +135,7 @@ func (m *WindowEditorModel) updateInputs(msg tea.Msg) tea.Cmd {
 	return tea.Batch(cmds...)
 }
 
-// FIXME: should be a tea.Cmd itself
+// FIXME: should be a tea.Cmd itself?
 func (m *WindowEditorModel) createWindow() tea.Cmd {
 	// TODO: should I check the number too?
 	_, err := data.CreateWindow(m.inputs[0].Value(), m.inputs[1].Value(), m.inputs[2].Value(), m.connector)
@@ -148,7 +148,7 @@ func (m *WindowEditorModel) createWindow() tea.Cmd {
 	return common.WindowCreated
 }
 
-// FIXME: should be a tea.Cmd itself
+// FIXME: should be a tea.Cmd itself?
 func (m *WindowEditorModel) editWindow() tea.Cmd {
 	m.window.Name = m.inputs[0].Value()
 	m.window.WorkingDirectory = m.inputs[1].Value()

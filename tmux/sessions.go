@@ -2,10 +2,15 @@
 package tmux
 
 import (
+	"bytes"
 	"fmt"
 	"os/exec"
 	"strings"
+
+	tea "github.com/charmbracelet/bubbletea"
 )
+
+type NumberOfSessionsMsg struct{ Number string }
 
 func NewSession(name string, workingDirectory string) error {
 	baseCmd := fmt.Sprintf("tmux new-session -d -s \"%s\"", name)
@@ -36,4 +41,18 @@ func GetCurrentTmuxSessionName() string {
 	cmd := exec.Command("sh", "-c", "tmux display-message -p \"#S\"")
 	out, _ := cmd.Output()
 	return strings.TrimSpace(string(out))
+}
+
+func CountTmuxSessions() tea.Cmd {
+	cmd := exec.Command("sh", "-c", "tmux ls | wc -l")
+	var out bytes.Buffer
+	cmd.Stdout = &out
+	var ret string
+	if err := cmd.Run(); err != nil {
+		fmt.Printf("Error counting sessions %v", err)
+		ret = "Error executing tmux ls"
+	} else {
+		ret = out.String()
+	}
+	return func() tea.Msg { return NumberOfSessionsMsg{Number: ret} }
 }
