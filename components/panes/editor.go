@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	"github.com/GianlucaTurra/teamux/common"
-	"github.com/GianlucaTurra/teamux/components/data"
+	"github.com/GianlucaTurra/teamux/database"
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
 )
@@ -21,12 +21,12 @@ type PaneEditorModel struct {
 	focusedIndex int
 	inputs       []textinput.Model
 	mode         int
-	pane         *data.Pane
-	connector    data.Connector
+	pane         *Pane
+	connector    database.Connector
 	logger       common.Logger
 }
 
-func NewPaneEditorModel(connector data.Connector, logger common.Logger, pane *data.Pane) PaneEditorModel {
+func NewPaneEditorModel(connector database.Connector, logger common.Logger, pane *Pane) PaneEditorModel {
 	m := PaneEditorModel{
 		inputs:    make([]textinput.Model, 6),
 		connector: connector,
@@ -91,7 +91,7 @@ func (m PaneEditorModel) Init() tea.Cmd {
 
 func (m PaneEditorModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
-	case common.EditPMsg:
+	case EditPMsg:
 		m.pane = &msg.Pane
 		return m, nil
 	case tea.KeyMsg:
@@ -155,7 +155,7 @@ func (m *PaneEditorModel) createPane() tea.Cmd {
 	}
 	switch strings.ToLower(m.inputs[2].Value()) {
 	case "h":
-		_, err = data.CreateHorizontalPane(
+		_, err = CreateHorizontalPane(
 			m.inputs[0].Value(),
 			m.inputs[1].Value(),
 			ratio,
@@ -164,7 +164,7 @@ func (m *PaneEditorModel) createPane() tea.Cmd {
 			m.inputs[5].Value(),
 		)
 	case "v":
-		_, err = data.CreateVerticalPane(
+		_, err = CreateVerticalPane(
 			m.inputs[0].Value(),
 			m.inputs[1].Value(),
 			ratio,
@@ -180,7 +180,7 @@ func (m *PaneEditorModel) createPane() tea.Cmd {
 		m.logger.Errorlogger.Printf("Error saving pane: %v", err)
 		return func() tea.Msg { return common.OutputMsg{Err: err, Severity: common.Error} }
 	}
-	return func() tea.Msg { return common.PanesEditedMsg{} }
+	return func() tea.Msg { return PanesEditedMsg{} }
 }
 
 // FIXME: should be a tea.Cmd itself
@@ -207,7 +207,7 @@ func (m *PaneEditorModel) editPane() tea.Cmd {
 		m.logger.Errorlogger.Printf("Error saving pane: %v", err)
 		return func() tea.Msg { return common.OutputMsg{Err: err, Severity: common.Error} }
 	}
-	return func() tea.Msg { return common.PanesEditedMsg{} }
+	return func() tea.Msg { return PanesEditedMsg{} }
 }
 
 func (m *PaneEditorModel) cycleInputs(s string) (tea.Model, tea.Cmd) {

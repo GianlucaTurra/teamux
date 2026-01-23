@@ -5,7 +5,7 @@ import (
 	"strings"
 
 	"github.com/GianlucaTurra/teamux/common"
-	"github.com/GianlucaTurra/teamux/components/data"
+	"github.com/GianlucaTurra/teamux/database"
 	"github.com/charmbracelet/bubbles/cursor"
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
@@ -22,13 +22,13 @@ type WindowEditorModel struct {
 	inputs       []textinput.Model
 	cursorMode   cursor.Mode
 	mode         int
-	window       *data.Window
+	window       *Window
 	error        error
-	connector    data.Connector
+	connector    database.Connector
 	logger       common.Logger
 }
 
-func NewWindowEditorModel(connector data.Connector, logger common.Logger, window *data.Window) WindowEditorModel {
+func NewWindowEditorModel(connector database.Connector, logger common.Logger, window *Window) WindowEditorModel {
 	m := WindowEditorModel{
 		inputs:    make([]textinput.Model, 3),
 		connector: connector,
@@ -138,14 +138,14 @@ func (m *WindowEditorModel) updateInputs(msg tea.Msg) tea.Cmd {
 // FIXME: should be a tea.Cmd itself?
 func (m *WindowEditorModel) createWindow() tea.Cmd {
 	// TODO: should I check the number too?
-	_, err := data.CreateWindow(m.inputs[0].Value(), m.inputs[1].Value(), m.inputs[2].Value(), m.connector)
+	_, err := CreateWindow(m.inputs[0].Value(), m.inputs[1].Value(), m.inputs[2].Value(), m.connector)
 	if err != nil {
 		m.error = err
 		m.logger.Errorlogger.Printf("Error saving window: %v", err)
 		return func() tea.Msg { return common.InputErrMsg{Err: err} }
 	}
 	m.error = nil
-	return common.WindowCreated
+	return WindowCreated
 }
 
 // FIXME: should be a tea.Cmd itself?
@@ -160,7 +160,7 @@ func (m *WindowEditorModel) editWindow() tea.Cmd {
 	}
 	m.error = nil
 	// TODO: this is a little confusing
-	return common.WindowCreated
+	return WindowCreated
 }
 
 func (m *WindowEditorModel) cycleInputs(s string) (tea.Model, tea.Cmd) {

@@ -7,10 +7,10 @@ import (
 	"time"
 
 	"github.com/GianlucaTurra/teamux/common"
-	"github.com/GianlucaTurra/teamux/components/data"
 	"github.com/GianlucaTurra/teamux/components/panes"
 	"github.com/GianlucaTurra/teamux/components/sessions"
 	"github.com/GianlucaTurra/teamux/components/windows"
+	"github.com/GianlucaTurra/teamux/database"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 )
@@ -24,7 +24,7 @@ type Model struct {
 	focusedTab  int
 	newPrefix   bool
 	quitting    bool
-	connector   data.Connector
+	connector   database.Connector
 	logger      common.Logger
 }
 
@@ -34,7 +34,7 @@ const (
 	PANES    = "Panes"
 )
 
-func InitialModel(connector data.Connector, logger common.Logger) Model {
+func InitialModel(connector database.Connector, logger common.Logger) Model {
 	return Model{
 		tabs:        []string{SESSIONS, WINDOWS, PANES},
 		mainModel:   sessions.NewSessionContainerModel(connector, logger),
@@ -72,10 +72,10 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.focusedTab -= 1
 		}
 		return m, func() tea.Msg { return common.ClearHelp(common.FocusedTab(m.focusedTab)) }
-	case common.NewSFocus:
+	case sessions.NewSFocus:
 		m.detailModel = sessions.NewSessionTreeModel(m.connector, m.logger, &msg.Session)
 		return m, nil
-	case common.NewWFocus:
+	case windows.NewWFocus:
 		m.detailModel = windows.NewWindowDetailModel(m.connector, m.logger, &msg.Window)
 		return m, nil
 	case tea.KeyMsg:
@@ -91,7 +91,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			time.Sleep(2 * time.Second)
 			return common.ResetOutputMsgMsg{}
 		}
-	case common.EditSMsg, common.EditWMsg, common.EditPMsg:
+	case sessions.EditSMsg, windows.EditWMsg, panes.EditPMsg:
 		m.helpModel.SetModel(NewEditorHelpModel())
 	case common.ClearHelpMsg:
 		switch m.focusedTab {

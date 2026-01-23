@@ -5,12 +5,14 @@ import (
 	"os/exec"
 	"testing"
 
-	"github.com/GianlucaTurra/teamux/components/data"
+	"github.com/GianlucaTurra/teamux/components/sessions"
+	"github.com/GianlucaTurra/teamux/components/windows"
+	"github.com/GianlucaTurra/teamux/database"
 	"gorm.io/gorm"
 )
 
-func sampleSession(name string, connector data.Connector) error {
-	_, err := data.CreateSession(name, "", connector)
+func sampleSession(name string, connector database.Connector) error {
+	_, err := sessions.CreateSession(name, "", connector)
 	return err
 }
 
@@ -27,7 +29,7 @@ func TestOpenSession(t *testing.T) {
 	if err := sampleSession("OpenTest", connector); err != nil {
 		t.Errorf("Failed to create sample session: %v", err)
 	}
-	s, err := gorm.G[data.Session](connector.DB).Where("id = ?", 1).First(connector.Ctx)
+	s, err := gorm.G[sessions.Session](connector.DB).Where("id = ?", 1).First(connector.Ctx)
 	if err != nil {
 		t.Errorf("Failed to read session: %v", err)
 	}
@@ -46,9 +48,9 @@ func TestOpenSession(t *testing.T) {
 }
 
 // createSampleWindows Creates 3 sample windows in the expiring db
-func createSampleWindows(connector data.Connector) error {
+func createSampleWindows(connector database.Connector) error {
 	for i := range 3 {
-		if _, err := data.CreateWindow(fmt.Sprintf("Window %d", i), "", "", connector); err != nil {
+		if _, err := windows.CreateWindow(fmt.Sprintf("Window %d", i), "", "", connector); err != nil {
 			return err
 		}
 	}

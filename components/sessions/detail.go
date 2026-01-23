@@ -4,21 +4,21 @@ import (
 	"fmt"
 
 	"github.com/GianlucaTurra/teamux/common"
-	"github.com/GianlucaTurra/teamux/components/data"
+	"github.com/GianlucaTurra/teamux/database"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"gorm.io/gorm"
 )
 
 type SessionDetailModel struct {
-	session   data.Session
-	connector data.Connector
+	session   Session
+	connector database.Connector
 	logger    common.Logger
 }
 
-func NewSessionTreeModel(connector data.Connector, logger common.Logger, session *data.Session) SessionDetailModel {
+func NewSessionTreeModel(connector database.Connector, logger common.Logger, session *Session) SessionDetailModel {
 	if session == nil {
-		firstSession, err := gorm.G[data.Session](connector.DB).First(connector.Ctx)
+		firstSession, err := gorm.G[Session](connector.DB).First(connector.Ctx)
 		if err != nil {
 			logger.Errorlogger.Printf("Error loading first session, falling back to default one.\n %v", err)
 		}

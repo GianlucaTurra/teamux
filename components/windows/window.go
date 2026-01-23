@@ -1,8 +1,10 @@
-package data
+package windows
 
 import (
 	"fmt"
 
+	"github.com/GianlucaTurra/teamux/components/panes"
+	"github.com/GianlucaTurra/teamux/database"
 	"github.com/GianlucaTurra/teamux/tmux"
 	"gorm.io/gorm"
 )
@@ -12,21 +14,21 @@ type Window struct {
 	Name             string
 	WorkingDirectory string
 	ShellCmd         string
-	Panes            []Pane `gorm:"many2many:window_panes"`
+	Panes            []panes.Pane `gorm:"many2many:window_panes"`
 }
 
-func CreateWindow(name string, workingDirectory string, shellCmd string, connector Connector) (int64, error) {
+func CreateWindow(name string, workingDirectory string, shellCmd string, connector database.Connector) (int64, error) {
 	window := Window{Name: name, WorkingDirectory: workingDirectory, ShellCmd: shellCmd}
 	result := gorm.WithResult()
 	err := gorm.G[Window](connector.DB, result).Create(connector.Ctx, &window)
 	return result.RowsAffected, err
 }
 
-func (w Window) Save(connector Connector) (int, error) {
+func (w Window) Save(connector database.Connector) (int, error) {
 	return gorm.G[Window](connector.DB).Updates(connector.Ctx, w)
 }
 
-func (w Window) Delete(connector Connector) (int, error) {
+func (w Window) Delete(connector database.Connector) (int, error) {
 	return gorm.G[Window](connector.DB).Where("id = ?", w.ID).Delete(connector.Ctx)
 }
 

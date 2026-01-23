@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	"github.com/GianlucaTurra/teamux/common"
-	"github.com/GianlucaTurra/teamux/components/data"
+	"github.com/GianlucaTurra/teamux/database"
 	"github.com/GianlucaTurra/teamux/tmux"
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
@@ -23,16 +23,16 @@ type (
 		list         list.Model
 		selected     string
 		openSessions string
-		sessions     map[string]data.Session
+		sessions     map[string]Session
 		State        common.State
-		connector    data.Connector
+		connector    database.Connector
 		logger       common.Logger
 	}
 )
 
 func (s item) FilterValue() string { return "" }
 
-func NewSessionBrowserModel(connector data.Connector, logger common.Logger) SessionBrowserModel {
+func NewSessionBrowserModel(connector database.Connector, logger common.Logger) SessionBrowserModel {
 	sessions, layouts := loadData(connector.DB, logger)
 	l := list.New(layouts, sessionDelegate{}, 100, 10)
 	l.SetFilteringEnabled(false)
@@ -50,13 +50,14 @@ func NewSessionBrowserModel(connector data.Connector, logger common.Logger) Sess
 	}
 }
 
-func loadData(db *gorm.DB, logger common.Logger) (map[string]data.Session, []list.Item) {
+func loadData(db *gorm.DB, logger common.Logger) (map[string]Session, []list.Item) {
 	layouts := []list.Item{}
-	sessions, err := data.ReadAllSessions(db)
+	// TODO: doesn't need to be public
+	sessions, err := ReadAllSessions(db)
 	if err != nil {
 		logger.Fatallogger.Fatalf("Failed to read sessions: %v", err)
 	}
-	data := make(map[string]data.Session)
+	data := make(map[string]Session)
 	for _, s := range sessions {
 		layouts = append(layouts, item{title: s.Name, open: s.IsOpen()})
 		data[s.Name] = s
@@ -86,7 +87,7 @@ func (m SessionBrowserModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmds []tea.Cmd
 	var cmd tea.Cmd
 	switch msg := msg.(type) {
-	case common.TmuxSessionsChanged:
+	case TmuxSessionsChanged:
 		return m, tmux.CountTmuxSessions()
 	case tmux.NumberOfSessionsMsg:
 		m.openSessions = msg.Number
@@ -132,7 +133,7 @@ func (m SessionBrowserModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "a":
 			return m.addWindowsToSession()
 		case "n":
-			return m, common.NewSession
+			return m, NewSession
 		case "j", "k", "up", "down":
 			cmds = append(cmds, common.UpDown)
 		case "?":
@@ -147,7 +148,7 @@ func (m SessionBrowserModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 func (m SessionBrowserModel) addWindowsToSession() (tea.Model, tea.Cmd) {
 	if i, ok := m.list.SelectedItem().(item); ok {
 		session := m.sessions[i.title]
-		return m, func() tea.Msg { return common.AssociateWindows{Session: session} }
+		return m, func() tea.Msg { return AssociateWindowsMsg{Session: session} }
 	} else {
 		return m, nil
 	}
@@ -180,7 +181,7 @@ func (m SessionBrowserModel) editSelected() (tea.Model, tea.Cmd) {
 	if i, ok := m.list.SelectedItem().(item); ok {
 		m.selected = i.title
 	}
-	return m, func() tea.Msg { return common.EditS(m.sessions[m.selected]) }
+	return m, func() tea.Msg { return EditS(m.sessions[m.selected]) }
 }
 
 func (m SessionBrowserModel) open() (tea.Model, tea.Cmd) {
@@ -196,7 +197,7 @@ func (m SessionBrowserModel) selectUpDownItem() (tea.Model, tea.Cmd) {
 	if ok {
 		m.selected = i.title
 	}
-	return m, func() tea.Msg { return common.NewSFocus{Session: m.sessions[m.selected]} }
+	return m, func() tea.Msg { return NewSFocus{Session: m.sessions[m.selected]} }
 }
 
 // switchToSelected Switch to the selected session opening it if necessary
@@ -224,12 +225,12 @@ func (m SessionBrowserModel) switchToSelected() (SessionBrowserModel, tea.Cmd) {
 		return m, func() tea.Msg { return common.OutputMsg{Err: err, Severity: common.Error} }
 	}
 	m.refreshItems()
-	return m, func() tea.Msg { return common.TmuxSessionsChanged{} }
+	return m, func() tea.Msg { return TmuxSessionsChanged{} }
 }
 
 // openSelected Opens the selected session. If it is already open nothing is
 // done.
-func openSelected(logger common.Logger, s data.Session) tea.Cmd {
+func openSelected(logger common.Logger, s Session) tea.Cmd {
 	if s.IsOpen() {
 		msg := fmt.Sprintf("session %s already open", s.Name)
 		return func() tea.Msg {
@@ -247,11 +248,11 @@ func openSelected(logger common.Logger, s data.Session) tea.Cmd {
 			return func() tea.Msg { return common.OutputMsg{Err: err, Severity: common.Error} }
 		}
 	}
-	return func() tea.Msg { return common.TmuxSessionsChanged{} }
+	return func() tea.Msg { return TmuxSessionsChanged{} }
 }
 
 // deleteSelected kills the session if open and proceeds to delete it from the db
-func deleteSelected(logger common.Logger, s data.Session, connector data.Connector) tea.Cmd {
+func deleteSelected(logger common.Logger, s Session, connector database.Connector) tea.Cmd {
 	if _, err := s.Delete(connector); err != nil {
 		logger.Errorlogger.Printf("Error deleting session %s: %v", s.Name, err)
 		return func() tea.Msg { return common.OutputMsg{Err: err, Severity: common.Error} }
@@ -260,7 +261,7 @@ func deleteSelected(logger common.Logger, s data.Session, connector data.Connect
 }
 
 // killSelected kills the selected session. If it is not open nothing is done.
-func killSelected(logger common.Logger, s data.Session) tea.Cmd {
+func killSelected(logger common.Logger, s Session) tea.Cmd {
 	if !s.IsOpen() {
 		return nil
 	}
@@ -268,7 +269,7 @@ func killSelected(logger common.Logger, s data.Session) tea.Cmd {
 		logger.Errorlogger.Printf("Error killing session %s: %v", s.Name, err)
 		return func() tea.Msg { return common.OutputMsg{Err: err, Severity: common.Error} }
 	}
-	return func() tea.Msg { return common.TmuxSessionsChanged{} }
+	return func() tea.Msg { return TmuxSessionsChanged{} }
 }
 
 // refreshItems checks again if any item status has changed

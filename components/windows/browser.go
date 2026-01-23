@@ -6,7 +6,7 @@ import (
 	"fmt"
 
 	"github.com/GianlucaTurra/teamux/common"
-	"github.com/GianlucaTurra/teamux/components/data"
+	"github.com/GianlucaTurra/teamux/database"
 	"github.com/GianlucaTurra/teamux/tmux"
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
@@ -22,15 +22,15 @@ type (
 		list      list.Model
 		selected  string
 		state     common.State
-		data      map[string]data.Window
-		connector data.Connector
+		data      map[string]Window
+		connector database.Connector
 		logger    common.Logger
 	}
 )
 
 func (s windowItem) FilterValue() string { return "" }
 
-func NewWindowBrowserModel(connector data.Connector, logger common.Logger) WindowBrowserModel {
+func NewWindowBrowserModel(connector database.Connector, logger common.Logger) WindowBrowserModel {
 	data, layouts := loadWindowData(connector, logger)
 	l := list.New(layouts, WindowDelegate{}, 100, 10)
 	l.SetShowTitle(false)
@@ -47,10 +47,10 @@ func NewWindowBrowserModel(connector data.Connector, logger common.Logger) Windo
 	}
 }
 
-func loadWindowData(connector data.Connector, logger common.Logger) (map[string]data.Window, []list.Item) {
+func loadWindowData(connector database.Connector, logger common.Logger) (map[string]Window, []list.Item) {
 	layouts := []list.Item{}
-	windowData := make(map[string]data.Window)
-	windows, err := data.ReadAllWindows(connector.DB)
+	windowData := make(map[string]Window)
+	windows, err := ReadAllWindows(connector.DB)
 	if err != nil {
 		logger.Fatallogger.Fatalf("Failed to read windows: %v", err)
 		return windowData, layouts
@@ -138,7 +138,7 @@ func (m WindowBrowserModel) Init() tea.Cmd {
 func (m WindowBrowserModel) addPanesToSelected() (tea.Model, tea.Cmd) {
 	if i, ok := m.list.SelectedItem().(windowItem); ok {
 		window := m.data[i.title]
-		return m, func() tea.Msg { return common.AssociatePanesMsg{Window: window} }
+		return m, func() tea.Msg { return AssociatePanesMsg{Window: window} }
 	}
 	return nil, nil
 }
@@ -148,7 +148,7 @@ func (m WindowBrowserModel) editSelected() (tea.Model, tea.Cmd) {
 	if ok {
 		m.selected = i.title
 	}
-	return m, func() tea.Msg { return common.EditW(m.data[m.selected]) }
+	return m, func() tea.Msg { return EditW(m.data[m.selected]) }
 }
 
 func (m WindowBrowserModel) kill() (tea.Model, tea.Cmd) {
@@ -187,10 +187,10 @@ func (m WindowBrowserModel) selectUpDown() (tea.Model, tea.Cmd) {
 	if ok {
 		m.selected = i.title
 	}
-	return m, func() tea.Msg { return common.NewWFocus{Window: m.data[m.selected]} }
+	return m, func() tea.Msg { return NewWFocus{Window: m.data[m.selected]} }
 }
 
-func openSelected(logger common.Logger, w data.Window) tea.Cmd {
+func openSelected(logger common.Logger, w Window) tea.Cmd {
 	if err := w.Open(); err != nil {
 		logger.Errorlogger.Printf("Error opening window %s: %v", w.Name, err)
 		var severity common.Severity
@@ -205,7 +205,7 @@ func openSelected(logger common.Logger, w data.Window) tea.Cmd {
 	return nil
 }
 
-func deleteSelected(logger common.Logger, w data.Window, connector data.Connector) tea.Cmd {
+func deleteSelected(logger common.Logger, w Window, connector database.Connector) tea.Cmd {
 	if _, err := w.Delete(connector); err != nil {
 		logger.Errorlogger.Printf("Error deleting window %s: %v", w.Name, err)
 		return func() tea.Msg { return common.OutputMsg{Err: err, Severity: common.Error} }
@@ -213,7 +213,7 @@ func deleteSelected(logger common.Logger, w data.Window, connector data.Connecto
 	return func() tea.Msg { return common.ReloadMsg{} }
 }
 
-func killSelected(logger common.Logger, w data.Window) tea.Cmd {
+func killSelected(logger common.Logger, w Window) tea.Cmd {
 	if err := w.Kill(); err != nil {
 		logger.Errorlogger.Printf("Error killing window %s: %v", w.Name, err)
 		return func() tea.Msg { return common.OutputMsg{Err: err, Severity: common.Error} }

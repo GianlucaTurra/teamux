@@ -2,13 +2,14 @@ package sessions
 
 import (
 	"github.com/GianlucaTurra/teamux/common"
-	"github.com/GianlucaTurra/teamux/components/data"
+	"github.com/GianlucaTurra/teamux/components/windows"
+	"github.com/GianlucaTurra/teamux/database"
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
 )
 
 type availableWindows struct {
-	window   data.Window
+	window   windows.Window
 	title    string
 	desc     string
 	selected bool
@@ -20,16 +21,16 @@ func (aw availableWindows) FilterValue() string {
 
 type SessionWindowsAssociationModel struct {
 	model     list.Model
-	connector data.Connector
+	connector database.Connector
 	logger    common.Logger
-	session   data.Session
+	session   Session
 	state     common.State
 }
 
 func NewSessionWindowsAssociationModel(
-	connector data.Connector,
+	connector database.Connector,
 	logger common.Logger,
-	session data.Session,
+	session Session,
 ) SessionWindowsAssociationModel {
 	var aws []list.Item
 	l := list.New(aws, sessionWindowsDelegate{}, 100, 10)
@@ -57,7 +58,7 @@ func (m SessionWindowsAssociationModel) Update(msg tea.Msg) (tea.Model, tea.Cmd)
 	case common.LoadDataMsg:
 		return m, m.loadWindowsList()
 	case common.UpdateDetailMsg:
-		return m, func() tea.Msg { return common.NewSFocus{Session: m.session} }
+		return m, func() tea.Msg { return NewSFocus{Session: m.session} }
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "n":
@@ -68,7 +69,7 @@ func (m SessionWindowsAssociationModel) Update(msg tea.Msg) (tea.Model, tea.Cmd)
 			// FIXME: this kinda works but will return to the session browser
 			// and not to the this model from the window editor
 			w := m.model.SelectedItem().(availableWindows)
-			return m, func() tea.Msg { return common.EditWindowMsg{Window: w.window} }
+			return m, func() tea.Msg { return windows.EditWindowMsg{Window: w.window} }
 		case "enter", " ":
 			return m, m.selectWindow()
 		case "esc":
@@ -93,7 +94,7 @@ func (m SessionWindowsAssociationModel) View() string {
 // loadWindowsList() loads all windows and marks the ones already associated
 func (m *SessionWindowsAssociationModel) loadWindowsList() tea.Cmd {
 	var aws []list.Item
-	windows, err := data.ReadAllWindows(m.connector.DB)
+	windows, err := windows.ReadAllWindows(m.connector.DB)
 	if err != nil {
 		m.logger.Errorlogger.Printf("Error reading windows for session_windows association: %v", err)
 		return func() tea.Msg { return common.OutputMsg{Err: err, Severity: common.Error} }

@@ -4,18 +4,18 @@ package sessions
 
 import (
 	"github.com/GianlucaTurra/teamux/common"
-	"github.com/GianlucaTurra/teamux/components/data"
 	"github.com/GianlucaTurra/teamux/components/windows"
+	"github.com/GianlucaTurra/teamux/database"
 	tea "github.com/charmbracelet/bubbletea"
 )
 
 type SessionContainerModel struct {
 	focusedModel tea.Model
-	connector    data.Connector
+	connector    database.Connector
 	logger       common.Logger
 }
 
-func NewSessionContainerModel(connector data.Connector, logger common.Logger) SessionContainerModel {
+func NewSessionContainerModel(connector database.Connector, logger common.Logger) SessionContainerModel {
 	return SessionContainerModel{
 		focusedModel: NewSessionBrowserModel(connector, logger),
 		connector:    connector,
@@ -29,16 +29,16 @@ func (m SessionContainerModel) Init() tea.Cmd {
 
 func (m SessionContainerModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
-	case common.NewSessionMsg:
+	case NewSessionMsg:
 		m.focusedModel = NewSessionEditorModel(m.connector, m.logger, nil)
 		return m, nil
-	case common.SessionCreatedMsg:
+	case SessionCreatedMsg:
 		m.focusedModel = NewSessionBrowserModel(m.connector, m.logger)
 		return m, common.Reaload
 	case common.BrowseMsg:
 		m.focusedModel = NewSessionBrowserModel(m.connector, m.logger)
 		return m, nil
-	case common.EditSMsg:
+	case EditSMsg:
 		// FIXME: shouldn't the message pass down the session to the editor? AKA: no return?
 		m.focusedModel = NewSessionEditorModel(m.connector, m.logger, &msg.Session)
 		return m, nil
@@ -47,13 +47,13 @@ func (m SessionContainerModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		// 	if msg.String() == "n" && m.focusedModel == sessionBrowser && m.sessionBrowser.State != common.Deleting {
 		// 		return m, common.NewSession
 		// 	}
-	case common.AssociateWindows:
+	case AssociateWindowsMsg:
 		m.focusedModel = NewSessionWindowsAssociationModel(m.connector, m.logger, msg.Session)
 		return m, common.LoadData
 	case common.CreateWindowMsg:
 		m.focusedModel = windows.NewWindowEditorModel(m.connector, m.logger, nil)
 		return m, nil
-	case common.EditWindowMsg:
+	case windows.EditWindowMsg:
 		m.focusedModel = windows.NewWindowEditorModel(m.connector, m.logger, &msg.Window)
 		return m, nil
 	}

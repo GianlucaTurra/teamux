@@ -1,4 +1,4 @@
-package common
+package database
 
 import (
 	"context"
@@ -6,11 +6,15 @@ import (
 	"log"
 	"os"
 
-	"github.com/GianlucaTurra/teamux/components/data"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
 )
+
+type Connector struct {
+	DB  *gorm.DB
+	Ctx context.Context
+}
 
 const (
 	ProdDB = "teamux/teamux.db"
@@ -26,19 +30,21 @@ func GetProdDB() (*gorm.DB, error) {
 	return getDB(prodDBPath)
 }
 
-func GetTestDB() *data.Connector {
-	db, err := getDB(TestDB)
-	if err != nil {
-		return nil
-	}
-	if err := db.AutoMigrate(
-		&data.Session{},
-		&data.Window{},
-		&data.Pane{},
-	); err != nil {
-		return nil
-	}
-	return &data.Connector{DB: db, Ctx: context.Background()}
+// FIXME: this causes cycle imports. Do it in the test package
+func GetTestDB() *Connector {
+	return nil
+	// db, err := getDB(TestDB)
+	// if err != nil {
+	// 	return nil
+	// }
+	// if err := db.AutoMigrate(
+	// 	&sessions.Session{},
+	// 	&windows.Window{},
+	// 	&panes.Pane{},
+	// ); err != nil {
+	// 	return nil
+	// }
+	// return &db.Connector{DB: db, Ctx: context.Background()}
 }
 
 func getDB(name string) (*gorm.DB, error) {

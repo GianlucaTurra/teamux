@@ -1,44 +1,28 @@
 package common
 
-import "github.com/GianlucaTurra/teamux/components/data"
-
 type (
-	TmuxSessionsChanged struct{}
-	OpenMsg             struct{}
-	DeleteMsg           struct{}
-	SwitchMsg           struct{}
-	NewSessionMsg       struct{}
-	NewWindowMsg        struct{}
-	NewPaneMsg          struct{}
-	KillMsg             struct{}
-	InputErrMsg         struct{ Err error }
-	ReloadMsg           struct{}
-	SessionCreatedMsg   struct{}
-	WindowCreatedMsg    struct{}
-	PanesEditedMsg      struct{}
-	BrowseMsg           struct{}
-	EditSMsg            struct{ Session data.Session }
-	EditWMsg            struct{ Window data.Window }
-	EditPMsg            struct{ Pane data.Pane }
-	QuitMsg             struct{}
-	NextTabMsg          struct{}
-	PreviousTabMsg      struct{}
-	UpDownMsg           struct{}
-	NewSFocus           struct{ Session data.Session }
-	NewWFocus           struct{ Window data.Window }
-	OutputMsg           struct {
-		Err      error
-		Severity Severity
-	}
 	ShowFullHelpMsg      struct{ Component ComponentWithHelp }
 	ClearHelpMsg         struct{ Tab FocusedTab }
-	AssociateWindows     struct{ Session data.Session }
-	AssociatePanesMsg    struct{ Window data.Window }
+	InputErrMsg          struct{ Err error }
+	OpenMsg              struct{}
+	DeleteMsg            struct{}
+	SwitchMsg            struct{}
+	NewWindowMsg         struct{}
+	NewPaneMsg           struct{}
+	KillMsg              struct{}
+	ReloadMsg            struct{}
+	BrowseMsg            struct{}
+	QuitMsg              struct{}
+	NextTabMsg           struct{}
+	PreviousTabMsg       struct{}
+	UpDownMsg            struct{}
 	LoadDataMsg          struct{}
 	UpdateDetailMsg      struct{}
 	CreateWindowMsg      struct{}
-	EditWindowMsg        struct{ Window data.Window }
-	PaneCreatedMsg       struct{}
 	SetOutputMsgTimerMsg struct{}
 	ResetOutputMsgMsg    struct{}
+	OutputMsg            struct {
+		Err      error
+		Severity Severity
+	}
 )

@@ -2,17 +2,17 @@ package windows
 
 import (
 	"github.com/GianlucaTurra/teamux/common"
-	"github.com/GianlucaTurra/teamux/components/data"
+	"github.com/GianlucaTurra/teamux/database"
 	tea "github.com/charmbracelet/bubbletea"
 )
 
 type WindowContainerModel struct {
 	model     tea.Model
-	connector data.Connector
+	connector database.Connector
 	logger    common.Logger
 }
 
-func NewWindowContainerModel(connector data.Connector, logger common.Logger) WindowContainerModel {
+func NewWindowContainerModel(connector database.Connector, logger common.Logger) WindowContainerModel {
 	return WindowContainerModel{
 		model:     NewWindowBrowserModel(connector, logger),
 		connector: connector,
@@ -29,15 +29,15 @@ func (m WindowContainerModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case common.NewWindowMsg:
 		m.model = NewWindowEditorModel(m.connector, m.logger, nil)
 		return m, nil
-	case common.EditWMsg:
+	case EditWMsg:
 		m.model = NewWindowEditorModel(m.connector, m.logger, &msg.Window)
-	case common.WindowCreatedMsg:
+	case WindowCreatedMsg:
 		m.model = NewWindowBrowserModel(m.connector, m.logger)
 		return m, common.Reaload
 	case common.BrowseMsg:
 		m.model = NewWindowBrowserModel(m.connector, m.logger)
 		return m, nil
-	case common.AssociatePanesMsg:
+	case AssociatePanesMsg:
 		m.model = NewWindowPanesAssociationModel(m.connector, m.logger, msg.Window)
 		return m, common.LoadData
 	}

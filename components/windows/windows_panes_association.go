@@ -5,13 +5,14 @@ import (
 	"fmt"
 
 	"github.com/GianlucaTurra/teamux/common"
-	"github.com/GianlucaTurra/teamux/components/data"
+	"github.com/GianlucaTurra/teamux/components/panes"
+	"github.com/GianlucaTurra/teamux/database"
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
 )
 
 type availablePanes struct {
-	pane     data.Pane
+	pane     panes.Pane
 	title    string
 	desc     string
 	selected bool
@@ -23,16 +24,16 @@ func (ap availablePanes) FilterValue() string {
 
 type WindowPanesAssociationModel struct {
 	model     list.Model
-	connector data.Connector
+	connector database.Connector
 	logger    common.Logger
-	window    data.Window
+	window    Window
 	state     common.State
 }
 
 func NewWindowPanesAssociationModel(
-	connector data.Connector,
+	connector database.Connector,
 	logger common.Logger,
-	window data.Window,
+	window Window,
 ) WindowPanesAssociationModel {
 	var aps []list.Item
 	l := list.New(aps, windowPanesDelegate{}, 100, 10)
@@ -60,7 +61,7 @@ func (m WindowPanesAssociationModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case common.LoadDataMsg:
 		return m.loadData()
 	case common.UpdateDetailMsg:
-		return m, func() tea.Msg { return common.NewWFocus{Window: m.window} }
+		return m, func() tea.Msg { return NewWFocus{Window: m.window} }
 	case tea.KeyMsg:
 		switch msg.String() {
 		// TODO: handle keys to create and edit panes from here?
@@ -89,7 +90,7 @@ func (m WindowPanesAssociationModel) View() string {
 
 func (m *WindowPanesAssociationModel) loadData() (tea.Model, tea.Cmd) {
 	var aps []list.Item
-	panes, err := data.ReadAllPanes(m.connector.DB)
+	panes, err := panes.ReadAllPanes(m.connector.DB)
 	if err != nil {
 		errMsg := fmt.Sprintf("error reading panes: %v", err)
 		m.logger.Errorlogger.Println(errMsg)

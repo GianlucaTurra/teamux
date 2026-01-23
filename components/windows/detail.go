@@ -4,21 +4,21 @@ import (
 	"fmt"
 
 	"github.com/GianlucaTurra/teamux/common"
-	"github.com/GianlucaTurra/teamux/components/data"
+	"github.com/GianlucaTurra/teamux/database"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"gorm.io/gorm"
 )
 
 type WindowDetailModel struct {
-	window    data.Window
-	connector data.Connector
+	window    Window
+	connector database.Connector
 	logger    common.Logger
 }
 
-func NewWindowDetailModel(connector data.Connector, logger common.Logger, window *data.Window) WindowDetailModel {
+func NewWindowDetailModel(connector database.Connector, logger common.Logger, window *Window) WindowDetailModel {
 	if window == nil {
-		firstWindow, err := gorm.G[data.Window](connector.DB).First(connector.Ctx)
+		firstWindow, err := gorm.G[Window](connector.DB).First(connector.Ctx)
 		if err != nil {
 			logger.Errorlogger.Printf("Error loading first window, falling back to default one.\n %v", err)
 		}

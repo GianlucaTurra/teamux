@@ -1,6 +1,7 @@
-package data
+package panes
 
 import (
+	"github.com/GianlucaTurra/teamux/database"
 	"github.com/GianlucaTurra/teamux/tmux"
 	"gorm.io/gorm"
 )
@@ -31,7 +32,7 @@ func CreateVerticalPane(
 	name string,
 	workingDirectory string,
 	splitRatio int,
-	connector Connector,
+	connector database.Connector,
 	target string,
 	shellCmd string,
 ) (int64, error) {
@@ -42,7 +43,7 @@ func CreateHorizontalPane(
 	name string,
 	workingDirectory string,
 	splitRatio int,
-	connector Connector,
+	connector database.Connector,
 	target string,
 	shellCmd string,
 ) (int64, error) {
@@ -54,7 +55,7 @@ func createPane(
 	workingDirectory string,
 	splitDirection int,
 	splitRatio int,
-	connector Connector,
+	connector database.Connector,
 	target string,
 	shellCmd string,
 ) (int64, error) {
@@ -71,11 +72,11 @@ func createPane(
 	return result.RowsAffected, err
 }
 
-func (p Pane) Save(connector Connector) (int, error) {
+func (p Pane) Save(connector database.Connector) (int, error) {
 	return gorm.G[Pane](connector.DB).Updates(connector.Ctx, p)
 }
 
-func (p Pane) Delete(connector Connector) (int, error) {
+func (p Pane) Delete(connector database.Connector) (int, error) {
 	return gorm.G[Pane](connector.DB).Where("id = ?", p.ID).Delete(connector.Ctx)
 }
 

@@ -1,12 +1,12 @@
-// Package data declares the data structure to map db entities and the
-// functions to interact with them
-package data
+package sessions
 
 import (
 	"errors"
 	"fmt"
 	"strings"
 
+	"github.com/GianlucaTurra/teamux/components/windows"
+	"github.com/GianlucaTurra/teamux/database"
 	"github.com/GianlucaTurra/teamux/tmux"
 	"gorm.io/gorm"
 )
@@ -15,7 +15,7 @@ type Session struct {
 	gorm.Model
 	Name             string
 	WorkingDirectory string
-	Windows          []Window `gorm:"many2many:session_windows;"`
+	Windows          []windows.Window `gorm:"many2many:session_windows;"`
 }
 
 func ReadAllSessions(db *gorm.DB) ([]Session, error) {
@@ -24,7 +24,7 @@ func ReadAllSessions(db *gorm.DB) ([]Session, error) {
 	return sessions, err
 }
 
-func CreateSession(name string, workingDirectory string, connector Connector) (int, error) {
+func CreateSession(name string, workingDirectory string, connector database.Connector) (int, error) {
 	if strings.TrimSpace(name) == "" {
 		err := errors.New("session name cannot be empty")
 		return 0, err
@@ -38,11 +38,11 @@ func CreateSession(name string, workingDirectory string, connector Connector) (i
 	return int(result.RowsAffected), err
 }
 
-func (s Session) Save(connector Connector) (int, error) {
+func (s Session) Save(connector database.Connector) (int, error) {
 	return gorm.G[Session](connector.DB).Updates(connector.Ctx, s)
 }
 
-func (s Session) Delete(connector Connector) (int, error) {
+func (s Session) Delete(connector database.Connector) (int, error) {
 	return gorm.G[Session](connector.DB).Where("id = ?", s.ID).Delete(connector.Ctx)
 }
 

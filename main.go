@@ -8,7 +8,10 @@ import (
 
 	"github.com/GianlucaTurra/teamux/common"
 	"github.com/GianlucaTurra/teamux/components"
-	"github.com/GianlucaTurra/teamux/components/data"
+	"github.com/GianlucaTurra/teamux/components/panes"
+	"github.com/GianlucaTurra/teamux/components/sessions"
+	"github.com/GianlucaTurra/teamux/components/windows"
+	"github.com/GianlucaTurra/teamux/database"
 	tea "github.com/charmbracelet/bubbletea"
 )
 
@@ -26,18 +29,18 @@ func main() {
 		Errorlogger:   log.New(logfile, "ERROR: ", log.Ldate|log.Ltime|log.Lshortfile),
 		Fatallogger:   log.New(logfile, "FATAL: ", log.Ldate|log.Ltime|log.Lshortfile),
 	}
-	db, err := common.GetProdDB()
+	db, err := database.GetProdDB()
 	if err != nil {
 		log.Fatal(err)
 	}
 	if err := db.AutoMigrate(
-		&data.Session{},
-		&data.Window{},
-		&data.Pane{},
+		&sessions.Session{},
+		&windows.Window{},
+		&panes.Pane{},
 	); err != nil {
 		teamuxLogger.Errorlogger.Printf("Error migrating tables: %v", err)
 	}
-	p := tea.NewProgram(components.InitialModel(data.Connector{DB: db, Ctx: context.Background()}, teamuxLogger))
+	p := tea.NewProgram(components.InitialModel(database.Connector{DB: db, Ctx: context.Background()}, teamuxLogger))
 	if _, err := p.Run(); err != nil {
 		fmt.Printf("ERROR: %v", err)
 		os.Exit(1)

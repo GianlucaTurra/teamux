@@ -2,17 +2,17 @@ package panes
 
 import (
 	"github.com/GianlucaTurra/teamux/common"
-	"github.com/GianlucaTurra/teamux/components/data"
+	"github.com/GianlucaTurra/teamux/database"
 	tea "github.com/charmbracelet/bubbletea"
 )
 
 type PaneContainerModel struct {
 	model     tea.Model
-	connector data.Connector
+	connector database.Connector
 	logger    common.Logger
 }
 
-func NewPaneContainerModel(connector data.Connector, logger common.Logger) PaneContainerModel {
+func NewPaneContainerModel(connector database.Connector, logger common.Logger) PaneContainerModel {
 	return PaneContainerModel{
 		model:     NewPaneBrowserModel(connector, logger),
 		connector: connector,
@@ -29,9 +29,9 @@ func (m PaneContainerModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case common.NewPaneMsg:
 		m.model = NewPaneEditorModel(m.connector, m.logger, nil)
 		return m, nil
-	case common.EditPMsg:
+	case EditPMsg:
 		m.model = NewPaneEditorModel(m.connector, m.logger, &msg.Pane)
-	case common.PaneCreatedMsg, common.PanesEditedMsg, common.BrowseMsg:
+	case PaneCreatedMsg, PanesEditedMsg, common.BrowseMsg:
 		m.model = NewPaneBrowserModel(m.connector, m.logger)
 		return m, common.Reaload
 	}

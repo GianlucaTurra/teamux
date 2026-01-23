@@ -6,7 +6,7 @@ import (
 	"fmt"
 
 	"github.com/GianlucaTurra/teamux/common"
-	"github.com/GianlucaTurra/teamux/components/data"
+	"github.com/GianlucaTurra/teamux/database"
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
@@ -16,10 +16,10 @@ import (
 type (
 	PaneBrowserModel struct {
 		list      list.Model
-		data      map[string]data.Pane
+		data      map[string]Pane
 		selected  string
 		state     common.State
-		connector data.Connector
+		connector database.Connector
 		logger    common.Logger
 	}
 	paneItem struct {
@@ -32,10 +32,10 @@ func (pi paneItem) FilterValue() string {
 }
 
 // loadPaneData Load the panes from db into the current model
-func loadPaneData(db *gorm.DB, logger common.Logger) (map[string]data.Pane, []list.Item) {
+func loadPaneData(db *gorm.DB, logger common.Logger) (map[string]Pane, []list.Item) {
 	layouts := []list.Item{}
-	paneData := make(map[string]data.Pane)
-	panes, err := data.ReadAllPanes(db)
+	paneData := make(map[string]Pane)
+	panes, err := ReadAllPanes(db)
 	if err != nil {
 		logger.Fatallogger.Fatalf("Failed to read panes: %v", err)
 		return paneData, layouts
@@ -47,7 +47,7 @@ func loadPaneData(db *gorm.DB, logger common.Logger) (map[string]data.Pane, []li
 	return paneData, layouts
 }
 
-func NewPaneBrowserModel(connector data.Connector, logger common.Logger) PaneBrowserModel {
+func NewPaneBrowserModel(connector database.Connector, logger common.Logger) PaneBrowserModel {
 	data, layouts := loadPaneData(connector.DB, logger)
 	l := list.New(layouts, paneDelegate{}, 100, 10)
 	l.SetShowTitle(false)
@@ -120,7 +120,7 @@ func (m PaneBrowserModel) edit() (tea.Model, tea.Cmd) {
 	if ok {
 		m.selected = i.title
 	}
-	return m, func() tea.Msg { return common.EditP(m.data[m.selected]) }
+	return m, func() tea.Msg { return EditP(m.data[m.selected]) }
 }
 
 // delete Mark the current pane for deletion signaling for the confirmation

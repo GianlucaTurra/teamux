@@ -5,7 +5,7 @@ import (
 	"strings"
 
 	"github.com/GianlucaTurra/teamux/common"
-	"github.com/GianlucaTurra/teamux/components/data"
+	"github.com/GianlucaTurra/teamux/database"
 	"github.com/GianlucaTurra/teamux/tmux"
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
@@ -24,13 +24,13 @@ type SessionEditorModel struct {
 	inputs       []textinput.Model
 	// cursorMode   cursor.Mode
 	mode      int
-	session   *data.Session
+	session   *Session
 	error     error
-	connector data.Connector
+	connector database.Connector
 	logger    common.Logger
 }
 
-func NewSessionEditorModel(connector data.Connector, logger common.Logger, session *data.Session) SessionEditorModel {
+func NewSessionEditorModel(connector database.Connector, logger common.Logger, session *Session) SessionEditorModel {
 	m := SessionEditorModel{
 		inputs:    make([]textinput.Model, 2),
 		connector: connector,
@@ -114,14 +114,15 @@ func (m *SessionEditorModel) updateInputs(msg tea.Msg) tea.Cmd {
 }
 
 func (m *SessionEditorModel) createSession() tea.Cmd {
-	_, err := data.CreateSession(m.inputs[0].Value(), m.inputs[1].Value(), m.connector)
+	// TODO: doesn't need to be public
+	_, err := CreateSession(m.inputs[0].Value(), m.inputs[1].Value(), m.connector)
 	if err != nil {
 		m.error = err
 		m.logger.Errorlogger.Printf("Error saving session: %v", err)
 		return func() tea.Msg { return common.InputErrMsg{Err: err} }
 	}
 	m.error = nil
-	return common.SessionCreated
+	return SessionCreated
 }
 
 func (m *SessionEditorModel) editSession() tea.Cmd {
@@ -140,7 +141,7 @@ func (m *SessionEditorModel) editSession() tea.Cmd {
 	}
 	m.error = nil
 	// TODO: this is a little confusing
-	return common.SessionCreated
+	return SessionCreated
 }
 
 func (m SessionEditorModel) View() string {
