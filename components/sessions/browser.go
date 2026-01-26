@@ -128,8 +128,8 @@ func (m SessionBrowserModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m.switchToSession()
 		case "d":
 			return m.delete()
-		case "x":
-			return m.kill()
+		// case "x":
+		// 	return m.kill()
 		case "a":
 			return m.addWindowsToSession()
 		case "n":
