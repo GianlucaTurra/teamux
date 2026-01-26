@@ -69,7 +69,7 @@ func (m PaneBrowserModel) Init() tea.Cmd {
 }
 
 func (m PaneBrowserModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
-	var cmd tea.Cmd
+	var cmds []tea.Cmd
 	switch msg := msg.(type) {
 	case common.ReloadMsg:
 		return NewPaneBrowserModel(m.connector, m.logger), nil
@@ -77,6 +77,8 @@ func (m PaneBrowserModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m.deleteSelected()
 	case common.OpenMsg:
 		return m.openSelected()
+	case common.UpDownMsg:
+		return m.selectUpDown()
 	case tea.KeyMsg:
 		if m.state == common.Deleting {
 			return m.confirmDeletion(msg)
@@ -87,6 +89,8 @@ func (m PaneBrowserModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "q", "esc", "ctrl+c":
 			m.state = common.Quitting
 			return m, common.Quit
+		case "j", "k", "up", "down":
+			cmds = append(cmds, common.UpDown)
 		case "d":
 			return m.delete()
 		case "e":
@@ -97,8 +101,10 @@ func (m PaneBrowserModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, func() tea.Msg { return common.ShowFullHelpMsg{Component: common.PaneBrowser} }
 		}
 	}
+	var cmd tea.Cmd
 	m.list, cmd = m.list.Update(msg)
-	return m, cmd
+	cmds = append(cmds, cmd)
+	return m, tea.Batch(cmds...)
 }
 
 func (m PaneBrowserModel) View() string {
@@ -114,7 +120,7 @@ func (m PaneBrowserModel) View() string {
 	)
 }
 
-// edit() Open the current pane into the editor
+// edit Open the current pane into the editor
 func (m PaneBrowserModel) edit() (tea.Model, tea.Cmd) {
 	i, ok := m.list.SelectedItem().(paneItem)
 	if ok {
@@ -175,4 +181,12 @@ func (m PaneBrowserModel) deleteSelected() (PaneBrowserModel, tea.Cmd) {
 		return m, func() tea.Msg { return common.OutputMsg{Err: e, Severity: common.Error} }
 	}
 	return m, func() tea.Msg { return common.ReloadMsg{} }
+}
+
+func (m PaneBrowserModel) selectUpDown() (tea.Model, tea.Cmd) {
+	i, ok := m.list.SelectedItem().(paneItem)
+	if ok {
+		m.selected = i.title
+	}
+	return m, func() tea.Msg { return NewPFocusMsg{Pane: m.data[m.selected]} }
 }

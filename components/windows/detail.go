@@ -49,6 +49,7 @@ func (m WindowDetailModel) Init() tea.Cmd { return nil }
 
 func (m WindowDetailModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) { return m, nil }
 
+// TODO: should be a common function
 func renderTreeItem(name string, pwd string, level int, isLast bool) string {
 	var treeSymbol string
 	if isLast {

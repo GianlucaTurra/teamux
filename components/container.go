@@ -78,6 +78,9 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case windows.NewWFocus:
 		m.detailModel = windows.NewWindowDetailModel(m.connector, m.logger, &msg.Window)
 		return m, nil
+	case panes.NewPFocusMsg:
+		m.detailModel = panes.NewPaneDetailModel(m.connector, m.logger, &msg.Pane)
+		return m, nil
 	case tea.KeyMsg:
 		if msg.String() == "]" {
 			return m, common.NextTab
@@ -103,8 +106,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.detailModel = windows.NewWindowDetailModel(m.connector, m.logger, nil)
 		case common.PaneContainer:
 			m.mainModel = panes.NewPaneContainerModel(m.connector, m.logger)
-			// TODO: add missing detail model
-			// m.detailModel = panes.NewPaneDetailModel(m.db, m.logger, nil
+			m.detailModel = panes.NewPaneDetailModel(m.connector, m.logger, nil)
 		}
 	}
 	var cmds []tea.Cmd
