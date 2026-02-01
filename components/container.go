@@ -40,7 +40,7 @@ func InitialModel(connector database.Connector, logger common.Logger) Model {
 		mainModel:   sessions.NewSessionContainerModel(connector, logger),
 		detailModel: sessions.NewSessionTreeModel(connector, logger, nil),
 		messageBox:  NewMessageBoxModel(),
-		helpModel:   NewHelpModel(),
+		helpModel:   NewHelpModel(sessions.NewSessionBrowserHelpModel()),
 		focusedTab:  0,
 		newPrefix:   false,
 		quitting:    false,
@@ -54,6 +54,7 @@ func (m Model) Init() tea.Cmd {
 }
 
 func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+	var cmds []tea.Cmd
 	switch msg := msg.(type) {
 	case common.QuitMsg:
 		m.quitting = true
@@ -72,6 +73,8 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.focusedTab -= 1
 		}
 		return m, func() tea.Msg { return common.ClearHelp(common.FocusedTab(m.focusedTab)) }
+	case common.BrowseMsg:
+		cmds = append(cmds, func() tea.Msg { return common.ClearHelp(common.FocusedTab(m.focusedTab)) })
 	case sessions.NewSFocus:
 		m.detailModel = sessions.NewSessionTreeModel(m.connector, m.logger, &msg.Session)
 		return m, nil
@@ -101,15 +104,14 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case common.SessionsContainer:
 			m.mainModel = sessions.NewSessionContainerModel(m.connector, m.logger)
 			m.detailModel = sessions.NewSessionTreeModel(m.connector, m.logger, nil)
-		case common.WindwowBrowser:
+		case common.WindwowsContainer:
 			m.mainModel = windows.NewWindowContainerModel(m.connector, m.logger)
 			m.detailModel = windows.NewWindowDetailModel(m.connector, m.logger, nil)
-		case common.PaneContainer:
+		case common.PanesContainer:
 			m.mainModel = panes.NewPaneContainerModel(m.connector, m.logger)
 			m.detailModel = panes.NewPaneDetailModel(m.connector, m.logger, nil)
 		}
 	}
-	var cmds []tea.Cmd
 	newMain, cmd := m.mainModel.Update(msg)
 	m.mainModel = newMain
 	cmds = append(cmds, cmd)
