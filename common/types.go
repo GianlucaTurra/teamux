@@ -31,6 +31,6 @@ type FocusedTab int
 
 const (
 	SessionsContainer = iota
-	WindwowBrowser
-	PaneContainer
+	WindwowsContainer
+	PanesContainer
 )
