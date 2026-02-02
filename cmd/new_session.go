@@ -1,21 +1,36 @@
 package cmd
 
 import (
-	"fmt"
+	"log"
 
+	"github.com/GianlucaTurra/teamux/components/sessions"
+	"github.com/GianlucaTurra/teamux/database"
 	"github.com/spf13/cobra"
 )
 
-var NewSessionCmd = &cobra.Command{
+var newSessionCmd = &cobra.Command{
 	Use:   "news [name]",
 	Short: "Start and attach a new teamux session",
-	Args:  cobra.MaximumNArgs(1),
+	Long: `Start a new tmux session and attach the tmux server to it. The session must be 
+	present in the local teamux DB`,
+	Args: cobra.MaximumNArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
-		name := "ASD"
+		var name string
+		detached, _ := cmd.Flags().GetBool("detached")
 		if len(args) == 1 {
 			name = args[0]
 		}
-		fmt.Printf("HI %s", name)
-		return nil
+		db, err := database.GetProdDB()
+		if err != nil {
+			log.Fatal(err)
+		}
+		session := sessions.Session{Name: name}
+		db.Preload("Windows").Preload("Windows.Panes").First(&session)
+		return session.Open(detached)
 	},
+}
+
+func init() {
+	newSessionCmd.Flags().BoolP("detached", "d", true, "Open the session as detached")
+	rootCmd.AddCommand(newSessionCmd)
 }

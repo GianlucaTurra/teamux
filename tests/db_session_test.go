@@ -33,7 +33,7 @@ func TestOpenSession(t *testing.T) {
 	if err != nil {
 		t.Errorf("Failed to read session: %v", err)
 	}
-	if err := s.Open(); err != nil {
+	if err := s.Open(true); err != nil {
 		t.Errorf("Failed to open session: %v", err)
 	}
 	// Compare new number of open sessions

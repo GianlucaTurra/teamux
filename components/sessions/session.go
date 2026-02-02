@@ -51,8 +51,8 @@ func (s Session) Delete(connector database.Connector) (int, error) {
 // session.
 // Opening the session this way creates an empty window at first, to avoid
 // confusion it is deleted and following Windows are reordered
-func (s Session) Open() error {
-	if err := tmux.NewSession(s.Name, s.WorkingDirectory); err != nil {
+func (s Session) Open(detached bool) error {
+	if err := tmux.NewSession(s.Name, s.WorkingDirectory, detached); err != nil {
 		return err
 	}
 	// TODO: is it better to stop the process at the first error or to load

@@ -209,7 +209,7 @@ func (m SessionBrowserModel) switchToSelected() (SessionBrowserModel, tea.Cmd) {
 			return m, func() tea.Msg { return common.OutputMsg{Err: err, Severity: common.Error} }
 		}
 	}
-	if err := m.sessions[m.selected].Open(); err != nil {
+	if err := m.sessions[m.selected].Open(true); err != nil {
 		// TODO: should be a common func to handle error types
 		switch err.(type) {
 		case tmux.Warning:
@@ -237,7 +237,7 @@ func openSelected(logger common.Logger, s Session) tea.Cmd {
 			return common.OutputMsg{Err: errors.New(msg), Severity: common.Info}
 		}
 	}
-	if err := s.Open(); err != nil {
+	if err := s.Open(true); err != nil {
 		// TODO: should be a common func to handle error types
 		switch err.(type) {
 		case tmux.Warning:

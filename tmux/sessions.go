@@ -12,9 +12,16 @@ import (
 
 type NumberOfSessionsMsg struct{ Number string }
 
-func NewSession(name string, workingDirectory string) error {
+func NewSession(name string, workingDirectory string, detached bool) error {
 	baseCmd := fmt.Sprintf("tmux new-session -d -s \"%s\"", name)
-	return commandWithWorkDir(workingDirectory, baseCmd, "")
+	err := commandWithWorkDir(workingDirectory, baseCmd, "")
+	if err != nil {
+		return err
+	}
+	if !detached {
+		return SwitchToSession(name)
+	}
+	return nil
 }
 
 func HasSession(name string) bool {
