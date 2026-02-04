@@ -30,21 +30,12 @@ func GetProdDB() (*gorm.DB, error) {
 	return getDB(prodDBPath)
 }
 
-// FIXME: this causes cycle imports. Do it in the test package
 func GetTestDB() *Connector {
-	return nil
-	// db, err := getDB(TestDB)
-	// if err != nil {
-	// 	return nil
-	// }
-	// if err := db.AutoMigrate(
-	// 	&sessions.Session{},
-	// 	&windows.Window{},
-	// 	&panes.Pane{},
-	// ); err != nil {
-	// 	return nil
-	// }
-	// return &db.Connector{DB: db, Ctx: context.Background()}
+	db, err := getDB(TestDB)
+	if err != nil {
+		return nil
+	}
+	return &Connector{DB: db, Ctx: context.Background()}
 }
 
 func getDB(name string) (*gorm.DB, error) {

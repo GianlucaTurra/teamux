@@ -77,7 +77,7 @@ func TestSplitWindowWithTargetWindow(t *testing.T) {
 				t.Errorf("Error opening test window: %v", err)
 			}
 		} else {
-			if err := tmux.NewSession("Test", ""); err != nil {
+			if err := tmux.NewSession("Test", "", true); err != nil {
 				t.Errorf("Error opening test session: %v", err)
 			}
 			target := "Test"

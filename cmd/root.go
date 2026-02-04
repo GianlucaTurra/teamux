@@ -10,12 +10,10 @@ import (
 
 	"github.com/GianlucaTurra/teamux/common"
 	"github.com/GianlucaTurra/teamux/components"
-	"github.com/GianlucaTurra/teamux/components/panes"
-	"github.com/GianlucaTurra/teamux/components/sessions"
-	"github.com/GianlucaTurra/teamux/components/windows"
 	"github.com/GianlucaTurra/teamux/database"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/spf13/cobra"
+	"gorm.io/gorm"
 )
 
 const LogFile = "/tmp/teamux.log"
@@ -25,7 +23,13 @@ var rootCmd = &cobra.Command{
 	Short: "Easy tmux sessions",
 	Long: `Teamux is a TUI application to define tmux sessions, windows and 
 	panes and manage them.`,
-	Run: func(cmd *cobra.Command, args []string) { tui() },
+	Run: func(cmd *cobra.Command, args []string) {
+		db, err := database.GetProdDB()
+		if err != nil {
+			log.Fatal(err)
+		}
+		tui(db)
+	},
 }
 
 func Execute() {
@@ -40,7 +44,7 @@ func init() {
 
 // tui open the TUI for teamux, creating the temporary log file and ensuring
 // db migrations are applied.
-func tui() {
+func tui(db *gorm.DB) {
 	setup()
 	logfile, err := os.OpenFile(LogFile, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0o644)
 	if err != nil {
@@ -52,17 +56,6 @@ func tui() {
 		Warninglogger: log.New(logfile, "WARNING: ", log.Ldate|log.Ltime|log.Lshortfile),
 		Errorlogger:   log.New(logfile, "ERROR: ", log.Ldate|log.Ltime|log.Lshortfile),
 		Fatallogger:   log.New(logfile, "FATAL: ", log.Ldate|log.Ltime|log.Lshortfile),
-	}
-	db, err := database.GetProdDB()
-	if err != nil {
-		log.Fatal(err)
-	}
-	if err := db.AutoMigrate(
-		&sessions.Session{},
-		&windows.Window{},
-		&panes.Pane{},
-	); err != nil {
-		teamuxLogger.Errorlogger.Printf("Error migrating tables: %v", err)
 	}
 	p := tea.NewProgram(components.InitialModel(database.Connector{DB: db, Ctx: context.Background()}, teamuxLogger))
 	if _, err := p.Run(); err != nil {
