@@ -150,7 +150,8 @@ func (m SessionBrowserModel) addWindowsToSession() (tea.Model, tea.Cmd) {
 		session := m.sessions[i.title]
 		return m, func() tea.Msg { return AssociateWindowsMsg{Session: session} }
 	} else {
-		return m, nil
+		err := errors.New("no available windows")
+		return m, func() tea.Msg { return common.OutputMsg{Err: err, Severity: common.Info} }
 	}
 }
 

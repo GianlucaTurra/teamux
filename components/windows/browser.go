@@ -3,6 +3,7 @@
 package windows
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/GianlucaTurra/teamux/common"
@@ -140,7 +141,8 @@ func (m WindowBrowserModel) addPanesToSelected() (tea.Model, tea.Cmd) {
 		window := m.data[i.title]
 		return m, func() tea.Msg { return AssociatePanesMsg{Window: window} }
 	}
-	return nil, nil
+	err := errors.New("no available panes")
+	return m, func() tea.Msg { return common.OutputMsg{Err: err, Severity: common.Info} }
 }
 
 func (m WindowBrowserModel) editSelected() (tea.Model, tea.Cmd) {
