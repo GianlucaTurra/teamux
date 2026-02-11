@@ -38,10 +38,13 @@ func (m paneDetailModel) View() string {
 	items = append(items, fmt.Sprintf("Name: %s", m.pane.Name))
 	items = append(items, fmt.Sprintf("PWD: %s", m.pane.WorkingDirectory))
 	var direction string
-	if m.pane.IsHorizontal() {
+	switch m.pane.SplitDirection {
+	case Horizontal:
 		direction = "Horizontal"
-	} else {
+	case Vertical:
 		direction = "Vertical"
+	default:
+		direction = "Invalid direction"
 	}
 	items = append(items, fmt.Sprintf("Split direction: %s", direction))
 	items = append(items, fmt.Sprintf("Split ratio: %d", m.pane.SplitRatio))

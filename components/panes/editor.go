@@ -73,11 +73,7 @@ func NewPaneEditorModel(connector database.Connector, logger common.Logger, pane
 		m.mode = editing
 		m.inputs[0].SetValue(pane.Name)
 		m.inputs[1].SetValue(pane.WorkingDirectory)
-		if pane.IsHorizontal() {
-			m.inputs[2].SetValue("h")
-		} else {
-			m.inputs[2].SetValue("v")
-		}
+		m.inputs[2].SetValue(pane.SplitDirection)
 		m.inputs[3].SetValue(strconv.Itoa(pane.SplitRatio))
 		m.inputs[4].SetValue(pane.Target)
 		m.inputs[5].SetValue(pane.ShellCmd)
@@ -187,15 +183,7 @@ func (m *PaneEditorModel) createPane() tea.Cmd {
 func (m *PaneEditorModel) editPane() tea.Cmd {
 	m.pane.Name = m.inputs[0].Value()
 	m.pane.WorkingDirectory = m.inputs[1].Value()
-	switch strings.ToLower(m.inputs[2].Value()) {
-	case "h":
-		m.pane.SetHorizontal()
-	case "v":
-		m.pane.SetVertical()
-	default:
-		err := fmt.Errorf("invalid direction: %s", m.inputs[2].Value())
-		return func() tea.Msg { return common.OutputMsg{Err: err, Severity: common.Error} }
-	}
+	m.pane.SplitDirection = m.inputs[2].Value()
 	ratio, err := strconv.Atoi(m.inputs[3].Value())
 	if err != nil {
 		m.logger.Errorlogger.Printf("Error converting ratio to int: %v", err)

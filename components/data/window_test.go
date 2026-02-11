@@ -9,7 +9,7 @@ import (
 
 func TestWindow_openAndCascade(t *testing.T) {
 	testSession := "Test"
-	if err := tmux.NewSession(testSession, "~/"); err != nil {
+	if err := tmux.NewSession(testSession, "~/", true); err != nil {
 		t.Errorf("unable to open test sessions: %v", err)
 	}
 	tests := []struct {

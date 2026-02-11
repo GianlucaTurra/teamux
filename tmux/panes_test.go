@@ -13,7 +13,7 @@ func TestSplitWindowWithTargetWindow(t *testing.T) {
 		target           string
 		splitRatio       int
 		workingDirectory string
-		horizontal       bool
+		splitDirection   string
 		wantErr          bool
 		currentSession   bool
 	}{
@@ -22,7 +22,7 @@ func TestSplitWindowWithTargetWindow(t *testing.T) {
 			target:           "test",
 			splitRatio:       25,
 			workingDirectory: "",
-			horizontal:       true,
+			splitDirection:   "h",
 			wantErr:          false,
 			currentSession:   true,
 		},
@@ -31,7 +31,7 @@ func TestSplitWindowWithTargetWindow(t *testing.T) {
 			target:           "",
 			splitRatio:       25,
 			workingDirectory: "",
-			horizontal:       true,
+			splitDirection:   "h",
 			wantErr:          true,
 			currentSession:   true,
 		},
@@ -40,7 +40,7 @@ func TestSplitWindowWithTargetWindow(t *testing.T) {
 			target:           "test",
 			splitRatio:       25,
 			workingDirectory: "~/go/",
-			horizontal:       true,
+			splitDirection:   "h",
 			wantErr:          false,
 			currentSession:   true,
 		},
@@ -48,7 +48,7 @@ func TestSplitWindowWithTargetWindow(t *testing.T) {
 			name:             "Directory with target and no splitRatio",
 			target:           "test",
 			workingDirectory: "~/go/",
-			horizontal:       true,
+			splitDirection:   "h",
 			wantErr:          true,
 			currentSession:   true,
 		},
@@ -56,7 +56,7 @@ func TestSplitWindowWithTargetWindow(t *testing.T) {
 			name:             "Detached session",
 			target:           "Test:test",
 			workingDirectory: "",
-			horizontal:       true,
+			splitDirection:   "h",
 			splitRatio:       25,
 			wantErr:          false,
 			currentSession:   false,
@@ -65,7 +65,7 @@ func TestSplitWindowWithTargetWindow(t *testing.T) {
 			name:             "Non existing target",
 			target:           "i do not exist",
 			workingDirectory: "",
-			horizontal:       true,
+			splitDirection:   "h",
 			splitRatio:       25,
 			wantErr:          true,
 			currentSession:   true,
@@ -86,7 +86,7 @@ func TestSplitWindowWithTargetWindow(t *testing.T) {
 			}
 		}
 		t.Run(tt.name, func(t *testing.T) {
-			gotErr := tmux.SplitWindowWithTargetWindow(tt.target, tt.splitRatio, tt.workingDirectory, tt.horizontal, "")
+			gotErr := tmux.SplitWindowWithTargetWindow(tt.target, tt.splitRatio, tt.workingDirectory, tt.splitDirection, "")
 			if gotErr != nil {
 				if !tt.wantErr {
 					t.Errorf("SplitWindowWithTarget() failed: %v", gotErr)

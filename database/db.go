@@ -1,3 +1,5 @@
+// Package database contains utility functions, structs and consts to interact with the
+// db
 package database
 
 import (
@@ -39,5 +41,8 @@ func GetTestDB() *Connector {
 }
 
 func getDB(name string) (*gorm.DB, error) {
-	return gorm.Open(sqlite.Open(name), &gorm.Config{Logger: logger.Default.LogMode(logger.Silent)})
+	return gorm.Open(
+		sqlite.Open(name),
+		&gorm.Config{Logger: logger.Default.LogMode(logger.Silent)},
+	)
 }

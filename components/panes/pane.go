@@ -6,20 +6,19 @@ import (
 	"gorm.io/gorm"
 )
 
-// TODO: handle both target window and target pane
 type Pane struct {
 	gorm.Model
 	Name             string
 	WorkingDirectory string
-	splitDirection   int
+	SplitDirection   string `gorm:"default:v;"`
 	SplitRatio       int
 	Target           string
 	ShellCmd         string
 }
 
 const (
-	vertical = iota
-	horizontal
+	Vertical   = "v"
+	Horizontal = "h"
 )
 
 func ReadAllPanes(db *gorm.DB) ([]Pane, error) {
@@ -36,7 +35,7 @@ func CreateVerticalPane(
 	target string,
 	shellCmd string,
 ) (int64, error) {
-	return createPane(name, workingDirectory, vertical, splitRatio, connector, target, shellCmd)
+	return createPane(name, workingDirectory, Vertical, splitRatio, connector, target, shellCmd)
 }
 
 func CreateHorizontalPane(
@@ -47,13 +46,13 @@ func CreateHorizontalPane(
 	target string,
 	shellCmd string,
 ) (int64, error) {
-	return createPane(name, workingDirectory, horizontal, splitRatio, connector, target, shellCmd)
+	return createPane(name, workingDirectory, Horizontal, splitRatio, connector, target, shellCmd)
 }
 
 func createPane(
 	name string,
 	workingDirectory string,
-	splitDirection int,
+	splitDirection string,
 	splitRatio int,
 	connector database.Connector,
 	target string,
@@ -62,7 +61,7 @@ func createPane(
 	pane := Pane{
 		Name:             name,
 		WorkingDirectory: workingDirectory,
-		splitDirection:   splitDirection,
+		SplitDirection:   splitDirection,
 		SplitRatio:       splitRatio,
 		Target:           target,
 		ShellCmd:         shellCmd,
@@ -80,20 +79,10 @@ func (p Pane) Delete(connector database.Connector) (int, error) {
 	return gorm.G[Pane](connector.DB).Where("id = ?", p.ID).Delete(connector.Ctx)
 }
 
-func (p Pane) IsVertical() bool { return p.splitDirection == vertical }
-
-func (p Pane) IsHorizontal() bool { return p.splitDirection == horizontal }
-
-func (p *Pane) SetHorizontal() { p.splitDirection = horizontal }
-
-func (p *Pane) SetVertical() { p.splitDirection = vertical }
-
-// TODO: remove these methods
-
 func (p Pane) Open() error {
-	return tmux.SplitWindowWithTargetWindow(p.Target, p.SplitRatio, p.WorkingDirectory, p.IsHorizontal(), p.ShellCmd)
+	return tmux.SplitWindow(p.SplitRatio, p.WorkingDirectory, p.SplitDirection, p.ShellCmd)
 }
 
 func (p Pane) OpenWithTarget(target string) error {
-	return tmux.SplitWindowWithTargetWindow(target, p.SplitRatio, p.WorkingDirectory, p.IsHorizontal(), p.ShellCmd)
+	return tmux.SplitWindowWithTargetWindow(target, p.SplitRatio, p.WorkingDirectory, p.SplitDirection, p.ShellCmd)
 }

@@ -10,6 +10,9 @@ import (
 
 	"github.com/GianlucaTurra/teamux/common"
 	"github.com/GianlucaTurra/teamux/components"
+	"github.com/GianlucaTurra/teamux/components/panes"
+	"github.com/GianlucaTurra/teamux/components/sessions"
+	"github.com/GianlucaTurra/teamux/components/windows"
 	"github.com/GianlucaTurra/teamux/database"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/spf13/cobra"
@@ -26,6 +29,13 @@ var rootCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		db, err := database.GetProdDB()
 		if err != nil {
+			log.Fatal(err)
+		}
+		if err = db.AutoMigrate(
+			&sessions.Session{},
+			&windows.Window{},
+			&panes.Pane{},
+		); err != nil {
 			log.Fatal(err)
 		}
 		tui(db)
