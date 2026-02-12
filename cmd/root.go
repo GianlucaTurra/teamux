@@ -19,8 +19,6 @@ import (
 	"gorm.io/gorm"
 )
 
-const LogFile = "/tmp/teamux.log"
-
 var rootCmd = &cobra.Command{
 	Use:   "",
 	Short: "Easy tmux sessions",
@@ -56,17 +54,7 @@ func init() {
 // db migrations are applied.
 func tui(db *gorm.DB) {
 	setup()
-	logfile, err := os.OpenFile(LogFile, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0o644)
-	if err != nil {
-		log.Fatalln("Unable to setup syslog:", err.Error())
-	}
-	defer logfile.Close()
-	teamuxLogger := common.Logger{
-		Infologger:    log.New(logfile, "INFO: ", log.Ldate|log.Ltime|log.Lshortfile),
-		Warninglogger: log.New(logfile, "WARNING: ", log.Ldate|log.Ltime|log.Lshortfile),
-		Errorlogger:   log.New(logfile, "ERROR: ", log.Ldate|log.Ltime|log.Lshortfile),
-		Fatallogger:   log.New(logfile, "FATAL: ", log.Ldate|log.Ltime|log.Lshortfile),
-	}
+	teamuxLogger := common.GetLogger()
 	p := tea.NewProgram(components.InitialModel(database.Connector{DB: db, Ctx: context.Background()}, teamuxLogger))
 	if _, err := p.Run(); err != nil {
 		fmt.Printf("ERROR: %v", err)
