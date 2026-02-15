@@ -82,7 +82,6 @@ func commandWithWorkDir(workingDirectory string, cmd string, extra string) error
 	if strings.TrimSpace(extra) != "" {
 		cmd += fmt.Sprintf(" \"%s\"", extra)
 	}
-	common.GetLogger().Info(cmd)
 	if err := executeCommand(cmd); err != nil {
 		return err
 	} else {
