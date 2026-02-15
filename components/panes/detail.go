@@ -13,18 +13,17 @@ import (
 type paneDetailModel struct {
 	pane      Pane
 	connector database.Connector
-	logger    common.Logger
 }
 
-func NewPaneDetailModel(connector database.Connector, logger common.Logger, pane *Pane) tea.Model {
+func NewPaneDetailModel(connector database.Connector, pane *Pane) tea.Model {
 	if pane == nil {
 		firstPane, err := gorm.G[Pane](connector.DB).First(connector.Ctx)
 		if err != nil {
-			logger.Errorlogger.Printf("Error loading first pane: %v", err)
+			common.GetLogger().Error(fmt.Sprintf("Error loading first pane: %v", err))
 		}
 		pane = &firstPane
 	}
-	return paneDetailModel{*pane, connector, logger}
+	return paneDetailModel{*pane, connector}
 }
 
 func (m paneDetailModel) Init() tea.Cmd { return nil }

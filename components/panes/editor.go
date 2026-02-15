@@ -23,14 +23,12 @@ type PaneEditorModel struct {
 	mode         int
 	pane         *Pane
 	connector    database.Connector
-	logger       common.Logger
 }
 
-func NewPaneEditorModel(connector database.Connector, logger common.Logger, pane *Pane) PaneEditorModel {
+func NewPaneEditorModel(connector database.Connector, pane *Pane) PaneEditorModel {
 	m := PaneEditorModel{
 		inputs:    make([]textinput.Model, 6),
 		connector: connector,
-		logger:    logger,
 		mode:      creating,
 	}
 	var t textinput.Model
@@ -93,7 +91,7 @@ func (m PaneEditorModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "esc":
-			return NewPaneEditorModel(m.connector, m.logger, nil), common.Browse
+			return NewPaneEditorModel(m.connector, nil), common.Browse
 		case "?":
 			return m, func() tea.Msg { return common.ShowFullHelpMsg{Component: common.PaneEditor} }
 		case "ctrl+c":
@@ -147,7 +145,7 @@ func (m *PaneEditorModel) updateInputs(msg tea.Msg) tea.Cmd {
 func (m *PaneEditorModel) createPane() tea.Cmd {
 	ratio, err := strconv.Atoi(m.inputs[3].Value())
 	if err != nil {
-		m.logger.Errorlogger.Printf("Error converting ratio to int: %v", err)
+		common.GetLogger().Error(fmt.Sprintf("Error converting ratio to int: %v", err))
 	}
 	switch strings.ToLower(m.inputs[2].Value()) {
 	case "h":
@@ -173,7 +171,7 @@ func (m *PaneEditorModel) createPane() tea.Cmd {
 		return func() tea.Msg { return common.OutputMsg{Err: err, Severity: common.Error} }
 	}
 	if err != nil {
-		m.logger.Errorlogger.Printf("Error saving pane: %v", err)
+		common.GetLogger().Error(fmt.Sprintf("Error saving pane: %v", err))
 		return func() tea.Msg { return common.OutputMsg{Err: err, Severity: common.Error} }
 	}
 	return func() tea.Msg { return PanesEditedMsg{} }
@@ -186,13 +184,13 @@ func (m *PaneEditorModel) editPane() tea.Cmd {
 	m.pane.SplitDirection = m.inputs[2].Value()
 	ratio, err := strconv.Atoi(m.inputs[3].Value())
 	if err != nil {
-		m.logger.Errorlogger.Printf("Error converting ratio to int: %v", err)
+		common.GetLogger().Error(fmt.Sprintf("Error converting ratio to int: %v", err))
 		return func() tea.Msg { return common.OutputMsg{Err: err, Severity: common.Error} }
 	}
 	m.pane.SplitRatio = ratio
 	m.pane.Target = m.inputs[4].Value()
 	if _, err := m.pane.Save(m.connector); err != nil {
-		m.logger.Errorlogger.Printf("Error saving pane: %v", err)
+		common.GetLogger().Error(fmt.Sprintf("Error saving pane: %v", err))
 		return func() tea.Msg { return common.OutputMsg{Err: err, Severity: common.Error} }
 	}
 	return func() tea.Msg { return PanesEditedMsg{} }

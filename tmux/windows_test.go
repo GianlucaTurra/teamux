@@ -96,7 +96,7 @@ func TestNewWindowWithTarget(t *testing.T) {
 			wantErr:          true,
 		},
 	}
-	if err := tmux.NewSession("Test", ""); err != nil {
+	if err := tmux.NewSession("Test", "", true); err != nil {
 		t.Errorf("Error opening test session: %v", err)
 	}
 	for _, tt := range tests {

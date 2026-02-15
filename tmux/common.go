@@ -7,6 +7,8 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
+
+	"github.com/GianlucaTurra/teamux/common"
 )
 
 // TODO: move errors to a proper file/package
@@ -32,6 +34,7 @@ func (e Warning) Error() string {
 // executeCommand Runs the given command and returns the stdErr or the err if
 // one is returned from the command execution
 func executeCommand(command string) error {
+	common.GetLogger().Info(command)
 	cmd := exec.Command("sh", "-c", command)
 	if output, err := cmd.CombinedOutput(); err != nil {
 		if strings.TrimSpace(string(output)) == "" {
@@ -79,6 +82,7 @@ func commandWithWorkDir(workingDirectory string, cmd string, extra string) error
 	if strings.TrimSpace(extra) != "" {
 		cmd += fmt.Sprintf(" \"%s\"", extra)
 	}
+	common.GetLogger().Info(cmd)
 	if err := executeCommand(cmd); err != nil {
 		return err
 	} else {

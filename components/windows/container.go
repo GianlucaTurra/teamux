@@ -9,14 +9,12 @@ import (
 type WindowContainerModel struct {
 	model     tea.Model
 	connector database.Connector
-	logger    common.Logger
 }
 
-func NewWindowContainerModel(connector database.Connector, logger common.Logger) WindowContainerModel {
+func NewWindowContainerModel(connector database.Connector) WindowContainerModel {
 	return WindowContainerModel{
-		model:     NewWindowBrowserModel(connector, logger),
+		model:     NewWindowBrowserModel(connector),
 		connector: connector,
-		logger:    logger,
 	}
 }
 
@@ -27,18 +25,18 @@ func (m WindowContainerModel) Init() tea.Cmd {
 func (m WindowContainerModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case common.NewWindowMsg:
-		m.model = NewWindowEditorModel(m.connector, m.logger, nil)
+		m.model = NewWindowEditorModel(m.connector, nil)
 		return m, nil
 	case EditWMsg:
-		m.model = NewWindowEditorModel(m.connector, m.logger, &msg.Window)
+		m.model = NewWindowEditorModel(m.connector, &msg.Window)
 	case WindowCreatedMsg:
-		m.model = NewWindowBrowserModel(m.connector, m.logger)
+		m.model = NewWindowBrowserModel(m.connector)
 		return m, common.Reaload
 	case common.BrowseMsg:
-		m.model = NewWindowBrowserModel(m.connector, m.logger)
+		m.model = NewWindowBrowserModel(m.connector)
 		return m, nil
 	case AssociatePanesMsg:
-		m.model = NewWindowPanesAssociationModel(m.connector, m.logger, msg.Window)
+		m.model = NewWindowPanesAssociationModel(m.connector, msg.Window)
 		return m, common.LoadData
 	}
 	newModel, cmd := m.model.Update(msg)

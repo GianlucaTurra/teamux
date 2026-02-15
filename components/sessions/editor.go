@@ -27,14 +27,12 @@ type SessionEditorModel struct {
 	session   *Session
 	error     error
 	connector database.Connector
-	logger    common.Logger
 }
 
-func NewSessionEditorModel(connector database.Connector, logger common.Logger, session *Session) SessionEditorModel {
+func NewSessionEditorModel(connector database.Connector, session *Session) SessionEditorModel {
 	m := SessionEditorModel{
 		inputs:    make([]textinput.Model, 2),
 		connector: connector,
-		logger:    logger,
 		mode:      creating,
 		session:   session,
 	}
@@ -78,7 +76,7 @@ func (m SessionEditorModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "esc":
-			return NewSessionEditorModel(m.connector, m.logger, nil), common.Browse
+			return NewSessionEditorModel(m.connector, nil), common.Browse
 		case "ctrl+c":
 			m.mode = quitting
 			return m, common.Quit
@@ -118,7 +116,7 @@ func (m *SessionEditorModel) createSession() tea.Cmd {
 	_, err := CreateSession(m.inputs[0].Value(), m.inputs[1].Value(), m.connector)
 	if err != nil {
 		m.error = err
-		m.logger.Errorlogger.Printf("Error saving session: %v", err)
+		common.GetLogger().Error(fmt.Sprintf("Error saving session: %v", err))
 		return func() tea.Msg { return common.InputErrMsg{Err: err} }
 	}
 	m.error = nil
@@ -131,11 +129,11 @@ func (m *SessionEditorModel) editSession() tea.Cmd {
 	edited, err := m.session.Save(m.connector)
 	if err != nil {
 		m.error = err
-		m.logger.Errorlogger.Printf("Error saving session: %v", err)
+		common.GetLogger().Error(fmt.Sprintf("Error saving session: %v", err))
 		return func() tea.Msg { return common.InputErrMsg{Err: err} }
 	}
 	if edited == 0 {
-		m.logger.Warninglogger.Printf("No rows updated for: %s", m.session.Name)
+		common.GetLogger().Warning(fmt.Sprintf("No rows updated for: %s", m.session.Name))
 		warn := tmux.NewWarning("no rows updated")
 		return func() tea.Msg { return common.OutputMsg{Err: warn, Severity: common.Warning} }
 	}

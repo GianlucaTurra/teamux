@@ -13,18 +13,17 @@ import (
 type SessionDetailModel struct {
 	session   Session
 	connector database.Connector
-	logger    common.Logger
 }
 
-func NewSessionTreeModel(connector database.Connector, logger common.Logger, session *Session) SessionDetailModel {
+func NewSessionTreeModel(connector database.Connector, session *Session) SessionDetailModel {
 	if session == nil {
 		firstSession, err := gorm.G[Session](connector.DB).First(connector.Ctx)
 		if err != nil {
-			logger.Errorlogger.Printf("Error loading first session, falling back to default one.\n %v", err)
+			common.GetLogger().Error(fmt.Sprintf("Error loading first session: %v", err))
 		}
 		session = &firstSession
 	}
-	return SessionDetailModel{*session, connector, logger}
+	return SessionDetailModel{*session, connector}
 }
 
 func (m SessionDetailModel) View() string {

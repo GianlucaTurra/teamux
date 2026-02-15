@@ -9,14 +9,12 @@ import (
 type PaneContainerModel struct {
 	model     tea.Model
 	connector database.Connector
-	logger    common.Logger
 }
 
-func NewPaneContainerModel(connector database.Connector, logger common.Logger) PaneContainerModel {
+func NewPaneContainerModel(connector database.Connector) PaneContainerModel {
 	return PaneContainerModel{
-		model:     NewPaneBrowserModel(connector, logger),
+		model:     NewPaneBrowserModel(connector),
 		connector: connector,
-		logger:    logger,
 	}
 }
 
@@ -27,12 +25,12 @@ func (m PaneContainerModel) Init() tea.Cmd {
 func (m PaneContainerModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case common.NewPaneMsg:
-		m.model = NewPaneEditorModel(m.connector, m.logger, nil)
+		m.model = NewPaneEditorModel(m.connector, nil)
 		return m, nil
 	case EditPMsg:
-		m.model = NewPaneEditorModel(m.connector, m.logger, &msg.Pane)
+		m.model = NewPaneEditorModel(m.connector, &msg.Pane)
 	case PaneCreatedMsg, PanesEditedMsg, common.BrowseMsg:
-		m.model = NewPaneBrowserModel(m.connector, m.logger)
+		m.model = NewPaneBrowserModel(m.connector)
 		return m, common.Reaload
 	}
 	newModel, cmd := m.model.Update(msg)

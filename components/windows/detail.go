@@ -13,14 +13,13 @@ import (
 type WindowDetailModel struct {
 	window    Window
 	connector database.Connector
-	logger    common.Logger
 }
 
-func NewWindowDetailModel(connector database.Connector, logger common.Logger, window *Window) WindowDetailModel {
+func NewWindowDetailModel(connector database.Connector, window *Window) WindowDetailModel {
 	if window == nil {
 		firstWindow, err := gorm.G[Window](connector.DB).First(connector.Ctx)
 		if err != nil {
-			logger.Errorlogger.Printf("Error loading first window, falling back to default one.\n %v", err)
+			common.GetLogger().Error(fmt.Sprintf("Error loading first window, falling back to default one.\n %v", err))
 		}
 		window = &firstWindow
 	}
@@ -28,7 +27,7 @@ func NewWindowDetailModel(connector database.Connector, logger common.Logger, wi
 	// if err := window.GetAllPanes(); err != nil {
 	// 	logger.Errorlogger.Printf("Error loading panes for first window.\n %v", err)
 	// }
-	return WindowDetailModel{*window, connector, logger}
+	return WindowDetailModel{*window, connector}
 }
 
 func (m WindowDetailModel) View() string {

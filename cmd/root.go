@@ -1,4 +1,4 @@
-// cmd contains all the CLI commands available in teamux.
+// Package cmd contains all the CLI commands available in teamux.
 // Commands are defined using cobra cli
 package cmd
 
@@ -8,7 +8,6 @@ import (
 	"log"
 	"os"
 
-	"github.com/GianlucaTurra/teamux/common"
 	"github.com/GianlucaTurra/teamux/components"
 	"github.com/GianlucaTurra/teamux/components/panes"
 	"github.com/GianlucaTurra/teamux/components/sessions"
@@ -54,8 +53,7 @@ func init() {
 // db migrations are applied.
 func tui(db *gorm.DB) {
 	setup()
-	teamuxLogger := common.GetLogger()
-	p := tea.NewProgram(components.InitialModel(database.Connector{DB: db, Ctx: context.Background()}, teamuxLogger))
+	p := tea.NewProgram(components.InitialModel(database.Connector{DB: db, Ctx: context.Background()}))
 	if _, err := p.Run(); err != nil {
 		fmt.Printf("ERROR: %v", err)
 		os.Exit(1)

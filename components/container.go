@@ -25,7 +25,6 @@ type Model struct {
 	newPrefix   bool
 	quitting    bool
 	connector   database.Connector
-	logger      common.Logger
 }
 
 const (
@@ -34,18 +33,17 @@ const (
 	PANES    = "Panes"
 )
 
-func InitialModel(connector database.Connector, logger common.Logger) Model {
+func InitialModel(connector database.Connector) Model {
 	return Model{
 		tabs:        []string{SESSIONS, WINDOWS, PANES},
-		mainModel:   sessions.NewSessionContainerModel(connector, logger),
-		detailModel: sessions.NewSessionTreeModel(connector, logger, nil),
+		mainModel:   sessions.NewSessionContainerModel(connector),
+		detailModel: sessions.NewSessionTreeModel(connector, nil),
 		messageBox:  NewMessageBoxModel(),
 		helpModel:   NewHelpModel(sessions.NewSessionBrowserHelpModel()),
 		focusedTab:  0,
 		newPrefix:   false,
 		quitting:    false,
 		connector:   connector,
-		logger:      logger,
 	}
 }
 
@@ -76,13 +74,13 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case common.BrowseMsg:
 		cmds = append(cmds, func() tea.Msg { return common.ClearHelp(common.FocusedTab(m.focusedTab)) })
 	case sessions.NewSFocus:
-		m.detailModel = sessions.NewSessionTreeModel(m.connector, m.logger, &msg.Session)
+		m.detailModel = sessions.NewSessionTreeModel(m.connector, &msg.Session)
 		return m, nil
 	case windows.NewWFocus:
-		m.detailModel = windows.NewWindowDetailModel(m.connector, m.logger, &msg.Window)
+		m.detailModel = windows.NewWindowDetailModel(m.connector, &msg.Window)
 		return m, nil
 	case panes.NewPFocusMsg:
-		m.detailModel = panes.NewPaneDetailModel(m.connector, m.logger, &msg.Pane)
+		m.detailModel = panes.NewPaneDetailModel(m.connector, &msg.Pane)
 		return m, nil
 	case tea.KeyMsg:
 		if msg.String() == "]" {
@@ -102,14 +100,14 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case common.ClearHelpMsg:
 		switch m.focusedTab {
 		case common.SessionsContainer:
-			m.mainModel = sessions.NewSessionContainerModel(m.connector, m.logger)
-			m.detailModel = sessions.NewSessionTreeModel(m.connector, m.logger, nil)
+			m.mainModel = sessions.NewSessionContainerModel(m.connector)
+			m.detailModel = sessions.NewSessionTreeModel(m.connector, nil)
 		case common.WindwowsContainer:
-			m.mainModel = windows.NewWindowContainerModel(m.connector, m.logger)
-			m.detailModel = windows.NewWindowDetailModel(m.connector, m.logger, nil)
+			m.mainModel = windows.NewWindowContainerModel(m.connector)
+			m.detailModel = windows.NewWindowDetailModel(m.connector, nil)
 		case common.PanesContainer:
-			m.mainModel = panes.NewPaneContainerModel(m.connector, m.logger)
-			m.detailModel = panes.NewPaneDetailModel(m.connector, m.logger, nil)
+			m.mainModel = panes.NewPaneContainerModel(m.connector)
+			m.detailModel = panes.NewPaneDetailModel(m.connector, nil)
 		}
 	}
 	newMain, cmd := m.mainModel.Update(msg)

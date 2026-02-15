@@ -1,6 +1,8 @@
 package sessions
 
 import (
+	"fmt"
+
 	"github.com/GianlucaTurra/teamux/common"
 	"github.com/GianlucaTurra/teamux/components/windows"
 	"github.com/GianlucaTurra/teamux/database"
@@ -22,14 +24,12 @@ func (aw availableWindows) FilterValue() string {
 type SessionWindowsAssociationModel struct {
 	model     list.Model
 	connector database.Connector
-	logger    common.Logger
 	session   Session
 	state     common.State
 }
 
 func NewSessionWindowsAssociationModel(
 	connector database.Connector,
-	logger common.Logger,
 	session Session,
 ) SessionWindowsAssociationModel {
 	var aws []list.Item
@@ -44,7 +44,6 @@ func NewSessionWindowsAssociationModel(
 	return SessionWindowsAssociationModel{
 		model:     l,
 		connector: connector,
-		logger:    logger,
 		session:   session,
 	}
 }
@@ -96,7 +95,7 @@ func (m *SessionWindowsAssociationModel) loadWindowsList() tea.Cmd {
 	var aws []list.Item
 	windows, err := windows.ReadAllWindows(m.connector.DB)
 	if err != nil {
-		m.logger.Errorlogger.Printf("Error reading windows for session_windows association: %v", err)
+		common.GetLogger().Error(fmt.Sprintf("Error reading windows for session_windows association: %v", err))
 		return func() tea.Msg { return common.OutputMsg{Err: err, Severity: common.Error} }
 	}
 	for _, w := range windows {
@@ -128,7 +127,7 @@ func (m *SessionWindowsAssociationModel) selectWindow() tea.Cmd {
 		err = m.connector.DB.Model(&m.session).Association("Windows").Append(&w.window)
 	}
 	if err != nil {
-		m.logger.Errorlogger.Printf("Error appending %s to session %s: %v", w.window.Name, m.session.Name, err)
+		common.GetLogger().Error(fmt.Sprintf("Error appending %s to session %s: %v", w.window.Name, m.session.Name, err))
 		return func() tea.Msg { return common.OutputMsg{Err: err, Severity: common.Error} }
 	}
 	itemIndex := m.model.GlobalIndex()

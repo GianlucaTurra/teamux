@@ -25,14 +25,12 @@ func (ap availablePanes) FilterValue() string {
 type WindowPanesAssociationModel struct {
 	model     list.Model
 	connector database.Connector
-	logger    common.Logger
 	window    Window
 	state     common.State
 }
 
 func NewWindowPanesAssociationModel(
 	connector database.Connector,
-	logger common.Logger,
 	window Window,
 ) WindowPanesAssociationModel {
 	var aps []list.Item
@@ -47,7 +45,6 @@ func NewWindowPanesAssociationModel(
 	return WindowPanesAssociationModel{
 		model:     l,
 		connector: connector,
-		logger:    logger,
 		window:    window,
 	}
 }
@@ -93,7 +90,7 @@ func (m *WindowPanesAssociationModel) loadData() (tea.Model, tea.Cmd) {
 	panes, err := panes.ReadAllPanes(m.connector.DB)
 	if err != nil {
 		errMsg := fmt.Sprintf("error reading panes: %v", err)
-		m.logger.Errorlogger.Println(errMsg)
+		common.GetLogger().Error(errMsg)
 		return m, func() tea.Msg { return common.OutputMsg{Err: errors.New(errMsg), Severity: common.Error} }
 	}
 	for _, pane := range panes {
@@ -120,7 +117,7 @@ func (m *WindowPanesAssociationModel) selectPane() (tea.Model, tea.Cmd) {
 	}
 	if err != nil {
 		errMsg := fmt.Sprintf("error appending/deleting pane %s to window %s: %v", p.pane.Name, m.window.Name, err)
-		m.logger.Errorlogger.Println(errMsg)
+		common.GetLogger().Error(errMsg)
 		// TODO: refactor OutputMsg with methods for clearer construction
 		return m, func() tea.Msg { return common.OutputMsg{Err: errors.New(errMsg), Severity: common.Error} }
 	}

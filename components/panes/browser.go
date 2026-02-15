@@ -20,7 +20,6 @@ type (
 		selected  string
 		state     common.State
 		connector database.Connector
-		logger    common.Logger
 	}
 	paneItem struct {
 		title string
@@ -32,12 +31,12 @@ func (pi paneItem) FilterValue() string {
 }
 
 // loadPaneData Load the panes from db into the current model
-func loadPaneData(db *gorm.DB, logger common.Logger) (map[string]Pane, []list.Item) {
+func loadPaneData(db *gorm.DB) (map[string]Pane, []list.Item) {
 	layouts := []list.Item{}
 	paneData := make(map[string]Pane)
 	panes, err := ReadAllPanes(db)
 	if err != nil {
-		logger.Fatallogger.Fatalf("Failed to read panes: %v", err)
+		common.GetLogger().Fatal(fmt.Sprintf("Failed to read panes: %v", err))
 		return paneData, layouts
 	}
 	for _, p := range panes {
@@ -47,8 +46,8 @@ func loadPaneData(db *gorm.DB, logger common.Logger) (map[string]Pane, []list.It
 	return paneData, layouts
 }
 
-func NewPaneBrowserModel(connector database.Connector, logger common.Logger) PaneBrowserModel {
-	data, layouts := loadPaneData(connector.DB, logger)
+func NewPaneBrowserModel(connector database.Connector) PaneBrowserModel {
+	data, layouts := loadPaneData(connector.DB)
 	l := list.New(layouts, paneDelegate{}, 100, 10)
 	l.SetShowTitle(false)
 	l.SetFilteringEnabled(false)
@@ -59,7 +58,6 @@ func NewPaneBrowserModel(connector database.Connector, logger common.Logger) Pan
 		list:      l,
 		data:      data,
 		state:     common.Browsing,
-		logger:    logger,
 		connector: connector,
 	}
 }
@@ -72,7 +70,7 @@ func (m PaneBrowserModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmds []tea.Cmd
 	switch msg := msg.(type) {
 	case common.ReloadMsg:
-		return NewPaneBrowserModel(m.connector, m.logger), nil
+		return NewPaneBrowserModel(m.connector), nil
 	case common.DeleteMsg:
 		return m.deleteSelected()
 	case common.OpenMsg:
@@ -166,7 +164,7 @@ func (m PaneBrowserModel) openSelected() (PaneBrowserModel, tea.Cmd) {
 	p := m.data[m.selected]
 	if err := p.Open(); err != nil {
 		e := fmt.Errorf("failed to open pane %s: %v", m.selected, err)
-		m.logger.Errorlogger.Println(e.Error())
+		common.GetLogger().Error(e.Error())
 		return m, func() tea.Msg { return common.OutputMsg{Err: e, Severity: common.Error} }
 	}
 	return m, func() tea.Msg { return common.ReloadMsg{} }
@@ -177,7 +175,7 @@ func (m PaneBrowserModel) deleteSelected() (PaneBrowserModel, tea.Cmd) {
 	p := m.data[m.selected]
 	if _, err := p.Delete(m.connector); err != nil {
 		e := fmt.Errorf("failed to delete pane %s: %v", m.selected, err)
-		m.logger.Errorlogger.Println(e.Error())
+		common.GetLogger().Error(e.Error())
 		return m, func() tea.Msg { return common.OutputMsg{Err: e, Severity: common.Error} }
 	}
 	return m, func() tea.Msg { return common.ReloadMsg{} }

@@ -42,7 +42,7 @@ func TestNewSession(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			gotErr := tmux.NewSession(tt.name, tt.workingDirectory)
+			gotErr := tmux.NewSession(tt.name, tt.workingDirectory, true)
 			if gotErr != nil {
 				if !tt.wantErr {
 					t.Errorf("NewSession() failed: %v", gotErr)
@@ -78,7 +78,7 @@ func TestHasSession(t *testing.T) {
 			want:     false,
 		},
 	}
-	if err := tmux.NewSession("Test", ""); err != nil {
+	if err := tmux.NewSession("Test", "", true); err != nil {
 		t.Errorf("Error opening test session: %v", err)
 	}
 	for _, tt := range tests {
@@ -115,7 +115,7 @@ func TestKillSession(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if !tt.wantErr {
-				if err := tmux.NewSession(tt.name, ""); err != nil {
+				if err := tmux.NewSession(tt.name, "", true); err != nil {
 					t.Errorf("Error opening test session: %v", err)
 				}
 			}
@@ -152,7 +152,7 @@ func TestSwitchToSession(t *testing.T) {
 		},
 	}
 	currentSession := tmux.GetCurrentTmuxSessionName()
-	if err := tmux.NewSession("Test", ""); err != nil {
+	if err := tmux.NewSession("Test", "", true); err != nil {
 		t.Errorf("Error opening test session: %v", err)
 	}
 	for _, tt := range tests {

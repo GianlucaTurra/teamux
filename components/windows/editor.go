@@ -25,14 +25,12 @@ type WindowEditorModel struct {
 	window       *Window
 	error        error
 	connector    database.Connector
-	logger       common.Logger
 }
 
-func NewWindowEditorModel(connector database.Connector, logger common.Logger, window *Window) WindowEditorModel {
+func NewWindowEditorModel(connector database.Connector, window *Window) WindowEditorModel {
 	m := WindowEditorModel{
 		inputs:    make([]textinput.Model, 3),
 		connector: connector,
-		logger:    logger,
 		mode:      creating,
 		window:    window,
 	}
@@ -81,7 +79,7 @@ func (m WindowEditorModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "esc":
-			return NewWindowEditorModel(m.connector, m.logger, nil), common.Browse
+			return NewWindowEditorModel(m.connector, nil), common.Browse
 		case "ctrl+c":
 			m.mode = quitting
 			return m, common.Quit
@@ -141,7 +139,7 @@ func (m *WindowEditorModel) createWindow() tea.Cmd {
 	_, err := CreateWindow(m.inputs[0].Value(), m.inputs[1].Value(), m.inputs[2].Value(), m.connector)
 	if err != nil {
 		m.error = err
-		m.logger.Errorlogger.Printf("Error saving window: %v", err)
+		common.GetLogger().Error(fmt.Sprintf("Error saving window: %v", err))
 		return func() tea.Msg { return common.InputErrMsg{Err: err} }
 	}
 	m.error = nil
@@ -155,7 +153,7 @@ func (m *WindowEditorModel) editWindow() tea.Cmd {
 	m.window.ShellCmd = m.inputs[2].Value()
 	if _, err := m.window.Save(m.connector); err != nil {
 		m.error = err
-		m.logger.Errorlogger.Printf("Error saving window: %v", err)
+		common.GetLogger().Error(fmt.Sprintf("Error saving window: %v", err))
 		return func() tea.Msg { return common.InputErrMsg{Err: err} }
 	}
 	m.error = nil

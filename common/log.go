@@ -6,29 +6,61 @@ import (
 	"log"
 	"os"
 	"os/exec"
+	"sync"
 )
 
-const tempLogFile = "/tmp/teamux.log"
+const (
+	tempLogFile = "/tmp/teamux.log"
+	logDepth    = 2
+)
 
-type Logger struct {
-	Infologger    *log.Logger
-	Warninglogger *log.Logger
-	Errorlogger   *log.Logger
-	Fatallogger   *log.Logger
+type logger struct {
+	infologger    *log.Logger
+	warninglogger *log.Logger
+	errorlogger   *log.Logger
+	fatallogger   *log.Logger
 }
 
-func GetLogger() Logger {
+var (
+	teamuxLogger *logger
+	once         sync.Once
+)
+
+func GetLogger() *logger {
+	once.Do(func() {
+		teamuxLogger = createLogger()
+	})
+	return teamuxLogger
+}
+
+func createLogger() *logger {
 	logfile, err := os.OpenFile(tempLogFile, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0o644)
 	if err != nil {
-		log.Fatalln("Unable to setup syslog:", err.Error())
+		log.Fatalln("Unable to setup logfile:", err.Error())
 	}
-	defer logfile.Close()
-	return Logger{
-		Infologger:    log.New(logfile, "INFO: ", log.Ldate|log.Ltime|log.Lshortfile),
-		Warninglogger: log.New(logfile, "WARNING: ", log.Ldate|log.Ltime|log.Lshortfile),
-		Errorlogger:   log.New(logfile, "ERROR: ", log.Ldate|log.Ltime|log.Lshortfile),
-		Fatallogger:   log.New(logfile, "FATAL: ", log.Ldate|log.Ltime|log.Lshortfile),
+	// defer logfile.Close()
+	return &logger{
+		infologger:    log.New(logfile, "INFO: ", log.Ldate|log.Ltime|log.Lshortfile),
+		warninglogger: log.New(logfile, "WARNING: ", log.Ldate|log.Ltime|log.Lshortfile),
+		errorlogger:   log.New(logfile, "ERROR: ", log.Ldate|log.Ltime|log.Lshortfile),
+		fatallogger:   log.New(logfile, "FATAL: ", log.Ldate|log.Ltime|log.Lshortfile),
 	}
+}
+
+func (l *logger) Info(msg string) {
+	_ = l.infologger.Output(logDepth, msg)
+}
+
+func (l *logger) Warning(msg string) {
+	_ = l.warninglogger.Output(logDepth, msg)
+}
+
+func (l *logger) Error(msg string) {
+	_ = l.errorlogger.Output(logDepth, msg)
+}
+
+func (l *logger) Fatal(msg string) {
+	_ = l.fatallogger.Output(logDepth, msg)
 }
 
 func ShowLogFile(n int) ([]byte, error) {
