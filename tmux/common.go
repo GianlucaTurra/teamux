@@ -34,8 +34,9 @@ func (e Warning) Error() string {
 // executeCommand Runs the given command and returns the stdErr or the err if
 // one is returned from the command execution
 func executeCommand(command string) error {
-	common.GetLogger().Info(command)
-	cmd := exec.Command("sh", "-c", command)
+	args := strings.Fields(command)
+	common.GetLogger().Info("tmux " + command)
+	cmd := exec.Command("tmux", args...)
 	if output, err := cmd.CombinedOutput(); err != nil {
 		if strings.TrimSpace(string(output)) == "" {
 			return err

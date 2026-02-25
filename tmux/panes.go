@@ -9,7 +9,7 @@ import (
 
 // SplitWindow creates a pane in the current window
 func SplitWindow(splitRatio int, workingDirectory string, splitDirection string, shellCmd string) error {
-	baseCmd := fmt.Sprintf("tmux split-window -l %s%s -%s", strconv.Itoa(splitRatio), "%", splitDirection)
+	baseCmd := fmt.Sprintf("split-window -l %s%s -%s", strconv.Itoa(splitRatio), "%", splitDirection)
 	return commandWithWorkDir(workingDirectory, baseCmd, "")
 }
 
@@ -29,9 +29,9 @@ func SplitWindowWithTargetWindow(
 		return errors.New("missing splitRatio")
 	}
 	baseCmd := fmt.Sprintf(
-		"tmux split-window -t \"%s\" -l %s%% -%s",
+		"split-window -t %s -l %s%% -%s",
 		targetWindow,
-		strconv.Itoa(splitRatio)+"%",
+		strconv.Itoa(splitRatio),
 		splitDirection,
 	)
 	return commandWithWorkDir(workingDirectory, baseCmd, shellCmd)

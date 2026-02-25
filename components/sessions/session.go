@@ -52,7 +52,7 @@ func (s Session) Delete(connector database.Connector) (int, error) {
 // Opening the session this way creates an empty window at first, to avoid
 // confusion it is deleted and following Windows are reordered
 func (s Session) Open(detached bool) error {
-	if err := tmux.NewSession(s.Name, s.WorkingDirectory, detached); err != nil {
+	if err := tmux.NewSession(s.Name, s.WorkingDirectory); err != nil {
 		return err
 	}
 	// TODO: is it better to stop the process at the first error or to load
@@ -72,6 +72,11 @@ func (s Session) Open(detached bool) error {
 	// TODO: handle error type
 	if err := tmux.ReorderWindows(s.Name); err != nil {
 		return tmux.NewWarning(fmt.Sprintf("unable to reoder windows in %s", s.Name))
+	}
+	if !detached {
+		if err := tmux.SwitchToSession(s.Name); err != nil {
+			return tmux.NewWarning(fmt.Sprintf("unable to attach session %s: %v", s.Name, err))
+		}
 	}
 	return nil
 }

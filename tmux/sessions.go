@@ -12,14 +12,11 @@ import (
 
 type NumberOfSessionsMsg struct{ Number string }
 
-func NewSession(name string, workingDirectory string, detached bool) error {
-	baseCmd := fmt.Sprintf("tmux new-session -d -s \"%s\"", name)
-	err := commandWithWorkDir(workingDirectory, baseCmd, "")
+func NewSession(name string, workingDirectory string) error {
+	baseCmd := "new-session -d -s %s"
+	err := commandWithWorkDir(workingDirectory, fmt.Sprintf(baseCmd, name), "")
 	if err != nil {
 		return err
-	}
-	if !detached {
-		return SwitchToSession(name)
 	}
 	return nil
 }
@@ -33,11 +30,11 @@ func HasSession(name string) bool {
 }
 
 func KillSession(name string) error {
-	return executeCommand(fmt.Sprintf("tmux kill-session -t \"%s\"", name))
+	return executeCommand(fmt.Sprintf("kill-session -t \"%s\"", name))
 }
 
 func SwitchToSession(name string) error {
-	return executeCommand(fmt.Sprintf("tmux switch -t \"%s\"", name))
+	return executeCommand(fmt.Sprintf("switch -t %s", name))
 }
 
 // GetCurrentTmuxSessionName name of the session in which the app is launched

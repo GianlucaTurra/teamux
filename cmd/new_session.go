@@ -31,6 +31,6 @@ var newSessionCmd = &cobra.Command{
 }
 
 func init() {
-	newSessionCmd.Flags().BoolP("detached", "d", true, "Open the session as detached")
+	newSessionCmd.Flags().BoolP("detached", "d", false, "Open the session as detached")
 	rootCmd.AddCommand(newSessionCmd)
 }
