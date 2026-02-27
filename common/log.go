@@ -64,10 +64,20 @@ func (l *logger) Fatal(msg string) {
 }
 
 func ShowLogFile(n int) ([]byte, error) {
-	cmd := exec.Command(
-		"sh",
-		"-c",
-		fmt.Sprintf("tail -n %d %s", n, tempLogFile),
-	)
+	var cmd *exec.Cmd
+	if n == -1 {
+		cmd = exec.Command("cat", tempLogFile)
+	} else {
+		cmd = exec.Command(
+			"sh",
+			"-c",
+			fmt.Sprintf("tail -n %d %s", n, tempLogFile),
+		)
+	}
 	return cmd.CombinedOutput()
+}
+
+func ClearLogFile() error {
+	cmd := exec.Command("sh", "-c", fmt.Sprintf("echo -n \"\" > %s", tempLogFile))
+	return cmd.Run()
 }
